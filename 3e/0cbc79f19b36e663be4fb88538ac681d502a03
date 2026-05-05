@@ -1,0 +1,23 @@
+src/components/settings-modal.tsx
+  517a4efb6e4fc257 479,483-484
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "3e0cbc79f19b36e663be4fb88538ac681d502a03",
+  "prompts": {
+    "517a4efb6e4fc257": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "93d28084-f555-4425-b8b8-80cb12862634",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Tito",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 2,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    }
+  }
+}

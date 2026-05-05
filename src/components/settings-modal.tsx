@@ -498,6 +498,8 @@ function EditBangPopup({
   const [searchUrl, setSearchUrl] = useState(bang.u);
   const [baseUrl, setBaseUrl] = useState(bang.d);
   const [error, setError] = useState<string | null>(null);
+  const firstFieldRef = useRef<HTMLInputElement>(null);
+  const titleId = "edit-bang-title";
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -509,6 +511,11 @@ function EditBangPopup({
     document.addEventListener("keydown", onKey, true);
     return () => document.removeEventListener("keydown", onKey, true);
   }, [onCancel]);
+
+  useEffect(() => {
+    firstFieldRef.current?.focus();
+    firstFieldRef.current?.select();
+  }, []);
 
   const submit = () => {
     const trimmedName = name.trim();
@@ -536,6 +543,7 @@ function EditBangPopup({
 
   return (
     <div
+      aria-labelledby={titleId}
       aria-modal="true"
       className="fixed inset-0 z-[1100] flex h-full w-full items-center justify-center text-fg"
       role="dialog"
@@ -555,7 +563,10 @@ function EditBangPopup({
         >
           &times;
         </button>
-        <h3 className="mb-3 border-border border-b pb-2 font-semibold text-base text-fg">
+        <h3
+          className="mb-3 border-border border-b pb-2 font-semibold text-base text-fg"
+          id={titleId}
+        >
           Edit Custom Bang
         </h3>
         <div className="flex flex-col gap-1.5">
@@ -564,6 +575,7 @@ function EditBangPopup({
             className={formInputCls}
             onChange={(e) => setName(e.target.value)}
             placeholder="Bang name"
+            ref={firstFieldRef}
             type="text"
             value={name}
           />

@@ -1,5 +1,5 @@
-import { useLocalStorageString } from "~/hooks/use-local-storage";
-import { CUTIES, LS_KEYS } from "~/lib/constants";
+import { useLocalStorageString } from "@/hooks/use-local-storage";
+import { CUTIES, LS_KEYS } from "@/lib/constants";
 
 const FACE =
   CUTIES.NOTFOUND[Math.floor(Math.random() * CUTIES.NOTFOUND.length)];

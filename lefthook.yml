@@ -1,12 +1,13 @@
 pre-commit:
   jobs:
-    - run: bun x ultracite fix
-      glob:
-        - "**/*.js"
-        - "**/*.jsx"
-        - "**/*.ts"
-        - "**/*.tsx"
-        - "**/*.json"
-        - "**/*.jsonc"
-        - "**/*.css"
+    - run: bun ultracite fix
+      glob: "**/*.{js,jsx,ts,tsx,json,jsonc,css}"
       stage_fixed: true
+
+    - group:
+        parallel: true
+        jobs:
+          - run: bun tsgo --noEmit
+            glob: "**/*.{ts,tsx}"
+
+          - run: bun run scripts/cleanup.ts

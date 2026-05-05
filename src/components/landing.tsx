@@ -1,9 +1,10 @@
 import { lazy, Suspense, useState } from "react";
-import { useAudio } from "~/hooks/use-audio";
-import { useLocalStorageString } from "~/hooks/use-local-storage";
-import { usePrefersReducedMotion } from "~/hooks/use-prefers-reduced-motion";
-import { LS_KEYS } from "~/lib/constants";
-import { getSearchHistory } from "~/lib/history";
+import { useAudio } from "@/hooks/use-audio";
+import { useLocalStorageString } from "@/hooks/use-local-storage";
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
+import { LS_KEYS } from "@/lib/constants";
+import { getSearchHistory } from "@/lib/history";
+import { SITE } from "@/site.config";
 import { CopyUrl } from "./copy-url";
 import { Cutie } from "./cutie";
 
@@ -123,11 +124,11 @@ export function Landing() {
       <footer className="footer">
         made with ♥ by{" "}
         <a
-          href="https://github.com/mynameistito"
+          href={`https://github.com/${SITE.githubUser}`}
           rel="noopener"
           target="_blank"
         >
-          mynameistito
+          {SITE.githubUser}
         </a>{" "}
         — forked from{" "}
         <a

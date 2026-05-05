@@ -63,7 +63,18 @@ Prereqs: [Bun](https://bun.com), Cloudflare account, `wrangler` logged in (`bun 
    bun install
    ```
 
-2. **Edit `wrangler.jsonc`** — change `name` and route `pattern` to your domain (or remove `routes` to use default `*.workers.dev` URL):
+2. **Edit `src/site.config.ts`** — set your domain, site name, and GitHub username:
+
+   ```ts
+   export const SITE = {
+     name: "my-search",
+     domain: "search.yourdomain.com",
+     githubUser: "your-username",
+   } as const;
+   ```
+
+3. **Edit `wrangler.jsonc`** — change `name` and route `pattern` to your domain (or remove `routes` to use default `*.workers.dev` URL):
+
    ```jsonc
    {
      "name": "your-worker-name",
@@ -73,23 +84,19 @@ Prereqs: [Bun](https://bun.com), Cloudflare account, `wrangler` logged in (`bun 
    }
    ```
 
-3. **Edit `public/opensearch.xml`** — replace `search.mynameistito.com` with your domain.
+4. **(Optional) Refresh bangs**
 
-4. **Edit `src/components/CopyUrl.tsx`** — update default URL shown in UI.
-
-5. **Edit `src/components/Landing.tsx`** — replace footer GitHub link/handle.
-
-6. **(Optional) Refresh bangs**
    ```bash
    bun run fetch-bangs
    ```
 
-7. **Dev**
+5. **Dev**
+
    ```bash
    bun run dev
    ```
 
-8. **Deploy**
+6. **Deploy**
    ```bash
    bun run deploy
    ```

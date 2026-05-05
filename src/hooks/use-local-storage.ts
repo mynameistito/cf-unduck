@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { storage } from "~/lib/storage";
+import { storage } from "@/lib/storage";
 
 export function useLocalStorage<T>(
   key: string,

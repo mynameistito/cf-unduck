@@ -1,0 +1,23 @@
+lefthook.yml
+  b7863dc3e6139450 6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "3bf6b7c87e49645e6a887a5642163249bbc9ed74",
+  "prompts": {
+    "b7863dc3e6139450": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_208a1f215ffeqaxq8d350hx0ev",
+        "model": "unknown"
+      },
+      "human_author": "Tito",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 0,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}

@@ -64,6 +64,7 @@ Prereqs: [Bun](https://bun.com), Cloudflare account, `wrangler` logged in (`bun 
    ```
 
 2. **Edit `src/site.config.ts`** — set your domain, site name, and GitHub username:
+
    ```ts
    export const SITE = {
      name: "my-search",
@@ -73,6 +74,7 @@ Prereqs: [Bun](https://bun.com), Cloudflare account, `wrangler` logged in (`bun 
    ```
 
 3. **Edit `wrangler.jsonc`** — change `name` and route `pattern` to your domain (or remove `routes` to use default `*.workers.dev` URL):
+
    ```jsonc
    {
      "name": "your-worker-name",
@@ -83,11 +85,13 @@ Prereqs: [Bun](https://bun.com), Cloudflare account, `wrangler` logged in (`bun 
    ```
 
 4. **(Optional) Refresh bangs**
+
    ```bash
    bun run fetch-bangs
    ```
 
 5. **Dev**
+
    ```bash
    bun run dev
    ```

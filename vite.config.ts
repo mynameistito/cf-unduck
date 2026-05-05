@@ -27,7 +27,22 @@ function escapeXml(str: string): string {
 }
 
 const TITLE_RE = /<title>.*?<\/title>/;
-const OPENSEARCH_LINK_RE = /title=".*?"\s+href="\/opensearch\.xml"/;
+const OPENSEARCH_LINK_RE = /<link\b[^>]*?\brel="search"[\s\S]*?>/;
+const TITLE_ATTR_RE = /title="[^"]*"/;
+
+function replaceOrThrow(
+  html: string,
+  re: RegExp,
+  replacement: string | ((m: string) => string),
+  label: string
+): string {
+  if (!re.test(html)) {
+    throw new Error(`site-config: ${label} did not match index.html`);
+  }
+  return typeof replacement === "function"
+    ? html.replace(re, replacement)
+    : html.replace(re, replacement);
+}
 
 function siteConfigPlugin(): Plugin {
   const safeName = escapeXml(SITE.name);
@@ -52,12 +67,25 @@ function siteConfigPlugin(): Plugin {
       });
     },
     transformIndexHtml(html) {
-      return html
-        .replace(TITLE_RE, `<title>${safeName}</title>`)
-        .replace(
-          OPENSEARCH_LINK_RE,
-          `title="${safeName}"\n      href="/opensearch.xml"`
-        );
+      let out = replaceOrThrow(
+        html,
+        TITLE_RE,
+        `<title>${safeName}</title>`,
+        "TITLE_RE"
+      );
+      out = replaceOrThrow(
+        out,
+        OPENSEARCH_LINK_RE,
+        (match) =>
+          replaceOrThrow(
+            match,
+            TITLE_ATTR_RE,
+            `title="${safeName}"`,
+            "OPENSEARCH title attr"
+          ),
+        "OPENSEARCH_LINK_RE"
+      );
+      return out;
     },
   };
 }

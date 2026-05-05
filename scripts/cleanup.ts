@@ -7,7 +7,7 @@
 import { readdir, unlink } from "node:fs/promises";
 import { join } from "node:path";
 
-const TARGET_PATTERNS = [/^tmpclaude-/, /^nul$/];
+const TARGET_PATTERNS = [/^tmpclaude-/, /^nul$/i];
 const SKIP_DIRS = new Set(["node_modules", ".git"]);
 
 function shouldDeleteFile(filename: string): boolean {

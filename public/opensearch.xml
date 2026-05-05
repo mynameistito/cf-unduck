@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
+  <ShortName>cf-unduck</ShortName>
+  <Description>Fast DuckDuckGo bang redirects</Description>
+  <InputEncoding>UTF-8</InputEncoding>
+  <Image width="16" height="16" type="image/x-icon">https://search.mynameistito.com/goose.gif</Image>
+  <Url type="text/html" template="https://search.mynameistito.com/?q={searchTerms}"/>
+</OpenSearchDescription>

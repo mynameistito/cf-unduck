@@ -24,6 +24,24 @@ interface Props {
 const SEARCH_DEBOUNCE_MS = 150;
 const STRIP_BANG_PREFIX_RE = /^!+/;
 const KAGI_SEARCH_SUFFIX_RE = /\s*\(Kagi Search\)\s*$/i;
+const STRIP_WWW_RE = /^www\./i;
+const HAS_PROTOCOL_RE = /^https?:\/\//i;
+
+function deriveBaseDomain(searchUrl: string): string {
+  const trimmed = searchUrl.trim();
+  if (!trimmed) {
+    return "";
+  }
+  try {
+    const withProtocol = HAS_PROTOCOL_RE.test(trimmed)
+      ? trimmed
+      : `https://${trimmed}`;
+    const { hostname } = new URL(withProtocol);
+    return hostname.replace(STRIP_WWW_RE, "");
+  } catch {
+    return "";
+  }
+}
 
 const sectionCls =
   "border-b border-border pb-3 mb-3 last:border-b-0 last:pb-0 last:mb-0";
@@ -109,7 +127,7 @@ export function SettingsModal({ open, onClose, audio, reducedMotion }: Props) {
         onClick={onClose}
         type="button"
       />
-      <div className="relative mx-auto my-[5vh] max-h-[90vh] w-[calc(100%-2rem)] max-w-[480px] overflow-y-auto rounded-lg border border-border bg-bg px-5 py-4 text-fg shadow-[0_20px_60px_rgba(0,0,0,0.4)]">
+      <div className="themed-scrollbar relative mx-auto my-[5vh] max-h-[90vh] w-[calc(100%-2rem)] max-w-[480px] overflow-y-auto rounded-lg border border-border bg-bg px-5 py-4 text-fg shadow-[0_20px_60px_rgba(0,0,0,0.4)]">
         <button
           aria-label="Close settings"
           className="absolute top-2.5 right-2.5 flex h-7 w-7 items-center justify-center rounded-md text-fg-muted leading-none transition hover:bg-bg-hover hover:text-fg"
@@ -314,6 +332,7 @@ function CustomBangsSection({
   const [shortcut, setShortcut] = useState("");
   const [searchUrl, setSearchUrl] = useState("");
   const [baseUrl, setBaseUrl] = useState("");
+  const [editingKey, setEditingKey] = useState<string | null>(null);
 
   const reload = () => {
     if (reducedMotion) {
@@ -330,7 +349,7 @@ function CustomBangsSection({
       .replace(STRIP_BANG_PREFIX_RE, "")
       .toLowerCase();
     const trimmedSearch = searchUrl.trim();
-    const trimmedBase = baseUrl.trim();
+    const trimmedBase = baseUrl.trim() || deriveBaseDomain(trimmedSearch);
     if (!(trimmedName && trimmedSearch && trimmedBase && cleanShortcut)) {
       return;
     }
@@ -346,6 +365,13 @@ function CustomBangsSection({
     audio.play("warning");
     const { [key]: _removed, ...rest } = customBangs;
     onChange(rest);
+    reload();
+  };
+
+  const saveEdit = (originalKey: string, next: { key: string; bang: Bang }) => {
+    audio.play("click", { rate: 2, from: 0.1 });
+    const { [originalKey]: _removed, ...rest } = customBangs;
+    onChange({ ...rest, [next.key]: next.bang });
     reload();
   };
 
@@ -374,6 +400,14 @@ function CustomBangsSection({
         <input
           aria-label="Bang search URL"
           className={formInputCls}
+          onBlur={() => {
+            if (!baseUrl.trim()) {
+              const derived = deriveBaseDomain(searchUrl);
+              if (derived) {
+                setBaseUrl(derived);
+              }
+            }
+          }}
           onChange={(e) => setSearchUrl(e.target.value)}
           placeholder="Search URL with {{{s}}}"
           type="text"
@@ -383,7 +417,7 @@ function CustomBangsSection({
           aria-label="Bang base domain"
           className={formInputCls}
           onChange={(e) => setBaseUrl(e.target.value)}
-          placeholder="Base domain"
+          placeholder="Base domain (auto-detected)"
           type="text"
           value={baseUrl}
         />
@@ -412,7 +446,14 @@ function CustomBangsSection({
                   <span className="text-fg-muted text-sm">{b.d}</span>
                 </div>
                 <div className="break-all text-fg-muted text-sm">{b.u}</div>
-                <div className="flex justify-end">
+                <div className="flex justify-end gap-2">
+                  <button
+                    className={`${secondaryBtnCls} px-3 py-1 text-sm`}
+                    onClick={() => setEditingKey(key)}
+                    type="button"
+                  >
+                    Edit
+                  </button>
                   <button
                     className={`${dangerBtnCls} px-3 py-1 text-sm`}
                     onClick={() => remove(key)}
@@ -426,6 +467,169 @@ function CustomBangsSection({
           </div>
         </>
       ) : null}
+      {editingKey !== null && customBangs[editingKey] ? (
+        <EditBangPopup
+          bang={customBangs[editingKey]}
+          existingKeys={Object.keys(customBangs)}
+          onCancel={() => setEditingKey(null)}
+          onSave={(next) => saveEdit(editingKey, next)}
+          shortcut={editingKey}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function EditBangPopup({
+  bang,
+  shortcut,
+  existingKeys,
+  onSave,
+  onCancel,
+}: {
+  bang: Bang;
+  shortcut: string;
+  existingKeys: string[];
+  onSave: (next: { key: string; bang: Bang }) => void;
+  onCancel: () => void;
+}) {
+  const [name, setName] = useState(bang.s);
+  const [shortcutInput, setShortcutInput] = useState(shortcut);
+  const [searchUrl, setSearchUrl] = useState(bang.u);
+  const [baseUrl, setBaseUrl] = useState(bang.d);
+  const [error, setError] = useState<string | null>(null);
+  const firstFieldRef = useRef<HTMLInputElement>(null);
+  const titleId = "edit-bang-title";
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopImmediatePropagation();
+        onCancel();
+      }
+    };
+    document.addEventListener("keydown", onKey, true);
+    return () => document.removeEventListener("keydown", onKey, true);
+  }, [onCancel]);
+
+  useEffect(() => {
+    firstFieldRef.current?.focus();
+    firstFieldRef.current?.select();
+  }, []);
+
+  const submit = () => {
+    const trimmedName = name.trim();
+    const cleanShortcut = shortcutInput
+      .trim()
+      .replace(STRIP_BANG_PREFIX_RE, "")
+      .toLowerCase();
+    const trimmedSearch = searchUrl.trim();
+    const trimmedBase = baseUrl.trim() || deriveBaseDomain(trimmedSearch);
+    if (!(trimmedName && trimmedSearch && trimmedBase && cleanShortcut)) {
+      setError("All fields required");
+      return;
+    }
+    if (cleanShortcut !== shortcut && existingKeys.includes(cleanShortcut)) {
+      setError("Shortcut already exists");
+      return;
+    }
+    onSave({
+      key: cleanShortcut,
+      bang: { s: trimmedName, u: trimmedSearch, d: trimmedBase },
+    });
+  };
+
+  const formInputCls = `${inputCls} bg-bg`;
+
+  return (
+    <div
+      aria-labelledby={titleId}
+      aria-modal="true"
+      className="fixed inset-0 z-[1100] flex h-full w-full items-center justify-center text-fg"
+      role="dialog"
+    >
+      <button
+        aria-label="Cancel edit"
+        className="absolute inset-0 h-full w-full cursor-default bg-black/60 backdrop-blur-sm"
+        onClick={onCancel}
+        type="button"
+      />
+      <div className="relative w-[calc(100%-2rem)] max-w-[420px] rounded-lg border border-border bg-bg px-5 py-4 shadow-[0_20px_60px_rgba(0,0,0,0.4)]">
+        <button
+          aria-label="Cancel edit"
+          className="absolute top-2.5 right-2.5 flex h-7 w-7 items-center justify-center rounded-md text-fg-muted leading-none transition hover:bg-bg-hover hover:text-fg"
+          onClick={onCancel}
+          type="button"
+        >
+          &times;
+        </button>
+        <h3
+          className="mb-3 border-border border-b pb-2 font-semibold text-base text-fg"
+          id={titleId}
+        >
+          Edit Custom Bang
+        </h3>
+        <div className="flex flex-col gap-1.5">
+          <input
+            aria-label="Bang name"
+            className={formInputCls}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Bang name"
+            ref={firstFieldRef}
+            type="text"
+            value={name}
+          />
+          <input
+            aria-label="Bang shortcut"
+            className={formInputCls}
+            onChange={(e) => setShortcutInput(e.target.value)}
+            placeholder="Shortcut (e.g. !ddg)"
+            type="text"
+            value={shortcutInput}
+          />
+          <input
+            aria-label="Bang search URL"
+            className={formInputCls}
+            onBlur={() => {
+              if (!baseUrl.trim()) {
+                const derived = deriveBaseDomain(searchUrl);
+                if (derived) {
+                  setBaseUrl(derived);
+                }
+              }
+            }}
+            onChange={(e) => setSearchUrl(e.target.value)}
+            placeholder="Search URL with {{{s}}}"
+            type="text"
+            value={searchUrl}
+          />
+          <input
+            aria-label="Bang base domain"
+            className={formInputCls}
+            onChange={(e) => setBaseUrl(e.target.value)}
+            placeholder="Base domain (auto-detected)"
+            type="text"
+            value={baseUrl}
+          />
+          {error ? (
+            <p className="text-danger text-sm" role="alert">
+              {error}
+            </p>
+          ) : null}
+          <div className="mt-1 flex justify-end gap-2">
+            <button
+              className={secondaryBtnCls}
+              onClick={onCancel}
+              type="button"
+            >
+              Cancel
+            </button>
+            <button className={primaryBtnCls} onClick={submit} type="button">
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

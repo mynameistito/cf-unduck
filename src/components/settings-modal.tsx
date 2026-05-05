@@ -11,6 +11,7 @@ import {
   LS_KEYS,
 } from "~/lib/constants";
 import { clearSearchHistory, getSearchHistory } from "~/lib/history";
+import { syncPrefsCookie } from "~/lib/prefs-cookie";
 import type { Bang, BangMap } from "~/lib/types";
 
 interface Props {
@@ -71,6 +72,7 @@ export function SettingsModal({ open, onClose, audio, reducedMotion }: Props) {
       return;
     }
     setDefaultBang(shortcut);
+    syncPrefsCookie();
     audio.play("click");
   };
 

@@ -1,8 +1,11 @@
 import { RouterProvider } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { syncPrefsCookie } from "./lib/prefs-cookie";
 import { router } from "./router";
 import "./styles/global.css";
+
+syncPrefsCookie();
 
 const el = document.getElementById("app");
 if (!el) {

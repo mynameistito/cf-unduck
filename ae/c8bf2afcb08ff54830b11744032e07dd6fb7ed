@@ -1,0 +1,136 @@
+src/styles/global.css
+  ffefc5b4b4c70ea6 137-143,660-666
+  067e474c8692d7cc 95-136,166-177
+  3d13f200a076bc61 1-51,301-313,321,327-330,334-337,342,345-347,350-355,359-362,365-368,370,372-373,383-385,387-391,398-636
+public/opensearch.xml
+  067e474c8692d7cc 3-7
+src/components/landing.tsx
+  ffefc5b4b4c70ea6 2-58
+src/components/cutie.tsx
+  ffefc5b4b4c70ea6 2
+.github/workflows/update-bangs.yml
+  ffefc5b4b4c70ea6 1-37
+biome.jsonc
+  ffefc5b4b4c70ea6 9
+scripts/fetch-bangs.ts
+  ffefc5b4b4c70ea6 8-22
+public/clipboard-check.svg
+  ffefc5b4b4c70ea6 1-17
+src/routes/__root.tsx
+  ffefc5b4b4c70ea6 1-9
+src/hooks/use-local-storage.ts
+  ffefc5b4b4c70ea6 1-44
+src/routes/$.tsx
+  ffefc5b4b4c70ea6 2
+src/lib/types.ts
+  ffefc5b4b4c70ea6 1-15
+public/gear.svg
+  ffefc5b4b4c70ea6 1-16
+public/clipboard.svg
+  ffefc5b4b4c70ea6 1-16
+src/lib/redirect.test.ts
+  ffefc5b4b4c70ea6 1-157
+vite.config.ts
+  3d13f200a076bc61 3-25
+src/lib/redirect.ts
+  ffefc5b4b4c70ea6 7-38
+index.html
+  067e474c8692d7cc 9-17
+.claude/settings.json
+  ffefc5b4b4c70ea6 1-15
+.zed/settings.json
+  ffefc5b4b4c70ea6 1-50
+src/router.tsx
+  ffefc5b4b4c70ea6 1-14
+src/lib/storage.ts
+  ffefc5b4b4c70ea6 1-22
+worker-configuration.d.ts
+  ffefc5b4b4c70ea6 1-13556
+src/lib/bangs/hashbang.ts
+  ffefc5b4b4c70ea6 1-4
+src/components/copy-url.tsx
+  ffefc5b4b4c70ea6 1-58
+src/hooks/use-audio.ts
+  ffefc5b4b4c70ea6 1-71
+.claude/CLAUDE.md
+  ffefc5b4b4c70ea6 1-123
+src/routes/index.tsx
+  ffefc5b4b4c70ea6 3-50
+public/global.css
+  ffefc5b4b4c70ea6 1-307
+src/routeTree.gen.ts
+  ffefc5b4b4c70ea6 1-77
+README.md
+  885f1713043c862f 1-108
+src/components/not-found.tsx
+  ffefc5b4b4c70ea6 1-38
+src/components/settings-modal.tsx
+  ffefc5b4b4c70ea6 1-540
+src/lib/history.ts
+  ffefc5b4b4c70ea6 1-44
+src/hooks/use-prefers-reduced-motion.ts
+  ffefc5b4b4c70ea6 1-15
+src/lib/bangs/bangs.json
+  ffefc5b4b4c70ea6 1-93444
+package.json
+  3d13f200a076bc61 25-32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "aec8bf2afcb08ff54830b11744032e07dd6fb7ed",
+  "prompts": {
+    "067e474c8692d7cc": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5d595237-8ae2-4d7f-9ca1-332569e3a0d7",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Tito",
+      "messages": [],
+      "total_additions": 77,
+      "total_deletions": 63,
+      "accepted_lines": 49,
+      "overriden_lines": 0
+    },
+    "3d13f200a076bc61": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "41a1bd67-28f1-4617-8863-04de3f753f5f",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Tito",
+      "messages": [],
+      "total_additions": 348,
+      "total_deletions": 140,
+      "accepted_lines": 187,
+      "overriden_lines": 29
+    },
+    "885f1713043c862f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "769eccf6-015b-4214-a1e8-fb3c8f5dd212",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Tito",
+      "messages": [],
+      "total_additions": 111,
+      "total_deletions": 18,
+      "accepted_lines": 103,
+      "overriden_lines": 0
+    },
+    "ffefc5b4b4c70ea6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a47b1afe-9ae7-4f93-b3a2-5d17d414a8d2",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Tito",
+      "messages": [],
+      "total_additions": 108757,
+      "total_deletions": 71,
+      "accepted_lines": 108732,
+      "overriden_lines": 0
+    }
+  }
+}

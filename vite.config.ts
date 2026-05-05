@@ -10,20 +10,39 @@ import { SITE } from "./src/site.config";
 
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)));
 
+const XML_ENTITIES: ReadonlyMap<string, string> = new Map([
+  ["&", "&amp;"],
+  ["<", "&lt;"],
+  [">", "&gt;"],
+  ['"', "&quot;"],
+  ["'", "&apos;"],
+]);
+
+function escapeXml(str: string): string {
+  let out = "";
+  for (const ch of str) {
+    out += XML_ENTITIES.get(ch) ?? ch;
+  }
+  return out;
+}
+
 const TITLE_RE = /<title>.*?<\/title>/;
 const OPENSEARCH_LINK_RE = /title=".*?"\s+href="\/opensearch\.xml"/;
 
 function siteConfigPlugin(): Plugin {
+  const safeName = escapeXml(SITE.name);
+  const safeDomain = escapeXml(SITE.domain);
+
   return {
     name: "site-config",
     generateBundle() {
       const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
-  <ShortName>${SITE.name}</ShortName>
+  <ShortName>${safeName}</ShortName>
   <Description>Fast DuckDuckGo bang redirects</Description>
   <InputEncoding>UTF-8</InputEncoding>
-  <Image width="16" height="16" type="image/x-icon">https://${SITE.domain}/goose.gif</Image>
-  <Url type="text/html" template="https://${SITE.domain}/?q={searchTerms}"/>
+  <Image width="16" height="16" type="image/x-icon">https://${safeDomain}/goose.gif</Image>
+  <Url type="text/html" template="https://${safeDomain}/?q={searchTerms}"/>
 </OpenSearchDescription>`;
 
       this.emitFile({
@@ -34,10 +53,10 @@ function siteConfigPlugin(): Plugin {
     },
     transformIndexHtml(html) {
       return html
-        .replace(TITLE_RE, `<title>${SITE.name}</title>`)
+        .replace(TITLE_RE, `<title>${safeName}</title>`)
         .replace(
           OPENSEARCH_LINK_RE,
-          `title="${SITE.name}"\n      href="/opensearch.xml"`
+          `title="${safeName}"\n      href="/opensearch.xml"`
         );
     },
   };

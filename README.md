@@ -63,7 +63,7 @@ Prereqs: [Bun](https://bun.com), Cloudflare account, `wrangler` logged in (`bun 
    bun install
    ```
 
-2. **Edit `site.config.ts`** — set your domain, site name, and GitHub username:
+2. **Edit `src/site.config.ts`** — set your domain, site name, and GitHub username:
    ```ts
    export const SITE = {
      name: "my-search",

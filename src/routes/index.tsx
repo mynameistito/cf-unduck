@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Landing } from "~/components/landing";
-import { DEFAULT_BANG_SHORTCUT, LS_KEYS } from "~/lib/constants";
-import { addToSearchHistory, getCustomBangs } from "~/lib/history";
-import { resolveBangRedirect } from "~/lib/redirect";
-import { storage } from "~/lib/storage";
+import { Landing } from "@/components/landing";
+import { DEFAULT_BANG_SHORTCUT, LS_KEYS } from "@/lib/constants";
+import { addToSearchHistory, getCustomBangs } from "@/lib/history";
+import { resolveBangRedirect } from "@/lib/redirect";
+import { storage } from "@/lib/storage";
 
 interface Search {
   q?: string;
@@ -30,7 +30,7 @@ function IndexComponent() {
       const defaultBangShortcut =
         storage.get(LS_KEYS.DEFAULT_BANG) ?? DEFAULT_BANG_SHORTCUT;
       const customBangs = getCustomBangs();
-      const { bangs } = await import("~/lib/bangs/hashbang");
+      const { bangs } = await import("@/lib/bangs/hashbang");
       if (cancelled) {
         return;
       }

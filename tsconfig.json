@@ -17,7 +17,7 @@
     "allowImportingTsExtensions": true,
     "types": ["@types/bun", "vite/client"],
     "paths": {
-      "~/*": ["./src/*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": [

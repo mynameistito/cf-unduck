@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import type { AudioController } from "~/hooks/use-audio";
-import { ANIMATION_DURATION_MS } from "~/lib/constants";
+import type { AudioController } from "@/hooks/use-audio";
+import { ANIMATION_DURATION_MS } from "@/lib/constants";
+import { SITE } from "@/site.config";
 
 interface Props {
   audio: AudioController;
@@ -8,7 +9,7 @@ interface Props {
 }
 
 export function CopyUrl({ audio, reducedMotion }: Props) {
-  const [url, setUrl] = useState("https://search.mynameistito.com?q=%s");
+  const [url, setUrl] = useState(`https://${SITE.domain}?q=%s`);
   const [copied, setCopied] = useState(false);
   const [flashing, setFlashing] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);

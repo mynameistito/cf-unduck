@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { usePrefersReducedMotion } from "~/hooks/use-prefers-reduced-motion";
-import { CUTIES } from "~/lib/constants";
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
+import { CUTIES } from "@/lib/constants";
 
 const MIN_DELTA = 100;
 

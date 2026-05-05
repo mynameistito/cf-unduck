@@ -1,18 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { AudioController } from "~/hooks/use-audio";
+import type { AudioController } from "@/hooks/use-audio";
 import {
   useLocalStorage,
   useLocalStorageString,
-} from "~/hooks/use-local-storage";
-import { bangs } from "~/lib/bangs/hashbang";
+} from "@/hooks/use-local-storage";
+import { bangs } from "@/lib/bangs/hashbang";
 import {
   ANIMATION_DURATION_MS,
   DEFAULT_BANG_SHORTCUT,
   LS_KEYS,
-} from "~/lib/constants";
-import { clearSearchHistory, getSearchHistory } from "~/lib/history";
-import { syncPrefsCookie } from "~/lib/prefs-cookie";
-import type { Bang, BangMap } from "~/lib/types";
+} from "@/lib/constants";
+import { clearSearchHistory, getSearchHistory } from "@/lib/history";
+import { syncPrefsCookie } from "@/lib/prefs-cookie";
+import type { Bang, BangMap } from "@/lib/types";
 
 interface Props {
   audio: AudioController;

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { useAudio } from "~/hooks/use-audio";
 import { useLocalStorageString } from "~/hooks/use-local-storage";
 import { usePrefersReducedMotion } from "~/hooks/use-prefers-reduced-motion";
@@ -6,7 +6,10 @@ import { LS_KEYS } from "~/lib/constants";
 import { getSearchHistory } from "~/lib/history";
 import { CopyUrl } from "./copy-url";
 import { Cutie } from "./cutie";
-import { SettingsModal } from "./settings-modal";
+
+const SettingsModal = lazy(() =>
+  import("./settings-modal").then((m) => ({ default: m.SettingsModal }))
+);
 
 export function Landing() {
   const reducedMotion = usePrefersReducedMotion();
@@ -136,12 +139,16 @@ export function Landing() {
         </a>
       </footer>
 
-      <SettingsModal
-        audio={audio}
-        onClose={() => setOpen(false)}
-        open={open}
-        reducedMotion={reducedMotion}
-      />
+      {open ? (
+        <Suspense fallback={null}>
+          <SettingsModal
+            audio={audio}
+            onClose={() => setOpen(false)}
+            open={open}
+            reducedMotion={reducedMotion}
+          />
+        </Suspense>
+      ) : null}
     </div>
   );
 }

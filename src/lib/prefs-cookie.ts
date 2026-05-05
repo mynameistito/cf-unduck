@@ -1,10 +1,11 @@
 import { LS_KEYS } from "./constants";
+import type { BangMap } from "./types";
 
 export const PREFS_COOKIE = "udprefs";
 const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365;
 
 export interface Prefs {
-  c?: string[];
+  c?: BangMap;
   d?: string;
 }
 
@@ -35,14 +36,17 @@ export function syncPrefsCookie(): void {
     return;
   }
   const d = localStorage.getItem(LS_KEYS.DEFAULT_BANG) ?? undefined;
-  let c: string[] | undefined;
+  let c: BangMap | undefined;
   try {
     const raw = localStorage.getItem(LS_KEYS.CUSTOM_BANGS);
     if (raw) {
-      const parsed = JSON.parse(raw) as Record<string, unknown>;
-      const keys = Object.keys(parsed).map((k) => k.toLowerCase());
-      if (keys.length > 0) {
-        c = keys;
+      const parsed = JSON.parse(raw) as BangMap;
+      const lowered: BangMap = {};
+      for (const [k, v] of Object.entries(parsed)) {
+        lowered[k.toLowerCase()] = v;
+      }
+      if (Object.keys(lowered).length > 0) {
+        c = lowered;
       }
     }
   } catch {

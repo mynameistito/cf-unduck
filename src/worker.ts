@@ -7,16 +7,6 @@ interface WorkerEnv {
   ASSETS: Fetcher;
 }
 
-const BANG_MATCH_RE = /^!(\S+)|!(\S+)$/i;
-
-function shortcutFromQuery(query: string, fallback: string): string {
-  const m = query.trim().toLowerCase().match(BANG_MATCH_RE);
-  if (!m) {
-    return fallback;
-  }
-  return m[1] ?? m[2] ?? fallback;
-}
-
 function isHandledPath(path: string): string | null {
   if (path === "/") {
     return "/";
@@ -42,16 +32,10 @@ export default {
     }
 
     const prefs = readPrefsFromCookieHeader(request.headers.get("Cookie"));
-    const customSet = new Set((prefs.c ?? []).map((s) => s.toLowerCase()));
     const defaultBangShortcut = prefs.d || DEFAULT_BANG_SHORTCUT;
-    const targetShortcut = shortcutFromQuery(q, defaultBangShortcut);
-
-    if (customSet.has(targetShortcut)) {
-      return env.ASSETS.fetch(request);
-    }
 
     const result = resolveBangRedirect(
-      { query: q, bangs, customBangs: {}, defaultBangShortcut },
+      { query: q, bangs, customBangs: prefs.c ?? {}, defaultBangShortcut },
       handledPath
     );
 

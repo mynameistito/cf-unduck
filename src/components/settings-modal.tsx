@@ -24,6 +24,24 @@ interface Props {
 const SEARCH_DEBOUNCE_MS = 150;
 const STRIP_BANG_PREFIX_RE = /^!+/;
 const KAGI_SEARCH_SUFFIX_RE = /\s*\(Kagi Search\)\s*$/i;
+const STRIP_WWW_RE = /^www\./i;
+const HAS_PROTOCOL_RE = /^https?:\/\//i;
+
+function deriveBaseDomain(searchUrl: string): string {
+  const trimmed = searchUrl.trim();
+  if (!trimmed) {
+    return "";
+  }
+  try {
+    const withProtocol = HAS_PROTOCOL_RE.test(trimmed)
+      ? trimmed
+      : `https://${trimmed}`;
+    const { hostname } = new URL(withProtocol);
+    return hostname.replace(STRIP_WWW_RE, "");
+  } catch {
+    return "";
+  }
+}
 
 const sectionCls =
   "border-b border-border pb-3 mb-3 last:border-b-0 last:pb-0 last:mb-0";
@@ -331,7 +349,7 @@ function CustomBangsSection({
       .replace(STRIP_BANG_PREFIX_RE, "")
       .toLowerCase();
     const trimmedSearch = searchUrl.trim();
-    const trimmedBase = baseUrl.trim();
+    const trimmedBase = baseUrl.trim() || deriveBaseDomain(trimmedSearch);
     if (!(trimmedName && trimmedSearch && trimmedBase && cleanShortcut)) {
       return;
     }
@@ -382,6 +400,14 @@ function CustomBangsSection({
         <input
           aria-label="Bang search URL"
           className={formInputCls}
+          onBlur={() => {
+            if (!baseUrl.trim()) {
+              const derived = deriveBaseDomain(searchUrl);
+              if (derived) {
+                setBaseUrl(derived);
+              }
+            }
+          }}
           onChange={(e) => setSearchUrl(e.target.value)}
           placeholder="Search URL with {{{s}}}"
           type="text"
@@ -391,7 +417,7 @@ function CustomBangsSection({
           aria-label="Bang base domain"
           className={formInputCls}
           onChange={(e) => setBaseUrl(e.target.value)}
-          placeholder="Base domain"
+          placeholder="Base domain (auto-detected)"
           type="text"
           value={baseUrl}
         />
@@ -491,7 +517,7 @@ function EditBangPopup({
       .replace(STRIP_BANG_PREFIX_RE, "")
       .toLowerCase();
     const trimmedSearch = searchUrl.trim();
-    const trimmedBase = baseUrl.trim();
+    const trimmedBase = baseUrl.trim() || deriveBaseDomain(trimmedSearch);
     if (!(trimmedName && trimmedSearch && trimmedBase && cleanShortcut)) {
       setError("All fields required");
       return;
@@ -552,6 +578,14 @@ function EditBangPopup({
           <input
             aria-label="Bang search URL"
             className={formInputCls}
+            onBlur={() => {
+              if (!baseUrl.trim()) {
+                const derived = deriveBaseDomain(searchUrl);
+                if (derived) {
+                  setBaseUrl(derived);
+                }
+              }
+            }}
             onChange={(e) => setSearchUrl(e.target.value)}
             placeholder="Search URL with {{{s}}}"
             type="text"
@@ -561,7 +595,7 @@ function EditBangPopup({
             aria-label="Bang base domain"
             className={formInputCls}
             onChange={(e) => setBaseUrl(e.target.value)}
-            placeholder="Base domain"
+            placeholder="Base domain (auto-detected)"
             type="text"
             value={baseUrl}
           />

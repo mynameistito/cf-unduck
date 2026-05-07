@@ -42,3 +42,15 @@ export function useLocalStorageString(
     (v) => v
   );
 }
+
+export function useLocalStorageBool(
+  key: string,
+  initial: boolean
+): [boolean, (value: boolean) => void] {
+  return useLocalStorage<boolean>(
+    key,
+    initial,
+    (raw) => raw === "true",
+    (v) => (v ? "true" : "false")
+  );
+}

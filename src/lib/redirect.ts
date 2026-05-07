@@ -1,7 +1,7 @@
 import type { Bang, BangMap } from "./types";
 
 const BANG_MATCH_RE = /^!(\S+)|!(\S+)$/i;
-const BANG_STRIP_RE = /!\S+\s*|^(\S+!|!\S+)$/i;
+export const BANG_STRIP_RE = /!\S+\s*|^(\S+!|!\S+)$/i;
 const KAGI_SITE_BANG_RE = /^\/search\?q=\{\{\{s\}\}\}\+site:/;
 const KAGI_SITE_EXTRACT_RE = /\+site:([^\s&]+)/;
 const TRAILING_SLASH_RE = /\/$/;

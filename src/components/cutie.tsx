@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { CUTIES } from "@/lib/constants";
 
 const MIN_DELTA = 100;
@@ -8,12 +7,11 @@ function pick<T>(arr: readonly T[]): T {
   return arr[Math.floor(Math.random() * arr.length)] as T;
 }
 
-export function Cutie() {
-  const reduced = usePrefersReducedMotion();
+export function Cutie({ reducedMotion }: { reducedMotion: boolean }) {
   const [face, setFace] = useState<string>(CUTIES.IDLE);
 
   useEffect(() => {
-    if (reduced) {
+    if (reducedMotion) {
       return;
     }
     const handler = (e: MouseEvent) => {
@@ -27,7 +25,7 @@ export function Cutie() {
     };
     document.addEventListener("click", handler);
     return () => document.removeEventListener("click", handler);
-  }, [reduced]);
+  }, [reducedMotion]);
 
   return <h1 id="cutie">{face}</h1>;
 }

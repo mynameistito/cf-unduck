@@ -4,7 +4,8 @@ import type { SearchHistoryEntry } from "./types";
 
 export function getSearchHistory(): SearchHistoryEntry[] {
   try {
-    return JSON.parse(storage.get(LS_KEYS.SEARCH_HISTORY) ?? "[]");
+    const raw = JSON.parse(storage.get(LS_KEYS.SEARCH_HISTORY) ?? "[]");
+    return Array.isArray(raw) ? (raw as SearchHistoryEntry[]) : [];
   } catch {
     return [];
   }
@@ -27,18 +28,4 @@ export function addToSearchHistory(
 
 export function clearSearchHistory(): void {
   storage.set(LS_KEYS.SEARCH_HISTORY, "[]");
-}
-
-export function getCustomBangs(): Record<
-  string,
-  { d: string; ad?: string; s: string; u: string }
-> {
-  try {
-    const raw = JSON.parse(storage.get(LS_KEYS.CUSTOM_BANGS) ?? "{}");
-    return Object.fromEntries(
-      Object.entries(raw).map(([k, v]) => [k.toLowerCase(), v])
-    ) as Record<string, { d: string; ad?: string; s: string; u: string }>;
-  } catch {
-    return {};
-  }
 }

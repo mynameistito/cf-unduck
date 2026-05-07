@@ -13,10 +13,4 @@ export const storage = {
     }
     localStorage.setItem(key, value);
   },
-  remove: (key: string): void => {
-    if (!isBrowser) {
-      return;
-    }
-    localStorage.removeItem(key);
-  },
 };

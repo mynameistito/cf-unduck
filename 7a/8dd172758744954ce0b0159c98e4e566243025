@@ -1,0 +1,23 @@
+src/lib/storage.ts
+  s_31f5201bbcb00d::t_09b40c2570f4cd 3-23,36-47
+src/hooks/use-local-storage.ts
+  s_31f5201bbcb00d::t_296ef766fca43b 1,10,12-17,19-23,26,28,31-37,56,66
+src/components/settings-modal.tsx
+  s_31f5201bbcb00d::t_e57c745e92ce18 482,495
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "7a8dd172758744954ce0b0159c98e4e566243025",
+  "prompts": {},
+  "sessions": {
+    "s_31f5201bbcb00d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7047f393-cd96-48f6-80fe-262cb857346f",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Tito <github@mynameistito.com>"
+    }
+  }
+}

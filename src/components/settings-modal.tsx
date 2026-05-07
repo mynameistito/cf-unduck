@@ -65,6 +65,10 @@ export function SettingsModal({ open, onClose, audio, reducedMotion }: Props) {
     LS_KEYS.HISTORY_ENABLED,
     "false"
   );
+  const [soundEnabled, setSoundEnabled] = useLocalStorageString(
+    LS_KEYS.SOUND_ENABLED,
+    "true"
+  );
   const [customBangs, setCustomBangs] = useLocalStorage<BangMap>(
     LS_KEYS.CUSTOM_BANGS,
     {}
@@ -155,6 +159,14 @@ export function SettingsModal({ open, onClose, audio, reducedMotion }: Props) {
           customBangs={customBangs}
           onChange={setCustomBangs}
           reducedMotion={reducedMotion}
+        />
+
+        <SoundSection
+          enabled={soundEnabled !== "false"}
+          onToggle={(checked) => {
+            setSoundEnabled(checked ? "true" : "false");
+            audio.play(checked ? "toggleOn" : "toggleOff", { force: true });
+          }}
         />
 
         <HistorySection
@@ -630,6 +642,33 @@ function EditBangPopup({
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function SoundSection({
+  enabled,
+  onToggle,
+}: {
+  enabled: boolean;
+  onToggle: (checked: boolean) => void;
+}) {
+  return (
+    <div className={sectionCls}>
+      <h3 className={sectionHeadingCls}>Sound</h3>
+      <label
+        className="flex cursor-pointer items-center justify-between gap-2.5 text-fg"
+        htmlFor="sound-toggle"
+      >
+        <span>Enable sounds</span>
+        <input
+          checked={enabled}
+          className="toggle"
+          id="sound-toggle"
+          onChange={(e) => onToggle(e.target.checked)}
+          type="checkbox"
+        />
+      </label>
     </div>
   );
 }

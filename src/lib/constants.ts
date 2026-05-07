@@ -7,6 +7,7 @@ export const LS_KEYS = {
   HISTORY_ENABLED: "history-enabled",
   DEFAULT_BANG: "default-bang",
   CUSTOM_BANGS: "custom-bangs",
+  SOUND_ENABLED: "sound-enabled",
 } as const;
 
 export const CUTIES = {

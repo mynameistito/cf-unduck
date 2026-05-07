@@ -1,0 +1,22 @@
+src/styles/global.css
+  s_dc52a091061c04::t_c2ef63ad38aaf9 92,100,104-105,109
+src/components/settings-modal.tsx
+  s_dc52a091061c04::t_5840c5495bd9e6 721
+  s_dc52a091061c04::t_c70c695fbe433f 748-750
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "61a1c2f687fec1ab31a3789fe59562c7d19ee05c",
+  "prompts": {},
+  "sessions": {
+    "s_dc52a091061c04": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5e5b8911-bcb2-49ac-b491-dbcaf9f5cb18",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Tito <github@mynameistito.com>"
+    }
+  }
+}

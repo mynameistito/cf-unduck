@@ -1,0 +1,30 @@
+src/lib/constants.ts
+  s_481aee01123b9f::t_38858fa90917a4 10
+src/components/settings-modal.tsx
+  s_481aee01123b9f::t_7b39a70a3cd0be 649-675
+  s_481aee01123b9f::t_e7f016e700ae5e 164-171
+  s_481aee01123b9f::t_a2c6828247432c 68-71
+src/components/landing.tsx
+  s_481aee01123b9f::t_b4dd5e1bf270aa 17-18
+  s_481aee01123b9f::t_45e2fdefba0634 87,89
+src/styles/global.css
+  s_481aee01123b9f::t_502b5c04db312c 91-111
+src/hooks/use-audio.ts
+  s_481aee01123b9f::t_662c79a3d50b4e 16-19,25-26,29,39,42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "989c3275c69bc030924d03b6aacc3ce5d19ece48",
+  "prompts": {},
+  "sessions": {
+    "s_481aee01123b9f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "91998702-c492-483f-8212-641aa56f1e24",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Tito <github@mynameistito.com>"
+    }
+  }
+}

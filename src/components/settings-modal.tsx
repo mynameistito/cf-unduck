@@ -282,7 +282,6 @@ export function SettingsModal({ open, onClose, audio, reducedMotion }: Props) {
           audio={audio}
           customBangs={customBangs}
           onChange={setCustomBangs}
-          reducedMotion={reducedMotion}
         />
 
         <SoundSection
@@ -456,12 +455,10 @@ function CustomBangsSection({
   audio,
   customBangs,
   onChange,
-  reducedMotion,
 }: {
   audio: AudioController;
   customBangs: BangMap;
   onChange: (next: BangMap) => void;
-  reducedMotion: boolean;
 }) {
   const [fields, setFields] = useState<BangFormFields>(EMPTY_FIELDS);
   const [addError, setAddError] = useState<string | null>(null);
@@ -470,14 +467,6 @@ function CustomBangsSection({
   const updateFields = (next: BangFormFields) => {
     setAddError(null);
     setFields(next);
-  };
-
-  const reload = () => {
-    if (reducedMotion) {
-      window.location.reload();
-    } else {
-      setTimeout(() => window.location.reload(), ANIMATION_DURATION_MS);
-    }
   };
 
   const add = () => {
@@ -490,21 +479,20 @@ function CustomBangsSection({
     setAddError(null);
     audio.play("click", { rate: 2, from: 0.1 });
     onChange({ ...customBangs, [cleaned.shortcut]: cleaned.bang });
-    reload();
+    setFields(EMPTY_FIELDS);
   };
 
   const remove = (key: string) => {
     audio.play("warning");
     const { [key]: _removed, ...rest } = customBangs;
     onChange(rest);
-    reload();
   };
 
   const saveEdit = (originalKey: string, next: { key: string; bang: Bang }) => {
     audio.play("click", { rate: 2, from: 0.1 });
     const { [originalKey]: _removed, ...rest } = customBangs;
     onChange({ ...rest, [next.key]: next.bang });
-    reload();
+    setEditingKey(null);
   };
 
   return (

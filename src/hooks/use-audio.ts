@@ -13,15 +13,20 @@ export type AudioName = keyof typeof SOURCES;
 
 export interface AudioController {
   pause: (name: AudioName) => void;
-  play: (name: AudioName, opts?: { rate?: number; from?: number }) => void;
+  play: (
+    name: AudioName,
+    opts?: { rate?: number; from?: number; force?: boolean }
+  ) => void;
   reset: (name: AudioName) => void;
 }
 
 export function useAudio(enabled: boolean): AudioController {
   const ref = useRef<Partial<Record<AudioName, HTMLAudioElement>>>({});
+  const enabledRef = useRef(enabled);
+  enabledRef.current = enabled;
 
   useEffect(() => {
-    if (!enabled) {
+    if (Object.keys(ref.current).length > 0) {
       return;
     }
     const elements: Partial<Record<AudioName, HTMLAudioElement>> = {};
@@ -31,10 +36,10 @@ export function useAudio(enabled: boolean): AudioController {
       elements[key] = a;
     }
     ref.current = elements;
-  }, [enabled]);
+  }, []);
 
   const play: AudioController["play"] = (name, opts) => {
-    if (!enabled) {
+    if (!(enabledRef.current || opts?.force)) {
       return;
     }
     const a = ref.current[name];

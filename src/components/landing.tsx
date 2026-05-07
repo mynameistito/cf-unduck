@@ -14,7 +14,8 @@ const SettingsModal = lazy(() =>
 
 export function Landing() {
   const reducedMotion = usePrefersReducedMotion();
-  const audio = useAudio(!reducedMotion);
+  const [soundEnabled] = useLocalStorageString(LS_KEYS.SOUND_ENABLED, "true");
+  const audio = useAudio(!reducedMotion && soundEnabled !== "false");
   const [searchCount] = useLocalStorageString(LS_KEYS.SEARCH_COUNT, "0");
   const [historyEnabled] = useLocalStorageString(
     LS_KEYS.HISTORY_ENABLED,
@@ -83,8 +84,9 @@ export function Landing() {
           <>
             <h2 style={{ marginTop: 24 }}>Recent Searches</h2>
             <div
+              className="history-scroll"
               style={{
-                maxHeight: 200,
+                maxHeight: 300,
                 overflowY: "auto",
                 textAlign: "left",
               }}

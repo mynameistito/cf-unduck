@@ -65,6 +65,10 @@ export function SettingsModal({ open, onClose, audio, reducedMotion }: Props) {
     LS_KEYS.HISTORY_ENABLED,
     "false"
   );
+  const [soundEnabled, setSoundEnabled] = useLocalStorageString(
+    LS_KEYS.SOUND_ENABLED,
+    "true"
+  );
   const [customBangs, setCustomBangs] = useLocalStorage<BangMap>(
     LS_KEYS.CUSTOM_BANGS,
     {}
@@ -155,6 +159,14 @@ export function SettingsModal({ open, onClose, audio, reducedMotion }: Props) {
           customBangs={customBangs}
           onChange={setCustomBangs}
           reducedMotion={reducedMotion}
+        />
+
+        <SoundSection
+          enabled={soundEnabled !== "false"}
+          onToggle={(checked) => {
+            setSoundEnabled(checked ? "true" : "false");
+            audio.play(checked ? "toggleOn" : "toggleOff", { force: true });
+          }}
         />
 
         <HistorySection
@@ -634,6 +646,33 @@ function EditBangPopup({
   );
 }
 
+function SoundSection({
+  enabled,
+  onToggle,
+}: {
+  enabled: boolean;
+  onToggle: (checked: boolean) => void;
+}) {
+  return (
+    <div className={sectionCls}>
+      <h3 className={sectionHeadingCls}>Sound</h3>
+      <label
+        className="flex cursor-pointer items-center justify-between gap-2.5 text-fg"
+        htmlFor="sound-toggle"
+      >
+        <span>Enable sounds</span>
+        <input
+          checked={enabled}
+          className="toggle"
+          id="sound-toggle"
+          onChange={(e) => onToggle(e.target.checked)}
+          type="checkbox"
+        />
+      </label>
+    </div>
+  );
+}
+
 function HistorySection({
   enabled,
   historyCount,
@@ -679,6 +718,7 @@ function ImportExportSection() {
       defaultBang: localStorage.getItem(LS_KEYS.DEFAULT_BANG),
       customBangs: localStorage.getItem(LS_KEYS.CUSTOM_BANGS),
       historyEnabled: localStorage.getItem(LS_KEYS.HISTORY_ENABLED),
+      soundEnabled: localStorage.getItem(LS_KEYS.SOUND_ENABLED),
       exportDate: new Date().toISOString(),
     };
     const blob = new Blob([JSON.stringify(settingsData, null, 2)], {
@@ -704,6 +744,9 @@ function ImportExportSection() {
       }
       if (data.historyEnabled !== undefined) {
         localStorage.setItem(LS_KEYS.HISTORY_ENABLED, data.historyEnabled);
+      }
+      if (data.soundEnabled !== undefined && data.soundEnabled !== null) {
+        localStorage.setItem(LS_KEYS.SOUND_ENABLED, data.soundEnabled);
       }
       window.location.reload();
     } catch (err) {

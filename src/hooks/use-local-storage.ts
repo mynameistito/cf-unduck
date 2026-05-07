@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useRef, useSyncExternalStore } from "react";
 import { storage } from "@/lib/storage";
 
 export function useLocalStorage<T>(
@@ -7,22 +7,37 @@ export function useLocalStorage<T>(
   parse: (raw: string) => T = (raw) => JSON.parse(raw) as T,
   serialize: (value: T) => string = (value) => JSON.stringify(value)
 ): [T, (value: T) => void] {
-  const [value, setValue] = useState<T>(initial);
+  const cacheRef = useRef<{ raw: string | null; value: T } | null>(null);
 
-  useEffect(() => {
+  const subscribe = useCallback(
+    (listener: () => void) => storage.subscribe(key, listener),
+    [key]
+  );
+
+  const getSnapshot = useCallback((): T => {
     const raw = storage.get(key);
+    const cached = cacheRef.current;
+    if (cached && cached.raw === raw) {
+      return cached.value;
+    }
+    let value: T = initial;
     if (raw !== null) {
       try {
-        setValue(parse(raw));
+        value = parse(raw);
       } catch {
-        /* swallow corrupt entry */
+        value = initial;
       }
     }
-  }, [key, parse]);
+    cacheRef.current = { raw, value };
+    return value;
+  }, [key, initial, parse]);
+
+  const getServerSnapshot = useCallback((): T => initial, [initial]);
+
+  const value = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   const update = useCallback(
     (next: T) => {
-      setValue(next);
       storage.set(key, serialize(next));
     },
     [key, serialize]
@@ -38,9 +53,7 @@ export function useLocalStorageString(
   key: string,
   initial: string
 ): [string, (value: string) => void] {
-  const parse = useCallback(stringParse, []);
-  const serialize = useCallback(stringSerialize, []);
-  return useLocalStorage<string>(key, initial, parse, serialize);
+  return useLocalStorage<string>(key, initial, stringParse, stringSerialize);
 }
 
 const boolParse = (raw: string) => raw === "true";
@@ -50,7 +63,5 @@ export function useLocalStorageBool(
   key: string,
   initial: boolean
 ): [boolean, (value: boolean) => void] {
-  const parse = useCallback(boolParse, []);
-  const serialize = useCallback(boolSerialize, []);
-  return useLocalStorage<boolean>(key, initial, parse, serialize);
+  return useLocalStorage<boolean>(key, initial, boolParse, boolSerialize);
 }

@@ -1,8 +1,10 @@
 import { LS_KEYS } from "./constants";
+import { readCustomBangs } from "./custom-bangs";
 import type { BangMap } from "./types";
 
 export const PREFS_COOKIE = "udprefs";
 const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365;
+const MAX_COOKIE_BYTES = 4000;
 
 export interface Prefs {
   c?: BangMap;
@@ -36,30 +38,25 @@ export function syncPrefsCookie(): void {
     return;
   }
   const d = localStorage.getItem(LS_KEYS.DEFAULT_BANG) ?? undefined;
-  let c: BangMap | undefined;
-  try {
-    const raw = localStorage.getItem(LS_KEYS.CUSTOM_BANGS);
-    if (raw) {
-      const parsed = JSON.parse(raw) as BangMap;
-      const lowered: BangMap = {};
-      for (const [k, v] of Object.entries(parsed)) {
-        lowered[k.toLowerCase()] = v;
-      }
-      if (Object.keys(lowered).length > 0) {
-        c = lowered;
-      }
-    }
-  } catch {
-    /* ignore */
-  }
+  const customBangs = readCustomBangs();
   const payload: Prefs = {};
   if (d) {
     payload.d = d;
   }
-  if (c) {
-    payload.c = c;
+  if (Object.keys(customBangs).length > 0) {
+    payload.c = customBangs;
   }
-  const value = encodeURIComponent(JSON.stringify(payload));
+  let value = encodeURIComponent(JSON.stringify(payload));
+  if (value.length > MAX_COOKIE_BYTES) {
+    const fallback: Prefs = {};
+    if (d) {
+      fallback.d = d;
+    }
+    value = encodeURIComponent(JSON.stringify(fallback));
+    if (value.length > MAX_COOKIE_BYTES) {
+      value = encodeURIComponent(JSON.stringify({}));
+    }
+  }
   // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API not available in all browsers; this cookie is read by the edge Worker
   document.cookie = `${PREFS_COOKIE}=${value}; path=/; max-age=${ONE_YEAR_SECONDS}; SameSite=Lax`;
 }

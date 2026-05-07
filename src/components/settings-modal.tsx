@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { AudioController } from "@/hooks/use-audio";
 import {
   useLocalStorage,
+  useLocalStorageBool,
   useLocalStorageString,
 } from "@/hooks/use-local-storage";
 import { bangs } from "@/lib/bangs/hashbang";
@@ -55,19 +56,142 @@ const secondaryBtnCls =
   "rounded-md border border-border bg-bg-muted px-3 py-1.5 text-sm font-medium text-fg transition hover:bg-bg-hover active:scale-[0.97]";
 const dangerBtnCls =
   "rounded-md bg-danger px-3 py-1.5 text-sm font-medium text-white transition hover:brightness-110 active:scale-[0.97]";
+const formInputCls = `${inputCls} bg-bg`;
+
+interface BangFormFields {
+  baseUrl: string;
+  name: string;
+  searchUrl: string;
+  shortcut: string;
+}
+
+const FIELD_LABEL_CLS = "text-fg-muted text-xs";
+
+function BangForm({
+  fields,
+  onChange,
+  firstFieldRef,
+  idPrefix,
+}: {
+  fields: BangFormFields;
+  onChange: (next: BangFormFields) => void;
+  firstFieldRef?: React.Ref<HTMLInputElement>;
+  idPrefix: string;
+}) {
+  const set = <K extends keyof BangFormFields>(
+    key: K,
+    value: BangFormFields[K]
+  ) => onChange({ ...fields, [key]: value });
+
+  const nameId = `${idPrefix}-name`;
+  const shortcutId = `${idPrefix}-shortcut`;
+  const searchUrlId = `${idPrefix}-search-url`;
+  const baseUrlId = `${idPrefix}-base-url`;
+
+  return (
+    <>
+      <label className={FIELD_LABEL_CLS} htmlFor={nameId}>
+        Name
+      </label>
+      <input
+        aria-label="Bang name"
+        className={formInputCls}
+        id={nameId}
+        onChange={(e) => set("name", e.target.value)}
+        placeholder="Bang name"
+        ref={firstFieldRef}
+        type="text"
+        value={fields.name}
+      />
+      <label className={FIELD_LABEL_CLS} htmlFor={shortcutId}>
+        Shortcut
+      </label>
+      <input
+        aria-label="Bang shortcut"
+        className={formInputCls}
+        id={shortcutId}
+        onChange={(e) => set("shortcut", e.target.value)}
+        placeholder="Shortcut (e.g. !ddg)"
+        type="text"
+        value={fields.shortcut}
+      />
+      <label className={FIELD_LABEL_CLS} htmlFor={searchUrlId}>
+        Search URL
+      </label>
+      <input
+        aria-label="Bang search URL"
+        className={formInputCls}
+        id={searchUrlId}
+        onBlur={() => {
+          if (!fields.baseUrl.trim()) {
+            const derived = deriveBaseDomain(fields.searchUrl);
+            if (derived) {
+              set("baseUrl", derived);
+            }
+          }
+        }}
+        onChange={(e) => set("searchUrl", e.target.value)}
+        placeholder="Search URL with {{{s}}}"
+        type="text"
+        value={fields.searchUrl}
+      />
+      <label className={FIELD_LABEL_CLS} htmlFor={baseUrlId}>
+        Base domain
+      </label>
+      <input
+        aria-label="Bang base domain"
+        className={formInputCls}
+        id={baseUrlId}
+        onChange={(e) => set("baseUrl", e.target.value)}
+        placeholder="Base domain (auto-detected)"
+        type="text"
+        value={fields.baseUrl}
+      />
+    </>
+  );
+}
+
+const ALL_FIELDS_REQUIRED = "All fields required";
+
+function cleanBangFields(fields: BangFormFields): {
+  shortcut: string;
+  bang: Bang;
+} | null {
+  const trimmedName = fields.name.trim();
+  const cleanShortcut = fields.shortcut
+    .trim()
+    .replace(STRIP_BANG_PREFIX_RE, "")
+    .toLowerCase();
+  const trimmedSearch = fields.searchUrl.trim();
+  const trimmedBase = fields.baseUrl.trim() || deriveBaseDomain(trimmedSearch);
+  if (!(trimmedName && trimmedSearch && trimmedBase && cleanShortcut)) {
+    return null;
+  }
+  return {
+    shortcut: cleanShortcut,
+    bang: { s: trimmedName, u: trimmedSearch, d: trimmedBase },
+  };
+}
+
+const EMPTY_FIELDS: BangFormFields = {
+  name: "",
+  shortcut: "",
+  searchUrl: "",
+  baseUrl: "",
+};
 
 export function SettingsModal({ open, onClose, audio, reducedMotion }: Props) {
   const [defaultBang, setDefaultBang] = useLocalStorageString(
     LS_KEYS.DEFAULT_BANG,
     DEFAULT_BANG_SHORTCUT
   );
-  const [historyEnabled, setHistoryEnabled] = useLocalStorageString(
+  const [historyEnabled, setHistoryEnabled] = useLocalStorageBool(
     LS_KEYS.HISTORY_ENABLED,
-    "false"
+    false
   );
-  const [soundEnabled, setSoundEnabled] = useLocalStorageString(
+  const [soundEnabled, setSoundEnabled] = useLocalStorageBool(
     LS_KEYS.SOUND_ENABLED,
-    "true"
+    true
   );
   const [customBangs, setCustomBangs] = useLocalStorage<BangMap>(
     LS_KEYS.CUSTOM_BANGS,
@@ -90,7 +214,7 @@ export function SettingsModal({ open, onClose, audio, reducedMotion }: Props) {
     if (!found) {
       setBangError(true);
       audio.play("warning");
-      setTimeout(() => setBangError(false), 300);
+      setTimeout(() => setBangError(false), ANIMATION_DURATION_MS);
       return;
     }
     setDefaultBang(shortcut);
@@ -162,16 +286,15 @@ export function SettingsModal({ open, onClose, audio, reducedMotion }: Props) {
         />
 
         <SoundSection
-          enabled={soundEnabled !== "false"}
+          enabled={soundEnabled}
           onToggle={(checked) => {
-            setSoundEnabled(checked ? "true" : "false");
+            setSoundEnabled(checked);
             audio.play(checked ? "toggleOn" : "toggleOff", { force: true });
           }}
         />
 
         <HistorySection
-          audio={audio}
-          enabled={historyEnabled === "true"}
+          enabled={historyEnabled}
           historyCount={history.length}
           onClear={() => {
             audio.play("warning");
@@ -183,7 +306,7 @@ export function SettingsModal({ open, onClose, audio, reducedMotion }: Props) {
             }
           }}
           onToggle={(checked) => {
-            setHistoryEnabled(checked.toString());
+            setHistoryEnabled(checked);
             audio.play(checked ? "toggleOn" : "toggleOff");
           }}
         />
@@ -340,11 +463,14 @@ function CustomBangsSection({
   onChange: (next: BangMap) => void;
   reducedMotion: boolean;
 }) {
-  const [name, setName] = useState("");
-  const [shortcut, setShortcut] = useState("");
-  const [searchUrl, setSearchUrl] = useState("");
-  const [baseUrl, setBaseUrl] = useState("");
+  const [fields, setFields] = useState<BangFormFields>(EMPTY_FIELDS);
+  const [addError, setAddError] = useState<string | null>(null);
   const [editingKey, setEditingKey] = useState<string | null>(null);
+
+  const updateFields = (next: BangFormFields) => {
+    setAddError(null);
+    setFields(next);
+  };
 
   const reload = () => {
     if (reducedMotion) {
@@ -355,21 +481,15 @@ function CustomBangsSection({
   };
 
   const add = () => {
-    const trimmedName = name.trim();
-    const cleanShortcut = shortcut
-      .trim()
-      .replace(STRIP_BANG_PREFIX_RE, "")
-      .toLowerCase();
-    const trimmedSearch = searchUrl.trim();
-    const trimmedBase = baseUrl.trim() || deriveBaseDomain(trimmedSearch);
-    if (!(trimmedName && trimmedSearch && trimmedBase && cleanShortcut)) {
+    const cleaned = cleanBangFields(fields);
+    if (!cleaned) {
+      setAddError(ALL_FIELDS_REQUIRED);
+      audio.play("warning");
       return;
     }
+    setAddError(null);
     audio.play("click", { rate: 2, from: 0.1 });
-    onChange({
-      ...customBangs,
-      [cleanShortcut]: { s: trimmedName, u: trimmedSearch, d: trimmedBase },
-    });
+    onChange({ ...customBangs, [cleaned.shortcut]: cleaned.bang });
     reload();
   };
 
@@ -387,52 +507,16 @@ function CustomBangsSection({
     reload();
   };
 
-  const formInputCls = `${inputCls} bg-bg`;
-
   return (
     <div className={sectionCls}>
       <h3 className={sectionHeadingCls}>Add Custom Bang</h3>
       <div className="flex flex-col gap-1.5 rounded-md border border-border bg-bg-muted p-2">
-        <input
-          aria-label="Bang name"
-          className={formInputCls}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Bang name"
-          type="text"
-          value={name}
-        />
-        <input
-          aria-label="Bang shortcut"
-          className={formInputCls}
-          onChange={(e) => setShortcut(e.target.value)}
-          placeholder="Shortcut (e.g. !ddg)"
-          type="text"
-          value={shortcut}
-        />
-        <input
-          aria-label="Bang search URL"
-          className={formInputCls}
-          onBlur={() => {
-            if (!baseUrl.trim()) {
-              const derived = deriveBaseDomain(searchUrl);
-              if (derived) {
-                setBaseUrl(derived);
-              }
-            }
-          }}
-          onChange={(e) => setSearchUrl(e.target.value)}
-          placeholder="Search URL with {{{s}}}"
-          type="text"
-          value={searchUrl}
-        />
-        <input
-          aria-label="Bang base domain"
-          className={formInputCls}
-          onChange={(e) => setBaseUrl(e.target.value)}
-          placeholder="Base domain (auto-detected)"
-          type="text"
-          value={baseUrl}
-        />
+        <BangForm fields={fields} idPrefix="add-bang" onChange={updateFields} />
+        {addError ? (
+          <p className="text-danger text-sm" role="alert">
+            {addError}
+          </p>
+        ) : null}
         <div className="flex justify-end">
           <button className={primaryBtnCls} onClick={add} type="button">
             Add Bang
@@ -505,10 +589,12 @@ function EditBangPopup({
   onSave: (next: { key: string; bang: Bang }) => void;
   onCancel: () => void;
 }) {
-  const [name, setName] = useState(bang.s);
-  const [shortcutInput, setShortcutInput] = useState(shortcut);
-  const [searchUrl, setSearchUrl] = useState(bang.u);
-  const [baseUrl, setBaseUrl] = useState(bang.d);
+  const [fields, setFields] = useState<BangFormFields>({
+    name: bang.s,
+    shortcut,
+    searchUrl: bang.u,
+    baseUrl: bang.d,
+  });
   const [error, setError] = useState<string | null>(null);
   const firstFieldRef = useRef<HTMLInputElement>(null);
   const titleId = "edit-bang-title";
@@ -530,28 +616,20 @@ function EditBangPopup({
   }, []);
 
   const submit = () => {
-    const trimmedName = name.trim();
-    const cleanShortcut = shortcutInput
-      .trim()
-      .replace(STRIP_BANG_PREFIX_RE, "")
-      .toLowerCase();
-    const trimmedSearch = searchUrl.trim();
-    const trimmedBase = baseUrl.trim() || deriveBaseDomain(trimmedSearch);
-    if (!(trimmedName && trimmedSearch && trimmedBase && cleanShortcut)) {
-      setError("All fields required");
+    const cleaned = cleanBangFields(fields);
+    if (!cleaned) {
+      setError(ALL_FIELDS_REQUIRED);
       return;
     }
-    if (cleanShortcut !== shortcut && existingKeys.includes(cleanShortcut)) {
+    if (
+      cleaned.shortcut !== shortcut &&
+      existingKeys.includes(cleaned.shortcut)
+    ) {
       setError("Shortcut already exists");
       return;
     }
-    onSave({
-      key: cleanShortcut,
-      bang: { s: trimmedName, u: trimmedSearch, d: trimmedBase },
-    });
+    onSave({ key: cleaned.shortcut, bang: cleaned.bang });
   };
-
-  const formInputCls = `${inputCls} bg-bg`;
 
   return (
     <div
@@ -582,46 +660,14 @@ function EditBangPopup({
           Edit Custom Bang
         </h3>
         <div className="flex flex-col gap-1.5">
-          <input
-            aria-label="Bang name"
-            className={formInputCls}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Bang name"
-            ref={firstFieldRef}
-            type="text"
-            value={name}
-          />
-          <input
-            aria-label="Bang shortcut"
-            className={formInputCls}
-            onChange={(e) => setShortcutInput(e.target.value)}
-            placeholder="Shortcut (e.g. !ddg)"
-            type="text"
-            value={shortcutInput}
-          />
-          <input
-            aria-label="Bang search URL"
-            className={formInputCls}
-            onBlur={() => {
-              if (!baseUrl.trim()) {
-                const derived = deriveBaseDomain(searchUrl);
-                if (derived) {
-                  setBaseUrl(derived);
-                }
-              }
+          <BangForm
+            fields={fields}
+            firstFieldRef={firstFieldRef}
+            idPrefix="edit-bang"
+            onChange={(next) => {
+              setError(null);
+              setFields(next);
             }}
-            onChange={(e) => setSearchUrl(e.target.value)}
-            placeholder="Search URL with {{{s}}}"
-            type="text"
-            value={searchUrl}
-          />
-          <input
-            aria-label="Bang base domain"
-            className={formInputCls}
-            onChange={(e) => setBaseUrl(e.target.value)}
-            placeholder="Base domain (auto-detected)"
-            type="text"
-            value={baseUrl}
           />
           {error ? (
             <p className="text-danger text-sm" role="alert">
@@ -679,7 +725,6 @@ function HistorySection({
   onToggle,
   onClear,
 }: {
-  audio: AudioController;
   enabled: boolean;
   historyCount: number;
   onToggle: (checked: boolean) => void;
@@ -710,8 +755,67 @@ function HistorySection({
   );
 }
 
+function isBoolString(v: unknown): v is "true" | "false" {
+  return v === "true" || v === "false";
+}
+
+function isMissing(v: unknown): boolean {
+  return v === undefined || v === null;
+}
+
+function validateImport(d: Record<string, unknown>): string | null {
+  if (!isMissing(d.defaultBang) && typeof d.defaultBang !== "string") {
+    return "Invalid defaultBang";
+  }
+  if (!isMissing(d.customBangs) && typeof d.customBangs !== "string") {
+    return "Invalid customBangs";
+  }
+  if (typeof d.customBangs === "string" && d.customBangs) {
+    try {
+      const parsed = JSON.parse(d.customBangs) as unknown;
+      if (!parsed || typeof parsed !== "object") {
+        return "Invalid customBangs shape";
+      }
+    } catch {
+      return "Invalid customBangs JSON";
+    }
+  }
+  if (!(isMissing(d.historyEnabled) || isBoolString(d.historyEnabled))) {
+    return "Invalid historyEnabled";
+  }
+  if (!(isMissing(d.soundEnabled) || isBoolString(d.soundEnabled))) {
+    return "Invalid soundEnabled";
+  }
+  return null;
+}
+
+function applyImport(data: unknown): string | null {
+  if (!data || typeof data !== "object") {
+    return "Invalid file";
+  }
+  const d = data as Record<string, unknown>;
+  const err = validateImport(d);
+  if (err) {
+    return err;
+  }
+  if (typeof d.defaultBang === "string") {
+    localStorage.setItem(LS_KEYS.DEFAULT_BANG, d.defaultBang);
+  }
+  if (typeof d.customBangs === "string") {
+    localStorage.setItem(LS_KEYS.CUSTOM_BANGS, d.customBangs);
+  }
+  if (isBoolString(d.historyEnabled)) {
+    localStorage.setItem(LS_KEYS.HISTORY_ENABLED, d.historyEnabled);
+  }
+  if (isBoolString(d.soundEnabled)) {
+    localStorage.setItem(LS_KEYS.SOUND_ENABLED, d.soundEnabled);
+  }
+  return null;
+}
+
 function ImportExportSection() {
   const fileRef = useRef<HTMLInputElement>(null);
+  const [importError, setImportError] = useState<string | null>(null);
 
   const onExport = () => {
     const settingsData = {
@@ -733,25 +837,19 @@ function ImportExportSection() {
   };
 
   const onImport = async (file: File) => {
+    let data: unknown;
     try {
-      const text = await file.text();
-      const data = JSON.parse(text);
-      if (data.defaultBang) {
-        localStorage.setItem(LS_KEYS.DEFAULT_BANG, data.defaultBang);
-      }
-      if (data.customBangs) {
-        localStorage.setItem(LS_KEYS.CUSTOM_BANGS, data.customBangs);
-      }
-      if (data.historyEnabled !== undefined) {
-        localStorage.setItem(LS_KEYS.HISTORY_ENABLED, data.historyEnabled);
-      }
-      if (data.soundEnabled !== undefined && data.soundEnabled !== null) {
-        localStorage.setItem(LS_KEYS.SOUND_ENABLED, data.soundEnabled);
-      }
-      window.location.reload();
-    } catch (err) {
-      console.error("import failed", err);
+      data = JSON.parse(await file.text());
+    } catch {
+      setImportError("Invalid JSON");
+      return;
     }
+    const err = applyImport(data);
+    if (err) {
+      setImportError(err);
+      return;
+    }
+    window.location.reload();
   };
 
   return (
@@ -775,15 +873,19 @@ function ImportExportSection() {
           onChange={(e) => {
             const f = e.target.files?.[0];
             if (f) {
-              onImport(f).catch((err: unknown) => {
-                console.error("import failed", err);
-              });
+              setImportError(null);
+              onImport(f).catch(() => setImportError("Import failed"));
             }
           }}
           ref={fileRef}
           type="file"
         />
       </div>
+      {importError ? (
+        <p className="mt-2 text-danger text-sm" role="alert">
+          {importError}
+        </p>
+      ) : null}
     </div>
   );
 }

@@ -2,15 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Landing } from "@/components/landing";
 import { DEFAULT_BANG_SHORTCUT, LS_KEYS } from "@/lib/constants";
-import { addToSearchHistory, getCustomBangs } from "@/lib/history";
-import { resolveBangRedirect } from "@/lib/redirect";
+import { readCustomBangs } from "@/lib/custom-bangs";
+import { addToSearchHistory } from "@/lib/history";
+import { BANG_STRIP_RE, resolveBangRedirect } from "@/lib/redirect";
 import { storage } from "@/lib/storage";
 
 interface Search {
   q?: string;
 }
-
-const HISTORY_BANG_STRIP_RE = /!\S+\s*|^(\S+!|!\S+)$/i;
 
 export const Route = createFileRoute("/")({
   validateSearch: (raw: Record<string, unknown>): Search => ({
@@ -29,7 +28,7 @@ function IndexComponent() {
       const query = q ?? "";
       const defaultBangShortcut =
         storage.get(LS_KEYS.DEFAULT_BANG) ?? DEFAULT_BANG_SHORTCUT;
-      const customBangs = getCustomBangs();
+      const customBangs = readCustomBangs();
       const { bangs } = await import("@/lib/bangs/hashbang");
       if (cancelled) {
         return;
@@ -46,13 +45,15 @@ function IndexComponent() {
         return;
       }
 
-      const count = (
-        Number.parseInt(storage.get(LS_KEYS.SEARCH_COUNT) ?? "0", 10) + 1
-      ).toString();
+      const prev = Number.parseInt(
+        storage.get(LS_KEYS.SEARCH_COUNT) ?? "0",
+        10
+      );
+      const count = ((Number.isNaN(prev) ? 0 : prev) + 1).toString();
       storage.set(LS_KEYS.SEARCH_COUNT, count);
 
       if (storage.get(LS_KEYS.HISTORY_ENABLED) === "true") {
-        addToSearchHistory(query.replace(HISTORY_BANG_STRIP_RE, "").trim(), {
+        addToSearchHistory(query.replace(BANG_STRIP_RE, "").trim(), {
           bang: result.bangShortcut,
           name: result.bang.s,
         });

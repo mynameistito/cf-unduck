@@ -1,12 +1,16 @@
 import { lazy, Suspense, useState } from "react";
 import { useAudio } from "@/hooks/use-audio";
-import { useLocalStorageString } from "@/hooks/use-local-storage";
+import {
+  useLocalStorageBool,
+  useLocalStorageString,
+} from "@/hooks/use-local-storage";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { LS_KEYS } from "@/lib/constants";
 import { getSearchHistory } from "@/lib/history";
 import { SITE } from "@/site.config";
 import { CopyUrl } from "./copy-url";
 import { Cutie } from "./cutie";
+import { TopBar } from "./top-bar";
 
 const SettingsModal = lazy(() =>
   import("./settings-modal").then((m) => ({ default: m.SettingsModal }))
@@ -14,59 +18,39 @@ const SettingsModal = lazy(() =>
 
 export function Landing() {
   const reducedMotion = usePrefersReducedMotion();
-  const [soundEnabled] = useLocalStorageString(LS_KEYS.SOUND_ENABLED, "true");
-  const audio = useAudio(!reducedMotion && soundEnabled !== "false");
+  const [soundEnabled] = useLocalStorageBool(LS_KEYS.SOUND_ENABLED, true);
+  const audio = useAudio(!reducedMotion && soundEnabled);
   const [searchCount] = useLocalStorageString(LS_KEYS.SEARCH_COUNT, "0");
-  const [historyEnabled] = useLocalStorageString(
-    LS_KEYS.HISTORY_ENABLED,
-    "false"
-  );
+  const [historyEnabled] = useLocalStorageBool(LS_KEYS.HISTORY_ENABLED, false);
   const [open, setOpen] = useState(false);
 
-  const history = historyEnabled === "true" ? getSearchHistory() : [];
+  const history = historyEnabled ? getSearchHistory() : [];
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        height: "100vh",
-      }}
-    >
-      <header style={{ position: "absolute", top: "1rem", width: "100%" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            padding: "0 1rem",
-          }}
+    <div className="flex h-screen flex-col items-center justify-center">
+      <TopBar searchCount={searchCount}>
+        <button
+          aria-label="Open settings"
+          className={["settings-button", open ? "rotate" : ""]
+            .filter(Boolean)
+            .join(" ")}
+          onClick={() => setOpen(true)}
+          onMouseEnter={() => audio.play("spin")}
+          onMouseLeave={() => audio.reset("spin")}
+          type="button"
         >
-          <span>
-            {searchCount} {searchCount === "1" ? "search" : "searches"}
-          </span>
-          <button
-            aria-label="Open settings"
-            className={`settings-button${open ? "rotate" : ""}`}
-            onClick={() => setOpen(true)}
-            onMouseEnter={() => audio.play("spin")}
-            onMouseLeave={() => audio.reset("spin")}
-            type="button"
-          >
-            <img
-              alt=""
-              className="settings"
-              height={24}
-              src="/gear.svg"
-              width={24}
-            />
-          </button>
-        </div>
-      </header>
+          <img
+            alt=""
+            className="settings"
+            height={24}
+            src="/gear.svg"
+            width={24}
+          />
+        </button>
+      </TopBar>
 
       <div className="content-container">
-        <Cutie />
+        <Cutie reducedMotion={reducedMotion} />
         <p>
           DuckDuckGo's bang redirects are too slow. Add the following URL as a
           custom search engine to your browser. Enables{" "}
@@ -80,39 +64,19 @@ export function Landing() {
         </p>
         <CopyUrl audio={audio} reducedMotion={reducedMotion} />
 
-        {historyEnabled === "true" ? (
+        {historyEnabled ? (
           <>
-            <h2 style={{ marginTop: 24 }}>Recent Searches</h2>
-            <div
-              className="history-scroll"
-              style={{
-                maxHeight: 300,
-                overflowY: "auto",
-                textAlign: "left",
-              }}
-            >
+            <h2 className="mt-6">Recent Searches</h2>
+            <div className="history-scroll max-h-[300px] overflow-y-auto text-left">
               {history.length === 0 ? (
-                <div style={{ padding: 8, textAlign: "center" }}>
-                  No search history
-                </div>
+                <div className="p-2 text-center">No search history</div>
               ) : (
                 history.map((s) => (
-                  <div
-                    key={s.timestamp}
-                    style={{
-                      padding: 8,
-                      borderBottom: "1px solid var(--border-color)",
-                    }}
-                  >
+                  <div className="border-border border-b p-2" key={s.timestamp}>
                     <a href={`?q=!${s.bang} ${s.query}`}>
                       {s.name}: {s.query}
                     </a>
-                    <span
-                      style={{
-                        float: "right",
-                        color: "var(--text-color-secondary)",
-                      }}
-                    >
+                    <span className="float-right text-fg-muted">
                       {new Date(s.timestamp).toLocaleString()}
                     </span>
                   </div>

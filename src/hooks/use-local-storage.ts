@@ -31,14 +31,26 @@ export function useLocalStorage<T>(
   return [value, update];
 }
 
+const stringParse = (raw: string) => raw;
+const stringSerialize = (v: string) => v;
+
 export function useLocalStorageString(
   key: string,
   initial: string
 ): [string, (value: string) => void] {
-  return useLocalStorage<string>(
-    key,
-    initial,
-    (raw) => raw,
-    (v) => v
-  );
+  const parse = useCallback(stringParse, []);
+  const serialize = useCallback(stringSerialize, []);
+  return useLocalStorage<string>(key, initial, parse, serialize);
+}
+
+const boolParse = (raw: string) => raw === "true";
+const boolSerialize = (v: boolean) => (v ? "true" : "false");
+
+export function useLocalStorageBool(
+  key: string,
+  initial: boolean
+): [boolean, (value: boolean) => void] {
+  const parse = useCallback(boolParse, []);
+  const serialize = useCallback(boolSerialize, []);
+  return useLocalStorage<boolean>(key, initial, parse, serialize);
 }

@@ -1,0 +1,59 @@
+src/components/top-bar.tsx
+  s_235aab66ddf9f0::t_20e80a35a982e0 1-19
+src/components/settings-modal.tsx
+  s_235aab66ddf9f0::t_87e4737a8db11a 59-61,63-64,66-154
+  s_235aab66ddf9f0::t_858d11d82789cc 262,264,270,282
+  s_235aab66ddf9f0::t_462ed8082411c8 190
+  s_235aab66ddf9f0::t_d232c8b11e4a42 5
+  s_235aab66ddf9f0::t_22de75ed0b812e 551-556,578-579,583-586,590,622-625
+  s_235aab66ddf9f0::t_a64323fb5099ac 439,451-452,456,478
+  s_235aab66ddf9f0::t_39c6fffc4a80ee 161,163,165,167
+  s_235aab66ddf9f0::t_c98aa38598063d 713-758,761,783,785-788,790-795,819-820,827-831
+src/hooks/use-local-storage.ts
+  s_235aab66ddf9f0::t_4c9b529c8810ad 45-56
+src/lib/redirect.ts
+  s_235aab66ddf9f0::t_43000fbc521360 4
+src/components/landing.tsx
+  s_235aab66ddf9f0::t_202eb569f791f8 69-70,72,75,79
+  s_235aab66ddf9f0::t_864d9154fe82e6 21-22,24,27
+  s_235aab66ddf9f0::t_dda655bd1719dd 13
+  s_235aab66ddf9f0::t_4220a74d723c4e 30-40,42-50,53
+  s_235aab66ddf9f0::t_91eb767dfb25a7 67
+  s_235aab66ddf9f0::t_9850faf296c0e6 3-6
+src/lib/history.ts
+  s_235aab66ddf9f0::t_4496d717df5b51 7-8
+src/lib/custom-bangs.ts
+  s_235aab66ddf9f0::t_d2cbec2ccbe1b7 1-33
+src/components/cutie.tsx
+  s_235aab66ddf9f0::t_af2c903f76251a 10,14
+  s_235aab66ddf9f0::t_794a8518703b89 28
+src/components/not-found.tsx
+  s_235aab66ddf9f0::t_6c9efc30416b12 15
+  s_235aab66ddf9f0::t_6a05b3fbaeedfa 4,12-13
+  s_235aab66ddf9f0::t_af1ac75f136436 1,8-10
+src/routes/index.tsx
+  s_235aab66ddf9f0::t_d4f3011cd02ab7 56
+  s_235aab66ddf9f0::t_08c804a29ae3bc 5-6
+  s_235aab66ddf9f0::t_217991d4121909 7
+  s_235aab66ddf9f0::t_91d9bd0936aed2 31
+  s_235aab66ddf9f0::t_4cd5b01d13133a 48-52
+src/lib/prefs-cookie.ts
+  s_235aab66ddf9f0::t_c0c48d53312826 41,46-55
+  s_235aab66ddf9f0::t_3e682926f79644 2,7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "87e9686ede57ac237d098dfef939234f8dd37dc1",
+  "prompts": {},
+  "sessions": {
+    "s_235aab66ddf9f0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "be4a1371-98c0-4825-99a7-b24faf963a61",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Tito <github@mynameistito.com>"
+    }
+  }
+}

@@ -718,6 +718,7 @@ function ImportExportSection() {
       defaultBang: localStorage.getItem(LS_KEYS.DEFAULT_BANG),
       customBangs: localStorage.getItem(LS_KEYS.CUSTOM_BANGS),
       historyEnabled: localStorage.getItem(LS_KEYS.HISTORY_ENABLED),
+      soundEnabled: localStorage.getItem(LS_KEYS.SOUND_ENABLED),
       exportDate: new Date().toISOString(),
     };
     const blob = new Blob([JSON.stringify(settingsData, null, 2)], {
@@ -743,6 +744,9 @@ function ImportExportSection() {
       }
       if (data.historyEnabled !== undefined) {
         localStorage.setItem(LS_KEYS.HISTORY_ENABLED, data.historyEnabled);
+      }
+      if (data.soundEnabled !== undefined && data.soundEnabled !== null) {
+        localStorage.setItem(LS_KEYS.SOUND_ENABLED, data.soundEnabled);
       }
       window.location.reload();
     } catch (err) {

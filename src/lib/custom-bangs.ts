@@ -2,21 +2,27 @@ import { LS_KEYS } from "./constants";
 import { storage } from "./storage";
 import type { BangMap } from "./types";
 
+const UNSAFE_KEYS = new Set(["__proto__", "prototype", "constructor"]);
+
 export function readCustomBangs(): BangMap {
   try {
     const raw = JSON.parse(storage.get(LS_KEYS.CUSTOM_BANGS) ?? "{}") as Record<
       string,
       unknown
     >;
-    const out: BangMap = {};
+    const out = Object.create(null) as BangMap;
     for (const [k, v] of Object.entries(raw)) {
+      const key = k.toLowerCase();
+      if (UNSAFE_KEYS.has(key)) {
+        continue;
+      }
       if (isBang(v)) {
-        out[k.toLowerCase()] = v;
+        out[key] = v;
       }
     }
     return out;
   } catch {
-    return {};
+    return Object.create(null) as BangMap;
   }
 }
 

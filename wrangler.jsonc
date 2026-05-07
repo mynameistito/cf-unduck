@@ -11,18 +11,18 @@
     "run_worker_first": true
   },
   "observability": {
-    "enabled": false,
-    "head_sampling_rate": 0,
+    "enabled": true,
+    "head_sampling_rate": 0.01,
     "logs": {
-      "enabled": false,
-      "head_sampling_rate": 0,
+      "enabled": true,
+      "head_sampling_rate": 0.01,
       "persist": false,
       "invocation_logs": true
     },
     "traces": {
-      "enabled": false,
+      "enabled": true,
       "persist": false,
-      "head_sampling_rate": 0
+      "head_sampling_rate": 0.01
     }
   },
   "routes": [

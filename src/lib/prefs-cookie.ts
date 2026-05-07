@@ -53,6 +53,9 @@ export function syncPrefsCookie(): void {
       fallback.d = d;
     }
     value = encodeURIComponent(JSON.stringify(fallback));
+    if (value.length > MAX_COOKIE_BYTES) {
+      value = encodeURIComponent(JSON.stringify({}));
+    }
   }
   // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API not available in all browsers; this cookie is read by the edge Worker
   document.cookie = `${PREFS_COOKIE}=${value}; path=/; max-age=${ONE_YEAR_SECONDS}; SameSite=Lax`;

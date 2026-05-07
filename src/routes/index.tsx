@@ -49,7 +49,7 @@ function IndexComponent() {
         storage.get(LS_KEYS.SEARCH_COUNT) ?? "0",
         10
       );
-      const count = ((Number.isFinite(prev) ? prev : 0) + 1).toString();
+      const count = ((Number.isNaN(prev) ? 0 : prev) + 1).toString();
       storage.set(LS_KEYS.SEARCH_COUNT, count);
 
       if (storage.get(LS_KEYS.HISTORY_ENABLED) === "true") {

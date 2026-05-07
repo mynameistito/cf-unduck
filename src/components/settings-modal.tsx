@@ -65,42 +65,63 @@ interface BangFormFields {
   shortcut: string;
 }
 
+const FIELD_LABEL_CLS = "text-fg-muted text-xs";
+
 function BangForm({
   fields,
   onChange,
   firstFieldRef,
+  idPrefix,
 }: {
   fields: BangFormFields;
   onChange: (next: BangFormFields) => void;
   firstFieldRef?: React.Ref<HTMLInputElement>;
+  idPrefix: string;
 }) {
   const set = <K extends keyof BangFormFields>(
     key: K,
     value: BangFormFields[K]
   ) => onChange({ ...fields, [key]: value });
 
+  const nameId = `${idPrefix}-name`;
+  const shortcutId = `${idPrefix}-shortcut`;
+  const searchUrlId = `${idPrefix}-search-url`;
+  const baseUrlId = `${idPrefix}-base-url`;
+
   return (
     <>
+      <label className={FIELD_LABEL_CLS} htmlFor={nameId}>
+        Name
+      </label>
       <input
         aria-label="Bang name"
         className={formInputCls}
+        id={nameId}
         onChange={(e) => set("name", e.target.value)}
         placeholder="Bang name"
         ref={firstFieldRef}
         type="text"
         value={fields.name}
       />
+      <label className={FIELD_LABEL_CLS} htmlFor={shortcutId}>
+        Shortcut
+      </label>
       <input
         aria-label="Bang shortcut"
         className={formInputCls}
+        id={shortcutId}
         onChange={(e) => set("shortcut", e.target.value)}
         placeholder="Shortcut (e.g. !ddg)"
         type="text"
         value={fields.shortcut}
       />
+      <label className={FIELD_LABEL_CLS} htmlFor={searchUrlId}>
+        Search URL
+      </label>
       <input
         aria-label="Bang search URL"
         className={formInputCls}
+        id={searchUrlId}
         onBlur={() => {
           if (!fields.baseUrl.trim()) {
             const derived = deriveBaseDomain(fields.searchUrl);
@@ -114,9 +135,13 @@ function BangForm({
         type="text"
         value={fields.searchUrl}
       />
+      <label className={FIELD_LABEL_CLS} htmlFor={baseUrlId}>
+        Base domain
+      </label>
       <input
         aria-label="Bang base domain"
         className={formInputCls}
+        id={baseUrlId}
         onChange={(e) => set("baseUrl", e.target.value)}
         placeholder="Base domain (auto-detected)"
         type="text"
@@ -125,6 +150,8 @@ function BangForm({
     </>
   );
 }
+
+const ALL_FIELDS_REQUIRED = "All fields required";
 
 function cleanBangFields(fields: BangFormFields): {
   shortcut: string;
@@ -437,7 +464,13 @@ function CustomBangsSection({
   reducedMotion: boolean;
 }) {
   const [fields, setFields] = useState<BangFormFields>(EMPTY_FIELDS);
+  const [addError, setAddError] = useState<string | null>(null);
   const [editingKey, setEditingKey] = useState<string | null>(null);
+
+  const updateFields = (next: BangFormFields) => {
+    setAddError(null);
+    setFields(next);
+  };
 
   const reload = () => {
     if (reducedMotion) {
@@ -450,8 +483,11 @@ function CustomBangsSection({
   const add = () => {
     const cleaned = cleanBangFields(fields);
     if (!cleaned) {
+      setAddError(ALL_FIELDS_REQUIRED);
+      audio.play("warning");
       return;
     }
+    setAddError(null);
     audio.play("click", { rate: 2, from: 0.1 });
     onChange({ ...customBangs, [cleaned.shortcut]: cleaned.bang });
     reload();
@@ -475,7 +511,12 @@ function CustomBangsSection({
     <div className={sectionCls}>
       <h3 className={sectionHeadingCls}>Add Custom Bang</h3>
       <div className="flex flex-col gap-1.5 rounded-md border border-border bg-bg-muted p-2">
-        <BangForm fields={fields} onChange={setFields} />
+        <BangForm fields={fields} idPrefix="add-bang" onChange={updateFields} />
+        {addError ? (
+          <p className="text-danger text-sm" role="alert">
+            {addError}
+          </p>
+        ) : null}
         <div className="flex justify-end">
           <button className={primaryBtnCls} onClick={add} type="button">
             Add Bang
@@ -577,7 +618,7 @@ function EditBangPopup({
   const submit = () => {
     const cleaned = cleanBangFields(fields);
     if (!cleaned) {
-      setError("All fields required");
+      setError(ALL_FIELDS_REQUIRED);
       return;
     }
     if (
@@ -622,7 +663,11 @@ function EditBangPopup({
           <BangForm
             fields={fields}
             firstFieldRef={firstFieldRef}
-            onChange={setFields}
+            idPrefix="edit-bang"
+            onChange={(next) => {
+              setError(null);
+              setFields(next);
+            }}
           />
           {error ? (
             <p className="text-danger text-sm" role="alert">
@@ -714,20 +759,20 @@ function isBoolString(v: unknown): v is "true" | "false" {
   return v === "true" || v === "false";
 }
 
-function applyImport(data: unknown): string | null {
-  if (!data || typeof data !== "object") {
-    return "Invalid file";
-  }
-  const d = data as Record<string, unknown>;
-  if (d.defaultBang !== undefined && typeof d.defaultBang !== "string") {
+function isMissing(v: unknown): boolean {
+  return v === undefined || v === null;
+}
+
+function validateImport(d: Record<string, unknown>): string | null {
+  if (!isMissing(d.defaultBang) && typeof d.defaultBang !== "string") {
     return "Invalid defaultBang";
   }
-  if (d.customBangs !== undefined && typeof d.customBangs !== "string") {
+  if (!isMissing(d.customBangs) && typeof d.customBangs !== "string") {
     return "Invalid customBangs";
   }
-  if (d.customBangs) {
+  if (typeof d.customBangs === "string" && d.customBangs) {
     try {
-      const parsed = JSON.parse(d.customBangs as string) as unknown;
+      const parsed = JSON.parse(d.customBangs) as unknown;
       if (!parsed || typeof parsed !== "object") {
         return "Invalid customBangs shape";
       }
@@ -735,11 +780,23 @@ function applyImport(data: unknown): string | null {
       return "Invalid customBangs JSON";
     }
   }
-  if (d.historyEnabled !== undefined && !isBoolString(d.historyEnabled)) {
+  if (!(isMissing(d.historyEnabled) || isBoolString(d.historyEnabled))) {
     return "Invalid historyEnabled";
   }
-  if (d.soundEnabled !== undefined && !isBoolString(d.soundEnabled)) {
+  if (!(isMissing(d.soundEnabled) || isBoolString(d.soundEnabled))) {
     return "Invalid soundEnabled";
+  }
+  return null;
+}
+
+function applyImport(data: unknown): string | null {
+  if (!data || typeof data !== "object") {
+    return "Invalid file";
+  }
+  const d = data as Record<string, unknown>;
+  const err = validateImport(d);
+  if (err) {
+    return err;
   }
   if (typeof d.defaultBang === "string") {
     localStorage.setItem(LS_KEYS.DEFAULT_BANG, d.defaultBang);

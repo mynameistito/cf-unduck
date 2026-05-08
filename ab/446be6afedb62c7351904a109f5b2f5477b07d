@@ -1,0 +1,22 @@
+README.md
+  s_27655022e29759::t_4e2cdfc1c29071 48,51,54-55,57
+  s_27655022e29759::t_14bca8238ca44b 110-113,116-117
+  s_27655022e29759::t_88655f29023f9f 23-28
+  s_27655022e29759::t_2a0d9659f6ccaa 32-37,41-43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "ab446be6afedb62c7351904a109f5b2f5477b07d",
+  "prompts": {},
+  "sessions": {
+    "s_27655022e29759": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a696c55a-752f-4688-aa63-d8d11e20ff5b",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Tito <github@mynameistito.com>"
+    }
+  }
+}

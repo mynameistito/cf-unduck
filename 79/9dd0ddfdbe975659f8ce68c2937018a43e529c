@@ -1,0 +1,31 @@
+scripts/fetch-bangs.ts
+  s_bb37e97d1f7ab6::t_3f3185382e0304 169-170,177
+  s_bb37e97d1f7ab6::t_9759dd876d60ee 171-173
+src/worker.ts
+  s_bb37e97d1f7ab6::t_aab73b3861da77 96-99,101
+  s_bb37e97d1f7ab6::t_a7d72c1ea47cc1 68-70,72-76,94-95,100,102-108,120-124,128,133,135-137
+  s_bb37e97d1f7ab6::t_d50b9186703cc9 134
+src/lib/bangs/hashbang.ts
+  s_bb37e97d1f7ab6::t_6b1938b518a6b7 4
+src/worker.test.ts
+  s_bb37e97d1f7ab6::t_507d1e315b346c 33-34,45-46,62-63,73-74,85-86
+  s_bb37e97d1f7ab6::t_86548ff9c5bdb2 94-98
+  s_bb37e97d1f7ab6::t_2bc64c60123a03 53
+  s_bb37e97d1f7ab6::t_32cb6c5878dcc1 15-23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "799dd0ddfdbe975659f8ce68c2937018a43e529c",
+  "prompts": {},
+  "sessions": {
+    "s_bb37e97d1f7ab6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "43d6fd6d-d87e-490d-9573-17cf96cc2a88",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Tito <github@mynameistito.com>"
+    }
+  }
+}

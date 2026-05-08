@@ -5,10 +5,7 @@ export function decodeShare(token: string): BangMap | null {
     const b64 = token.replace(/-/g, "+").replace(/_/g, "/");
     const padded = b64 + "===".slice((b64.length + 3) % 4);
     const bin = atob(padded);
-    const bytes = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; i++) {
-      bytes[i] = bin.charCodeAt(i);
-    }
+    const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
     const json = new TextDecoder().decode(bytes);
     const parsed = JSON.parse(json) as unknown;
     if (!parsed || typeof parsed !== "object") {
@@ -21,14 +18,22 @@ export function decodeShare(token: string): BangMap | null {
 }
 
 export function isValidBangMap(m: BangMap): boolean {
+  if (!m || typeof m !== "object" || Array.isArray(m)) {
+    return false;
+  }
+  const proto = Object.getPrototypeOf(m);
+  if (proto !== null && proto !== Object.prototype) {
+    return false;
+  }
   for (const v of Object.values(m)) {
     if (
       !(
         v &&
         typeof v === "object" &&
-        typeof v.s === "string" &&
-        typeof v.u === "string" &&
-        typeof v.d === "string"
+        !Array.isArray(v) &&
+        typeof (v as { s?: unknown }).s === "string" &&
+        typeof (v as { u?: unknown }).u === "string" &&
+        typeof (v as { d?: unknown }).d === "string"
       )
     ) {
       return false;

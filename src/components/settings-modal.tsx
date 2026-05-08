@@ -185,15 +185,22 @@ function useFocusTrap(
   ref: React.RefObject<HTMLElement | null>,
   onEscape: () => void
 ): void {
+  const onEscapeRef = useRef(onEscape);
+  useEffect(() => {
+    onEscapeRef.current = onEscape;
+  });
   useEffect(() => {
     if (!active) {
       return;
     }
-    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const previouslyFocused =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
     getFocusables(ref.current)[0]?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        onEscape();
+        onEscapeRef.current();
         return;
       }
       if (e.key === "Tab") {
@@ -205,7 +212,7 @@ function useFocusTrap(
       document.removeEventListener("keydown", onKey);
       previouslyFocused?.focus?.();
     };
-  }, [active, ref, onEscape]);
+  }, [active, ref]);
 }
 
 function cleanBangFields(fields: BangFormFields): {
@@ -892,7 +899,12 @@ function ImportExportSection() {
       return;
     }
     const url = `${window.location.origin}/#bangs=${encodeShare(map)}`;
-    await navigator.clipboard.writeText(url);
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      setImportError("Clipboard blocked — copy URL manually");
+      return;
+    }
     setShareCopied(true);
     setTimeout(() => setShareCopied(false), 1500);
   };

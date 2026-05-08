@@ -40,11 +40,18 @@ export function BangTester({ inputRef }: Props) {
 
   useEffect(() => {
     let cancelled = false;
-    import("@/lib/bangs/hashbang").then((m) => {
-      if (!cancelled) {
-        setBangs(m.bangs);
-      }
-    });
+    import("@/lib/bangs/hashbang")
+      .then((m) => {
+        if (!cancelled) {
+          setBangs(m.bangs);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load bangs", err);
+        if (!cancelled) {
+          setBangs({});
+        }
+      });
     return () => {
       cancelled = true;
     };

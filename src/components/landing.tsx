@@ -22,6 +22,20 @@ const SettingsModal = lazy(() =>
   import("./settings-modal").then((m) => ({ default: m.SettingsModal }))
 );
 
+function shouldIgnoreShortcut(e: KeyboardEvent): boolean {
+  if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) {
+    return true;
+  }
+  if (e.target instanceof HTMLElement) {
+    return (
+      e.target.tagName === "INPUT" ||
+      e.target.tagName === "TEXTAREA" ||
+      e.target.isContentEditable
+    );
+  }
+  return false;
+}
+
 export function Landing() {
   const reducedMotion = usePrefersReducedMotion();
   const [soundEnabled] = useLocalStorageBool(LS_KEYS.SOUND_ENABLED, true);
@@ -73,16 +87,7 @@ export function Landing() {
   const testerInputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (open) {
-        return;
-      }
-      const target = e.target as HTMLElement | null;
-      const inField =
-        target &&
-        (target.tagName === "INPUT" ||
-          target.tagName === "TEXTAREA" ||
-          target.isContentEditable);
-      if (inField) {
+      if (open || shouldIgnoreShortcut(e)) {
         return;
       }
       if (e.key === "/") {

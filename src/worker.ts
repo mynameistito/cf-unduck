@@ -8,6 +8,7 @@ interface WorkerEnv {
 }
 
 const SUGGEST_UPSTREAM = "https://duckduckgo.com/ac/?type=list&q=";
+const SUGGESTION_CACHE_TTL_SECONDS = 60;
 
 function isHandledPath(path: string): string | null {
   if (path === "/") {
@@ -25,19 +26,40 @@ async function handleSuggest(url: URL): Promise<Response> {
     return new Response("[]", {
       headers: {
         "Content-Type": "application/json; charset=utf-8",
-        "Cache-Control": "public, max-age=60",
+        "Cache-Control": `public, max-age=${SUGGESTION_CACHE_TTL_SECONDS}`,
       },
     });
   }
-  const upstream = await fetch(SUGGEST_UPSTREAM + encodeURIComponent(q), {
-    cf: { cacheTtl: 60, cacheEverything: true },
-  });
-  const body = await upstream.text();
-  return new Response(body, {
-    status: upstream.status,
+  try {
+    const upstream = await fetch(SUGGEST_UPSTREAM + encodeURIComponent(q), {
+      cf: {
+        cacheTtl: SUGGESTION_CACHE_TTL_SECONDS,
+        cacheEverything: true,
+      },
+    });
+    if (!upstream.ok) {
+      return emptySuggestions(upstream.status);
+    }
+    const body = await upstream.text();
+    return new Response(body, {
+      status: upstream.status,
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+        "Cache-Control": `public, max-age=${SUGGESTION_CACHE_TTL_SECONDS}`,
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
+  } catch {
+    return emptySuggestions(502);
+  }
+}
+
+function emptySuggestions(status: number): Response {
+  return new Response("[]", {
+    status,
     headers: {
       "Content-Type": "application/json; charset=utf-8",
-      "Cache-Control": "public, max-age=60",
+      "Cache-Control": "no-store",
       "Access-Control-Allow-Origin": "*",
     },
   });

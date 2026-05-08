@@ -69,13 +69,15 @@ Prereqs: [Bun](https://bun.com), Cloudflare account, `wrangler` logged in (`bun 
    bun install
    ```
 
-2. **Edit `src/site.config.ts`** — set your domain, site name, and GitHub username:
+2. **Edit `src/site.config.ts`** — set your domain, repo, and footer credit:
 
    ```ts
    export const SITE = {
      name: "my-search",
      domain: "search.yourdomain.com",
      githubUser: "your-username",
+     repo: "cf-unduck",
+     author: { name: "your-name", url: "https://yourdomain.com" },
    } as const;
    ```
 

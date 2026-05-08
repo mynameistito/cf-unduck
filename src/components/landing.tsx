@@ -196,14 +196,18 @@ export function Landing() {
 
       <footer className="footer">
         made with ♥ by{" "}
+        <a href={SITE.author.url} rel="noopener" target="_blank">
+          {SITE.author.name}
+        </a>{" "}
+        —{" "}
         <a
-          href={`https://github.com/${SITE.githubUser}`}
+          href={`https://github.com/${SITE.githubUser}/${SITE.repo}`}
           rel="noopener"
           target="_blank"
         >
-          {SITE.githubUser}
-        </a>{" "}
-        — forked from{" "}
+          source
+        </a>
+        , forked from{" "}
         <a
           href="https://github.com/taciturnaxolotl/unduckified"
           rel="noopener"

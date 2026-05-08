@@ -1,0 +1,20 @@
+src/components/landing.tsx
+  s_a6fbad8fe6ebec::t_f28ba182835811 26
+  s_a6fbad8fe6ebec::t_22833a52eb3a8c 96
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "dcad0459d56c3e5a28fad7a154fbc049135a220d",
+  "prompts": {},
+  "sessions": {
+    "s_a6fbad8fe6ebec": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "353d8d1a-43e0-4c05-a250-dc0052ad7b3a",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Tito <github@mynameistito.com>"
+    }
+  }
+}

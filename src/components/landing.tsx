@@ -23,7 +23,7 @@ const SettingsModal = lazy(() =>
 );
 
 function shouldIgnoreShortcut(e: KeyboardEvent): boolean {
-  if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) {
+  if (e.ctrlKey || e.metaKey || e.altKey) {
     return true;
   }
   if (e.target instanceof HTMLElement) {
@@ -93,7 +93,7 @@ export function Landing() {
       if (e.key === "/") {
         e.preventDefault();
         testerInputRef.current?.focus();
-      } else if (e.key === "s") {
+      } else if (e.key === "s" && !e.shiftKey) {
         e.preventDefault();
         setOpen(true);
       }

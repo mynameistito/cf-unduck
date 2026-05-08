@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
 interface Props {
@@ -9,9 +10,9 @@ export function TopBar({ searchCount, children }: Props) {
   return (
     <header className="absolute top-4 w-full">
       <div className="flex justify-between px-4">
-        <span>
+        <Link className="hover:text-fg-strong hover:underline" to="/history">
           {searchCount} {searchCount === "1" ? "search" : "searches"}
-        </span>
+        </Link>
         {children}
       </div>
     </header>

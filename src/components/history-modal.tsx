@@ -5,6 +5,18 @@ interface Props {
   onClose: () => void;
 }
 
+const FOCUSABLE_SEL =
+  'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+function getFocusables(root: HTMLElement | null): HTMLElement[] {
+  if (!root) {
+    return [];
+  }
+  return Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE_SEL)).filter(
+    (el) => !el.hasAttribute("aria-hidden")
+  );
+}
+
 export function HistoryModal({ onClose }: Props) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const history = useMemo(() => getSearchHistory(), []);
@@ -18,6 +30,23 @@ export function HistoryModal({ onClose }: Props) {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         onClose();
+        return;
+      }
+      if (e.key !== "Tab") {
+        return;
+      }
+      const focusables = getFocusables(dialogRef.current);
+      const firstEl = focusables[0];
+      const lastEl = focusables.at(-1);
+      if (!(firstEl && lastEl)) {
+        return;
+      }
+      if (e.shiftKey && document.activeElement === firstEl) {
+        e.preventDefault();
+        lastEl.focus();
+      } else if (!e.shiftKey && document.activeElement === lastEl) {
+        e.preventDefault();
+        firstEl.focus();
       }
     };
     document.addEventListener("keydown", onKey);
@@ -67,7 +96,7 @@ export function HistoryModal({ onClose }: Props) {
           ) : (
             history.map((s) => (
               <div className="border-border border-b p-2" key={s.timestamp}>
-                <a href={`/?q=!${s.bang} ${s.query}`}>
+                <a href={`/?q=${encodeURIComponent(`!${s.bang} ${s.query}`)}`}>
                   {s.name}: {s.query}
                 </a>
                 <span className="float-right text-fg-muted">

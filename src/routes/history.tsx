@@ -11,7 +11,7 @@ function HistoryComponent() {
   return (
     <>
       <Landing />
-      <HistoryModal onClose={() => navigate({ to: "/" })} />
+      <HistoryModal onClose={() => navigate({ to: "/", replace: true })} />
     </>
   );
 }

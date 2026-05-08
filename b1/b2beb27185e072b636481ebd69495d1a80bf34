@@ -1,0 +1,59 @@
+index.html
+  s_870cb4f0c24797::t_d4dac9de49bf28 5-6,14-24,29-43
+src/lib/share-bangs.ts
+  s_870cb4f0c24797::t_b3a0c91094c263 1-38
+src/main.tsx
+  s_870cb4f0c24797::t_c6c427619dcd59 8-11
+src/worker.ts
+  s_870cb4f0c24797::t_c90cc02bc16330 10-11,22-45,53-57,82-83
+public/favicon.svg
+  s_870cb4f0c24797::t_b1d7ffce3e60cb 1
+src/lib/redirect.ts
+  s_870cb4f0c24797::t_3ec63b663e80b0 48,50
+src/worker.test.ts
+  s_870cb4f0c24797::t_57683e493c9ad1 1-84
+src/components/settings-modal.tsx
+  s_870cb4f0c24797::t_5e5f4e4b461c92 316-319
+  s_870cb4f0c24797::t_576f5a569ae733 856-859,866-869
+  s_870cb4f0c24797::t_d184fda785c83b 861-864
+  s_870cb4f0c24797::t_a954780db72cf2 283
+  s_870cb4f0c24797::t_e3b2961d1bc89f 860,865,870-871,875-898
+  s_870cb4f0c24797::t_2626d5af57583a 938,949-950
+  s_870cb4f0c24797::t_227307d7154c99 284
+  s_870cb4f0c24797::t_a9f7b3afbfc539 304-307
+  s_870cb4f0c24797::t_5efb7cf6a5d9b5 156-210
+  s_870cb4f0c24797::t_bf3fb2e8f8c68e 292
+src/components/bang-tester.tsx
+  s_870cb4f0c24797::t_3fdb57fdec6f5e 7,9-26
+  s_870cb4f0c24797::t_4dd7f3774144d7 1-3,5-6,8,27-61,63-85,87-92,94-96
+  s_870cb4f0c24797::t_0cab9adbce90b2 93
+  s_870cb4f0c24797::t_9bc586719f9765 62
+public/og.svg
+  s_870cb4f0c24797::t_860f33c4be8673 1
+src/components/landing.tsx
+  s_870cb4f0c24797::t_9ce3386f1e7c2c 35-45,47-72
+  s_870cb4f0c24797::t_a3d2c0a2c00e92 73-99
+  s_870cb4f0c24797::t_c0e78f7b1d40d3 9,11-14
+  s_870cb4f0c24797::t_53f51debdc0a7b 137-163
+  s_870cb4f0c24797::t_dde07d1f74dfef 164-167
+  s_870cb4f0c24797::t_e633af85efe55a 1,16
+vite.config.ts
+  s_870cb4f0c24797::t_ae4dbf8ceb3e7d 32-36
+  s_870cb4f0c24797::t_6be40e8ccf3658 93-122
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "b1b2beb27185e072b636481ebd69495d1a80bf34",
+  "prompts": {},
+  "sessions": {
+    "s_870cb4f0c24797": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d249b430-0a53-41b2-889d-3818af332c39",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Tito <github@mynameistito.com>"
+    }
+  }
+}

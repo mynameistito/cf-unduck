@@ -35,7 +35,8 @@ describe("worker fetch", () => {
     );
     expect(res.status).toBe(302);
     expect(res.headers.get("Location")).toContain("google.com");
-    expect(res.headers.get("Vary")).toBe("Cookie");
+    expect(res.headers.get("Vary")).toBeNull();
+    expect(res.headers.get("Cache-Control")).toContain("public");
   });
 
   it("redirects on /search?q=!g foo", async () => {
@@ -87,6 +88,8 @@ describe("worker fetch", () => {
     );
     expect(res.status).toBe(302);
     expect(res.headers.get("Location")).toContain("google.com");
+    expect(res.headers.get("Vary")).toBe("Cookie");
+    expect(res.headers.get("Cache-Control")).toContain("no-store");
   });
 
   it("/suggest returns json with empty query", async () => {

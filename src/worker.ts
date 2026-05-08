@@ -117,19 +117,24 @@ export default {
       return env.ASSETS.fetch(request);
     }
 
-    const cacheControl = hasPrefs
-      ? "private, no-store"
-      : `public, s-maxage=${REDIRECT_EDGE_TTL_SECONDS}, max-age=0`;
+    const headers: Record<string, string> = {
+      Location: result.url,
+      "Referrer-Policy": "no-referrer",
+    };
+    if (hasPrefs) {
+      // Vary on Cookie so any intermediate cache keys per-user; combined with
+      // no-store this is defense-in-depth.
+      headers["Cache-Control"] = "private, no-store";
+      headers.Vary = "Cookie";
+    } else {
+      // Redirect target depends only on (path, query) for cookieless users —
+      // omit Vary so unrelated cookies (analytics etc.) don't fragment the
+      // edge cache key.
+      headers["Cache-Control"] =
+        `public, s-maxage=${REDIRECT_EDGE_TTL_SECONDS}, max-age=0`;
+    }
 
-    const response = new Response(null, {
-      status: 302,
-      headers: {
-        Location: result.url,
-        "Cache-Control": cacheControl,
-        Vary: "Cookie",
-        "Referrer-Policy": "no-referrer",
-      },
-    });
+    const response = new Response(null, { status: 302, headers });
 
     if (!hasPrefs && cache) {
       ctx.waitUntil(cache.put(request, response.clone()));

@@ -57,15 +57,21 @@ export function Landing() {
     if (!hash.startsWith("#bangs=")) {
       return;
     }
-    const map = decodeShare(hash.slice("#bangs=".length));
-    if (!(map && isValidBangMap(map))) {
-      return;
-    }
-    const count = Object.keys(map).length;
-    if (count === 0) {
-      return;
-    }
-    setShareImport({ map, count });
+    let cancelled = false;
+    (async () => {
+      const map = await decodeShare(hash.slice("#bangs=".length));
+      if (cancelled || !(map && isValidBangMap(map))) {
+        return;
+      }
+      const count = Object.keys(map).length;
+      if (count === 0) {
+        return;
+      }
+      setShareImport({ map, count });
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const acceptShareImport = () => {

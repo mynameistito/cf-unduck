@@ -1,0 +1,22 @@
+src/worker.ts
+  s_bb37e97d1f7ab6::t_fdc69683df2079 120-135,137
+src/worker.test.ts
+  s_bb37e97d1f7ab6::t_7845ca5cabb68f 38-39
+  s_bb37e97d1f7ab6::t_39f859183b6da5 91-92
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "913d9ff1de3132962445e90bcb86311fedf86a04",
+  "prompts": {},
+  "sessions": {
+    "s_bb37e97d1f7ab6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "43d6fd6d-d87e-490d-9573-17cf96cc2a88",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Tito <github@mynameistito.com>"
+    }
+  }
+}

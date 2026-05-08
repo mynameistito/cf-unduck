@@ -65,8 +65,15 @@ function emptySuggestions(status: number): Response {
   });
 }
 
+const PREFS_COOKIE_RE = /(?:^|;\s*)udprefs=/;
+const REDIRECT_EDGE_TTL_SECONDS = 86_400;
+
 export default {
-  fetch(request: Request, env: WorkerEnv): Response | Promise<Response> {
+  async fetch(
+    request: Request,
+    env: WorkerEnv,
+    ctx: ExecutionContext
+  ): Promise<Response> {
     if (request.method !== "GET" && request.method !== "HEAD") {
       return env.ASSETS.fetch(request);
     }
@@ -84,7 +91,21 @@ export default {
       return env.ASSETS.fetch(request);
     }
 
-    const prefs = readPrefsFromCookieHeader(request.headers.get("Cookie"));
+    const cookieHeader = request.headers.get("Cookie");
+    const hasPrefs = cookieHeader ? PREFS_COOKIE_RE.test(cookieHeader) : false;
+    const cache =
+      typeof caches === "undefined"
+        ? null
+        : (caches as unknown as { default: Cache }).default;
+
+    if (!hasPrefs && cache) {
+      const cached = await cache.match(request);
+      if (cached) {
+        return cached;
+      }
+    }
+
+    const prefs = readPrefsFromCookieHeader(cookieHeader);
     const defaultBangShortcut = prefs.d || DEFAULT_BANG_SHORTCUT;
 
     const result = resolveBangRedirect(
@@ -96,14 +117,23 @@ export default {
       return env.ASSETS.fetch(request);
     }
 
-    return new Response(null, {
+    const cacheControl = hasPrefs
+      ? "private, no-store"
+      : `public, s-maxage=${REDIRECT_EDGE_TTL_SECONDS}, max-age=0`;
+
+    const response = new Response(null, {
       status: 302,
       headers: {
         Location: result.url,
-        "Cache-Control": "private, no-store",
+        "Cache-Control": cacheControl,
         Vary: "Cookie",
         "Referrer-Policy": "no-referrer",
       },
     });
+
+    if (!hasPrefs && cache) {
+      ctx.waitUntil(cache.put(request, response.clone()));
+    }
+    return response;
   },
 };

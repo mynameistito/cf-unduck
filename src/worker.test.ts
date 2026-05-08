@@ -12,6 +12,15 @@ function makeEnv() {
   };
 }
 
+const ctx = {
+  waitUntil: () => {
+    /* noop */
+  },
+  passThroughOnException: () => {
+    /* noop */
+  },
+} as unknown as ExecutionContext;
+
 function req(url: string, init?: RequestInit): Request {
   return new Request(url, init);
 }
@@ -21,7 +30,8 @@ describe("worker fetch", () => {
     const env = makeEnv();
     const res = await worker.fetch(
       req("https://x.test/?q=!g foo"),
-      env as never
+      env as never,
+      ctx
     );
     expect(res.status).toBe(302);
     expect(res.headers.get("Location")).toContain("google.com");
@@ -32,14 +42,15 @@ describe("worker fetch", () => {
     const env = makeEnv();
     const res = await worker.fetch(
       req("https://x.test/search?q=!g foo"),
-      env as never
+      env as never,
+      ctx
     );
     expect(res.status).toBe(302);
   });
 
   it("falls through to ASSETS for /?q empty", async () => {
     const env = makeEnv();
-    const res = await worker.fetch(req("https://x.test/"), env as never);
+    const res = await worker.fetch(req("https://x.test/"), env as never, ctx);
     expect(env.ASSETS.fetch).toHaveBeenCalled();
     expect(res.status).toBe(200);
   });
@@ -48,7 +59,8 @@ describe("worker fetch", () => {
     const env = makeEnv();
     const res = await worker.fetch(
       req("https://x.test/random?q=foo"),
-      env as never
+      env as never,
+      ctx
     );
     expect(env.ASSETS.fetch).toHaveBeenCalled();
     expect(res.status).toBe(200);
@@ -58,7 +70,8 @@ describe("worker fetch", () => {
     const env = makeEnv();
     const res = await worker.fetch(
       req("https://x.test/?q=!g+foo", { method: "POST" }),
-      env as never
+      env as never,
+      ctx
     );
     expect(env.ASSETS.fetch).toHaveBeenCalled();
     expect(res.status).toBe(200);
@@ -69,7 +82,8 @@ describe("worker fetch", () => {
     const cookie = `udprefs=${encodeURIComponent(JSON.stringify({ d: "g" }))}`;
     const res = await worker.fetch(
       req("https://x.test/?q=hello", { headers: { Cookie: cookie } }),
-      env as never
+      env as never,
+      ctx
     );
     expect(res.status).toBe(302);
     expect(res.headers.get("Location")).toContain("google.com");
@@ -77,7 +91,11 @@ describe("worker fetch", () => {
 
   it("/suggest returns json with empty query", async () => {
     const env = makeEnv();
-    const res = await worker.fetch(req("https://x.test/suggest"), env as never);
+    const res = await worker.fetch(
+      req("https://x.test/suggest"),
+      env as never,
+      ctx
+    );
     expect(res.headers.get("Content-Type")).toContain("application/json");
     expect(await res.text()).toBe("[]");
   });

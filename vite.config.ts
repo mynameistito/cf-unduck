@@ -29,6 +29,11 @@ function escapeXml(str: string): string {
 const TITLE_RE = /<title>.*?<\/title>/;
 const OPENSEARCH_LINK_RE = /<link\b[^>]*?\brel="search"[\s\S]*?>/;
 const TITLE_ATTR_RE = /title="[^"]*"/;
+const CANONICAL_RE = /<link rel="canonical"[^>]*>/;
+const OG_URL_RE = /<meta property="og:url"[^>]*>/;
+const OG_IMAGE_RE = /<meta property="og:image"[^>]*>/;
+const OG_TITLE_RE = /<meta property="og:title"[^>]*>/;
+const TWITTER_TITLE_RE = /<meta name="twitter:title"[^>]*>/;
 
 function replaceOrThrow(
   html: string,
@@ -84,6 +89,36 @@ function siteConfigPlugin(): Plugin {
             "OPENSEARCH title attr"
           ),
         "OPENSEARCH_LINK_RE"
+      );
+      out = replaceOrThrow(
+        out,
+        CANONICAL_RE,
+        `<link rel="canonical" href="https://${safeDomain}/">`,
+        "CANONICAL_RE"
+      );
+      out = replaceOrThrow(
+        out,
+        OG_URL_RE,
+        `<meta property="og:url" content="https://${safeDomain}/">`,
+        "OG_URL_RE"
+      );
+      out = replaceOrThrow(
+        out,
+        OG_IMAGE_RE,
+        `<meta property="og:image" content="https://${safeDomain}/og.svg">`,
+        "OG_IMAGE_RE"
+      );
+      out = replaceOrThrow(
+        out,
+        OG_TITLE_RE,
+        `<meta property="og:title" content="${safeName}">`,
+        "OG_TITLE_RE"
+      );
+      out = replaceOrThrow(
+        out,
+        TWITTER_TITLE_RE,
+        `<meta name="twitter:title" content="${safeName}">`,
+        "TWITTER_TITLE_RE"
       );
       return out;
     },

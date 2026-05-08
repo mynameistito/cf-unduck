@@ -7,6 +7,9 @@ interface WorkerEnv {
   ASSETS: Fetcher;
 }
 
+const SUGGEST_UPSTREAM = "https://duckduckgo.com/ac/?type=list&q=";
+const SUGGESTION_CACHE_TTL_SECONDS = 60;
+
 function isHandledPath(path: string): string | null {
   if (path === "/") {
     return "/";
@@ -17,6 +20,51 @@ function isHandledPath(path: string): string | null {
   return null;
 }
 
+async function handleSuggest(url: URL): Promise<Response> {
+  const q = url.searchParams.get("q") ?? "";
+  if (!q) {
+    return new Response("[]", {
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+        "Cache-Control": `public, max-age=${SUGGESTION_CACHE_TTL_SECONDS}`,
+      },
+    });
+  }
+  try {
+    const upstream = await fetch(SUGGEST_UPSTREAM + encodeURIComponent(q), {
+      cf: {
+        cacheTtl: SUGGESTION_CACHE_TTL_SECONDS,
+        cacheEverything: true,
+      },
+    });
+    if (!upstream.ok) {
+      return emptySuggestions(upstream.status);
+    }
+    const body = await upstream.text();
+    return new Response(body, {
+      status: upstream.status,
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+        "Cache-Control": `public, max-age=${SUGGESTION_CACHE_TTL_SECONDS}`,
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
+  } catch {
+    return emptySuggestions(502);
+  }
+}
+
+function emptySuggestions(status: number): Response {
+  return new Response("[]", {
+    status,
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "no-store",
+      "Access-Control-Allow-Origin": "*",
+    },
+  });
+}
+
 export default {
   fetch(request: Request, env: WorkerEnv): Response | Promise<Response> {
     if (request.method !== "GET" && request.method !== "HEAD") {
@@ -24,6 +72,11 @@ export default {
     }
 
     const url = new URL(request.url);
+
+    if (url.pathname === "/suggest" || url.pathname === "/suggest/") {
+      return handleSuggest(url);
+    }
+
     const handledPath = isHandledPath(url.pathname);
     const q = url.searchParams.get("q");
 
@@ -48,6 +101,8 @@ export default {
       headers: {
         Location: result.url,
         "Cache-Control": "private, no-store",
+        Vary: "Cookie",
+        "Referrer-Policy": "no-referrer",
       },
     });
   },

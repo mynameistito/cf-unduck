@@ -45,9 +45,9 @@ export function resolveBangRedirect(
     return { kind: "landing" };
   }
 
-  const match = query.toLowerCase().match(BANG_MATCH_RE);
+  const match = query.match(BANG_MATCH_RE);
   const bangShortcut = match
-    ? (match[1] ?? match[2] ?? input.defaultBangShortcut)
+    ? (match[1] ?? match[2] ?? input.defaultBangShortcut).toLowerCase()
     : input.defaultBangShortcut;
 
   const selectedBang =

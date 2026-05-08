@@ -5,6 +5,12 @@ import { syncPrefsCookie } from "./lib/prefs-cookie";
 import { router } from "./router";
 import "./styles/global.css";
 
+if (new URLSearchParams(window.location.search).has("q")) {
+  import("./lib/bangs/hashbang").catch((err) => {
+    console.error("Failed to preload bangs", err);
+  });
+}
+
 syncPrefsCookie();
 
 const el = document.getElementById("app");

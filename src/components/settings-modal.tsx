@@ -153,6 +153,68 @@ function BangForm({
 
 const ALL_FIELDS_REQUIRED = "All fields required";
 
+const FOCUSABLE_SEL =
+  'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+function getFocusables(root: HTMLElement | null): HTMLElement[] {
+  if (!root) {
+    return [];
+  }
+  return Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE_SEL)).filter(
+    (el) => !el.hasAttribute("aria-hidden")
+  );
+}
+
+function handleTrapTab(e: KeyboardEvent, list: HTMLElement[]): void {
+  const firstEl = list[0];
+  const lastEl = list.at(-1);
+  if (!(firstEl && lastEl)) {
+    return;
+  }
+  if (e.shiftKey && document.activeElement === firstEl) {
+    e.preventDefault();
+    lastEl.focus();
+  } else if (!e.shiftKey && document.activeElement === lastEl) {
+    e.preventDefault();
+    firstEl.focus();
+  }
+}
+
+function useFocusTrap(
+  active: boolean,
+  ref: React.RefObject<HTMLElement | null>,
+  onEscape: () => void
+): void {
+  const onEscapeRef = useRef(onEscape);
+  useEffect(() => {
+    onEscapeRef.current = onEscape;
+  });
+  useEffect(() => {
+    if (!active) {
+      return;
+    }
+    const previouslyFocused =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    getFocusables(ref.current)[0]?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onEscapeRef.current();
+        return;
+      }
+      if (e.key === "Tab") {
+        handleTrapTab(e, getFocusables(ref.current));
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      previouslyFocused?.focus?.();
+    };
+  }, [active, ref]);
+}
+
 function cleanBangFields(fields: BangFormFields): {
   shortcut: string;
   bang: Bang;
@@ -225,18 +287,8 @@ export function SettingsModal({ open, onClose, audio, reducedMotion }: Props) {
   const history = useMemo(() => (open ? getSearchHistory() : []), [open]);
 
   const backdropRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose();
-      }
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(open, dialogRef, onClose);
 
   if (!open) {
     return null;
@@ -244,6 +296,7 @@ export function SettingsModal({ open, onClose, audio, reducedMotion }: Props) {
 
   return (
     <div
+      aria-labelledby="settings-title"
       aria-modal="true"
       className="fixed inset-0 z-[1000] h-full w-full text-fg"
       ref={backdropRef}
@@ -255,7 +308,10 @@ export function SettingsModal({ open, onClose, audio, reducedMotion }: Props) {
         onClick={onClose}
         type="button"
       />
-      <div className="themed-scrollbar relative mx-auto my-[5vh] max-h-[90vh] w-[calc(100%-2rem)] max-w-[480px] overflow-y-auto rounded-lg border border-border bg-bg px-5 py-4 text-fg shadow-[0_20px_60px_rgba(0,0,0,0.4)]">
+      <div
+        className="themed-scrollbar relative mx-auto my-[5vh] max-h-[90vh] w-[calc(100%-2rem)] max-w-[480px] overflow-y-auto rounded-lg border border-border bg-bg px-5 py-4 text-fg shadow-[0_20px_60px_rgba(0,0,0,0.4)]"
+        ref={dialogRef}
+      >
         <button
           aria-label="Close settings"
           className="absolute top-2.5 right-2.5 flex h-7 w-7 items-center justify-center rounded-md text-fg-muted leading-none transition hover:bg-bg-hover hover:text-fg"
@@ -264,7 +320,10 @@ export function SettingsModal({ open, onClose, audio, reducedMotion }: Props) {
         >
           &times;
         </button>
-        <h2 className="mb-3 border-border border-b pb-2 font-semibold text-fg text-lg">
+        <h2
+          className="mb-3 border-border border-b pb-2 font-semibold text-fg text-lg"
+          id="settings-title"
+        >
           Settings
         </h2>
 
@@ -801,9 +860,54 @@ function applyImport(data: unknown): string | null {
   return null;
 }
 
+const B64_PLUS_RE = /\+/g;
+const B64_SLASH_RE = /\//g;
+const B64_PAD_RE = /=+$/;
+
+function encodeShare(map: BangMap): string {
+  const bytes = new TextEncoder().encode(JSON.stringify(map));
+  let bin = "";
+  for (const b of bytes) {
+    bin += String.fromCharCode(b);
+  }
+  return btoa(bin)
+    .replace(B64_PLUS_RE, "-")
+    .replace(B64_SLASH_RE, "_")
+    .replace(B64_PAD_RE, "");
+}
+
 function ImportExportSection() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [importError, setImportError] = useState<string | null>(null);
+  const [shareCopied, setShareCopied] = useState(false);
+
+  const onShare = async () => {
+    const raw = localStorage.getItem(LS_KEYS.CUSTOM_BANGS);
+    if (!raw) {
+      setImportError("No custom bangs to share");
+      return;
+    }
+    let map: BangMap;
+    try {
+      map = JSON.parse(raw) as BangMap;
+    } catch {
+      setImportError("Custom bangs corrupt");
+      return;
+    }
+    if (Object.keys(map).length === 0) {
+      setImportError("No custom bangs to share");
+      return;
+    }
+    const url = `${window.location.origin}/#bangs=${encodeShare(map)}`;
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      setImportError("Clipboard blocked — copy URL manually");
+      return;
+    }
+    setShareCopied(true);
+    setTimeout(() => setShareCopied(false), 1500);
+  };
 
   const onExport = () => {
     const settingsData = {
@@ -843,7 +947,7 @@ function ImportExportSection() {
   return (
     <div className={sectionCls}>
       <h3 className={sectionHeadingCls}>Settings Import/Export</h3>
-      <div className="mt-2 flex gap-2">
+      <div className="mt-2 flex flex-wrap gap-2">
         <button className={secondaryBtnCls} onClick={onExport} type="button">
           Export Settings
         </button>
@@ -853,6 +957,9 @@ function ImportExportSection() {
           type="button"
         >
           Import Settings
+        </button>
+        <button className={secondaryBtnCls} onClick={onShare} type="button">
+          {shareCopied ? "Link copied!" : "Share custom bangs"}
         </button>
         <input
           accept=".json"

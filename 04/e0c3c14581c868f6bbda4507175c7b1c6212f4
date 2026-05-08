@@ -1,0 +1,29 @@
+src/components/history-modal.tsx
+  s_b6c81319b722aa::t_519d8208d72ca2 34,44
+  s_b6c81319b722aa::t_bf3e61307f8a77 1-33,35-43,45-83
+src/routeTree.gen.ts
+  s_b6c81319b722aa::t_dd142eec3079f6 12,16-18,64-68
+src/routes/history.tsx
+  s_b6c81319b722aa::t_3eb4c23abe8afe 1-17
+src/components/top-bar.tsx
+  s_b6c81319b722aa::t_b25cd54ca33d21 1,13,15
+src/components/landing.tsx
+  s_b6c81319b722aa::t_d03827137d967e 1
+  s_b6c81319b722aa::t_5d26471d2fdca8 177-184
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "04e0c3c14581c868f6bbda4507175c7b1c6212f4",
+  "prompts": {},
+  "sessions": {
+    "s_b6c81319b722aa": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9455c742-621c-4eca-9d69-12e7e5eea6bb",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Tito <github@mynameistito.com>"
+    }
+  }
+}

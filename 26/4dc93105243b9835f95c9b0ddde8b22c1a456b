@@ -1,0 +1,23 @@
+src/site.config.ts
+  s_27655022e29759::t_62670fa1543baa 5-10
+src/components/landing.tsx
+  s_27655022e29759::t_4e00a3baf195d6 199-202,204,208-210
+README.md
+  s_27655022e29759::t_25885b7fb783b2 72,79-80
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "264dc93105243b9835f95c9b0ddde8b22c1a456b",
+  "prompts": {},
+  "sessions": {
+    "s_27655022e29759": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a696c55a-752f-4688-aa63-d8d11e20ff5b",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Tito <github@mynameistito.com>"
+    }
+  }
+}

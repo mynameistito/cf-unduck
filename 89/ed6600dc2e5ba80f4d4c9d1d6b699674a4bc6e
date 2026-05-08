@@ -1,0 +1,21 @@
+src/components/history-modal.tsx
+  s_b6c81319b722aa::t_a51b69e7ad0fa8 8-19,33-49,99
+src/routes/history.tsx
+  s_b6c81319b722aa::t_bee66c299aa4e7 14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "89ed6600dc2e5ba80f4d4c9d1d6b699674a4bc6e",
+  "prompts": {},
+  "sessions": {
+    "s_b6c81319b722aa": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9455c742-621c-4eca-9d69-12e7e5eea6bb",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Tito <github@mynameistito.com>"
+    }
+  }
+}

@@ -1,0 +1,27 @@
+tsconfig.json
+  s_bb37e97d1f7ab6::t_8c0f8c228e43b2 26
+__tests__/worker.test.ts
+  s_bb37e97d1f7ab6::t_cfcdc2277d16e0 2
+__tests__/redirect.test.ts
+  s_bb37e97d1f7ab6::t_bbc7fa4de571b5 2-3
+src/lib/bangs/hashbang.ts
+  s_bb37e97d1f7ab6::t_abff353e60798b 2
+scripts/fetch-bangs.ts
+  s_bb37e97d1f7ab6::t_8577dea4f2ec07 175
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "9c9601778c2a635e6ed25d39845b264f6a979ed4",
+  "prompts": {},
+  "sessions": {
+    "s_bb37e97d1f7ab6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "43d6fd6d-d87e-490d-9573-17cf96cc2a88",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Tito <github@mynameistito.com>"
+    }
+  }
+}

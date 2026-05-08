@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { useAudio } from "@/hooks/use-audio";
 import {
@@ -173,7 +174,14 @@ export function Landing() {
 
         {historyEnabled ? (
           <>
-            <h2 className="mt-6">Recent Searches</h2>
+            <h2 className="mt-6">
+              <Link
+                className="hover:text-fg-strong hover:underline"
+                to="/history"
+              >
+                Recent Searches
+              </Link>
+            </h2>
             <div className="history-scroll max-h-[300px] overflow-y-auto text-left">
               {history.length === 0 ? (
                 <div className="p-2 text-center">No search history</div>

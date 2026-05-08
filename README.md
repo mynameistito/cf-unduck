@@ -20,35 +20,41 @@ Then `!gh react` → GitHub search for "react". No bang → falls back to DuckDu
 
 ## How is it that much faster?
 
-DuckDuckGo does redirects server-side; their DNS isn't always great. cf-unduck does it all client-side. After the first visit, JS is cached and your device handles redirects — no server round-trip.
+DuckDuckGo redirects through their own server hop. cf-unduck skips that:
+
+- **First hit**: Worker resolves the bang at the edge and 302s straight to the target. Cookieless redirects are cached at the edge (`s-maxage=86400`), so repeat queries with the same `q` are pure cache hits.
+- **Subsequent hits**: SPA is cached locally, so redirects happen on-device with no round-trip.
+
+Users with custom prefs (`udprefs` cookie) get private, no-store responses so settings never leak across the edge cache.
 
 ## Features
 
-- Bangs (DuckDuckGo + [Kagi](https://github.com/kagisearch/bangs/))
-- Dark mode
-- Settings: search history toggle, default bang, custom bangs
-- Search counter
-- [OpenSearch](https://developer.mozilla.org/en-US/docs/Web/XML/Guides/OpenSearch) support
-- Local search history (off by default, clearable)
-- Sound effects (respects `prefers-reduced-motion`)
-- Text animations
-- Hashmapped bangs for fast lookup
-- Local font file (no Google Fonts)
+- Bangs (DuckDuckGo + [Kagi](https://github.com/kagisearch/bangs/)), hashmapped for O(1) lookup
+- Edge-cached server-side redirects on first hit, on-device after
+- Search suggestions endpoint (`/suggest`) proxying DuckDuckGo with edge cache
+- [OpenSearch](https://developer.mozilla.org/en-US/docs/Web/XML/Guides/OpenSearch) support (browser auto-discovery)
+- PWA / installable
+- Settings: default bang, custom bangs, history toggle — synced via `udprefs` cookie so server redirects honor them
 - Empty-query bang → base site (e.g. `!g` → google.com)
 - Suffix bangs (`ghr! user/repo` → that GitHub repo)
 - Quick settings (`!settings` or `!`)
-- Custom local bangs
+- Local search history (off by default, clearable)
+- Dark mode, sound effects (respects `prefers-reduced-motion`), text animations
+- Local font file (no Google Fonts)
 - Auto-updating bangs file via fetch script
 
 ## Search Suggestions
 
-Firefox has a dedicated suggestions URL field. Other browsers usually don't — pick one of these as your suggestions source:
+Firefox has a dedicated suggestions URL field. Use the built-in proxy (cached at the edge):
+
+```
+https://search.mynameistito.com/suggest?q=%s
+```
+
+Or point straight at an upstream:
 
 ```
 https://duckduckgo.com/ac/?q=%s&type=list
-```
-
-```
 https://www.google.com/complete/search?client=chrome&q=%s
 ```
 
@@ -101,10 +107,14 @@ Prereqs: [Bun](https://bun.com), Cloudflare account, `wrangler` logged in (`bun 
    bun run deploy
    ```
 
+## Stack
+
+React 19 + Vite + TanStack Router SPA, served as static assets by a Cloudflare Worker that also handles redirects and `/suggest`. Tailwind v4. Ultracite (Biome) for lint/format. Bun test runner.
+
 ## Scripts
 
-- `bun run dev` — Vite dev server
-- `bun run build` — build + typecheck
+- `bun run dev` — Vite dev server (via portless)
+- `bun run build` — build + typecheck (`tsgo`)
 - `bun run deploy` — build + `wrangler deploy`
 - `bun run fetch-bangs` — refresh bangs list
 - `bun run check` / `fix` — Ultracite lint

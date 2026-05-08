@@ -1,0 +1,34 @@
+src/lib/share-bangs.ts
+  s_a6fbad8fe6ebec::t_16f3f953da7112 21-27,33-36
+  s_a6fbad8fe6ebec::t_ec9ad998e855b8 8
+src/components/landing.tsx
+  s_a6fbad8fe6ebec::t_4ce273417f15f5 90
+  s_a6fbad8fe6ebec::t_60b98c9795c4dd 25-38
+src/main.tsx
+  s_a6fbad8fe6ebec::t_5ec44b8d41c922 9-11
+src/components/settings-modal.tsx
+  s_a6fbad8fe6ebec::t_6aea8a61945173 902-907
+  s_a6fbad8fe6ebec::t_2c1908b124dddc 188-191,196-199,203,215
+src/components/bang-tester.tsx
+  s_a6fbad8fe6ebec::t_21a4bda540bc9f 43-54
+src/worker.ts
+  s_a6fbad8fe6ebec::t_ad6ee1d6c7ffb6 11
+  s_a6fbad8fe6ebec::t_629abe919f705d 29,35-38,40-42,48,53,55-59,62
+  s_a6fbad8fe6ebec::t_cadf9c56e22009 33-34,39,43-47,49-52,54
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "fa2f3121e0961ccac72f8c5cb7da177f18b15305",
+  "prompts": {},
+  "sessions": {
+    "s_a6fbad8fe6ebec": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "353d8d1a-43e0-4c05-a250-dc0052ad7b3a",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Tito <github@mynameistito.com>"
+    }
+  }
+}

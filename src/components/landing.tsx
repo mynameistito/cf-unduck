@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { useAudio } from "@/hooks/use-audio";
 import {
   useLocalStorageBool,
@@ -6,8 +6,14 @@ import {
 } from "@/hooks/use-local-storage";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { LS_KEYS } from "@/lib/constants";
+import { readCustomBangs } from "@/lib/custom-bangs";
 import { getSearchHistory } from "@/lib/history";
+import { syncPrefsCookie } from "@/lib/prefs-cookie";
+import { decodeShare, isValidBangMap } from "@/lib/share-bangs";
+import { storage } from "@/lib/storage";
+import type { BangMap } from "@/lib/types";
 import { SITE } from "@/site.config";
+import { BangTester } from "./bang-tester";
 import { CopyUrl } from "./copy-url";
 import { Cutie } from "./cutie";
 import { TopBar } from "./top-bar";
@@ -25,6 +31,71 @@ export function Landing() {
   const [open, setOpen] = useState(false);
 
   const history = historyEnabled ? getSearchHistory() : [];
+
+  const [shareImport, setShareImport] = useState<{
+    map: BangMap;
+    count: number;
+  } | null>(null);
+
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (!hash.startsWith("#bangs=")) {
+      return;
+    }
+    const map = decodeShare(hash.slice("#bangs=".length));
+    if (!(map && isValidBangMap(map))) {
+      return;
+    }
+    const count = Object.keys(map).length;
+    if (count === 0) {
+      return;
+    }
+    setShareImport({ map, count });
+  }, []);
+
+  const acceptShareImport = () => {
+    if (!shareImport) {
+      return;
+    }
+    const existing = readCustomBangs();
+    const merged = { ...existing, ...shareImport.map };
+    storage.set(LS_KEYS.CUSTOM_BANGS, JSON.stringify(merged));
+    syncPrefsCookie();
+    setShareImport(null);
+    window.location.hash = "";
+  };
+
+  const dismissShareImport = () => {
+    setShareImport(null);
+    window.location.hash = "";
+  };
+
+  const testerInputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (open) {
+        return;
+      }
+      const target = e.target as HTMLElement | null;
+      const inField =
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable);
+      if (inField) {
+        return;
+      }
+      if (e.key === "/") {
+        e.preventDefault();
+        testerInputRef.current?.focus();
+      } else if (e.key === "s") {
+        e.preventDefault();
+        setOpen(true);
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
 
   return (
     <div className="flex h-screen flex-col items-center justify-center">
@@ -63,6 +134,37 @@ export function Landing() {
           </a>
         </p>
         <CopyUrl audio={audio} reducedMotion={reducedMotion} />
+        {shareImport ? (
+          <div
+            className="mt-4 flex flex-col gap-2 rounded-md border border-border bg-bg-muted p-3 text-left text-sm"
+            role="alert"
+          >
+            <span>
+              Import {shareImport.count} shared custom bang
+              {shareImport.count === 1 ? "" : "s"}?
+            </span>
+            <div className="flex justify-end gap-2">
+              <button
+                className="rounded-md border border-border bg-bg px-3 py-1 text-fg text-sm transition hover:bg-bg-hover"
+                onClick={dismissShareImport}
+                type="button"
+              >
+                Dismiss
+              </button>
+              <button
+                className="rounded-md bg-fg px-3 py-1 text-bg text-sm transition hover:brightness-90"
+                onClick={acceptShareImport}
+                type="button"
+              >
+                Import
+              </button>
+            </div>
+          </div>
+        ) : null}
+        <BangTester inputRef={testerInputRef} />
+        <p className="mt-2 text-fg-muted text-xs">
+          Shortcuts: <kbd>/</kbd> focus tester · <kbd>s</kbd> settings
+        </p>
 
         {historyEnabled ? (
           <>

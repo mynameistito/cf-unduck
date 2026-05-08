@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import { resolveBangRedirect } from "./redirect";
-import type { BangMap } from "./types";
+import { resolveBangRedirect } from "@/lib/redirect";
+import type { BangMap } from "@/lib/types";
 
 const bangs: BangMap = {
   g: { d: "google.com", s: "Google", u: "https://google.com/search?q={{{s}}}" },

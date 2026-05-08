@@ -1,5 +1,5 @@
 import { describe, expect, it, mock } from "bun:test";
-import worker from "./worker";
+import worker from "@/worker";
 
 function makeEnv() {
   return {

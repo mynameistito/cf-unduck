@@ -23,6 +23,7 @@
   "include": [
     "src",
     "scripts",
+    "__tests__",
     "vite.config.ts",
     "app.config.ts",
     "worker-configuration.d.ts"

@@ -7,6 +7,9 @@ const B64_PAD_RE = /=+$/;
 function bytesToB64Url(bytes: Uint8Array): string {
   let bin = "";
   const CHUNK = 0x80_00;
+  // Chunked index loop (not for...of) so we can spread `bytes.subarray(i, i + CHUNK)`
+  // into String.fromCharCode in fixed-size CHUNK windows — avoids per-byte function
+  // calls and stays under the JS arg-count limit on large payloads.
   for (let i = 0; i < bytes.length; i += CHUNK) {
     bin += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
   }
@@ -67,12 +70,15 @@ export async function decodeShare(token: string): Promise<BangMap | null> {
     }
     const out = Object.create(null) as BangMap;
     for (const row of parsed) {
-      if (
-        !Array.isArray(row) ||
-        row.length !== 4 ||
-        row.some((x) => typeof x !== "string")
-      ) {
+      if (!Array.isArray(row) || row.length !== 4) {
         return null;
+      }
+      // Index loop (not .some) — .some skips holes in sparse arrays, which would
+      // let `undefined` slip through into the decoded map.
+      for (let i = 0; i < 4; i++) {
+        if (typeof row[i] !== "string") {
+          return null;
+        }
       }
       const [t, s, u, d] = row as [string, string, string, string];
       out[t] = { s, u, d };

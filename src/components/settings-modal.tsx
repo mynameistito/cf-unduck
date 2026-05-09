@@ -883,7 +883,14 @@ function ImportExportSection() {
       setImportError("No custom bangs to share");
       return;
     }
-    const url = `${window.location.origin}/#bangs=${await encodeShare(map)}`;
+    let token: string;
+    try {
+      token = await encodeShare(map);
+    } catch {
+      setImportError("Failed to encode share link");
+      return;
+    }
+    const url = `${window.location.origin}/#bangs=${token}`;
     try {
       await navigator.clipboard.writeText(url);
     } catch {

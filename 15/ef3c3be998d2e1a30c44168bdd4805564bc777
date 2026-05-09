@@ -1,0 +1,22 @@
+src/components/settings-modal.tsx
+  s_32444d02edbfc0::t_ad7e153a156aaa 886-893
+src/lib/share-bangs.ts
+  s_32444d02edbfc0::t_b4c43d40c5e036 10-12
+  s_32444d02edbfc0::t_203cfdb83fccb1 73,76-81
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "15ef3c3be998d2e1a30c44168bdd4805564bc777",
+  "prompts": {},
+  "sessions": {
+    "s_32444d02edbfc0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8b10ea93-b10d-4cc8-a2c5-b9dc69aacbb6",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Tito <github@mynameistito.com>"
+    }
+  }
+}

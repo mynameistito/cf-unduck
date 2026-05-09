@@ -1,0 +1,19 @@
+src/lib/share-bangs.ts
+  s_32444d02edbfc0::t_86bb785dae8da7 27-29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "9a5adf016459d4d616d598437b231b57d5499043",
+  "prompts": {},
+  "sessions": {
+    "s_32444d02edbfc0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8b10ea93-b10d-4cc8-a2c5-b9dc69aacbb6",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Tito <github@mynameistito.com>"
+    }
+  }
+}

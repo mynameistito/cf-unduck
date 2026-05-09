@@ -13,6 +13,7 @@ import {
 } from "@/lib/constants";
 import { clearSearchHistory, getSearchHistory } from "@/lib/history";
 import { syncPrefsCookie } from "@/lib/prefs-cookie";
+import { encodeShare } from "@/lib/share-bangs";
 import type { Bang, BangMap } from "@/lib/types";
 
 interface Props {
@@ -860,22 +861,6 @@ function applyImport(data: unknown): string | null {
   return null;
 }
 
-const B64_PLUS_RE = /\+/g;
-const B64_SLASH_RE = /\//g;
-const B64_PAD_RE = /=+$/;
-
-function encodeShare(map: BangMap): string {
-  const bytes = new TextEncoder().encode(JSON.stringify(map));
-  let bin = "";
-  for (const b of bytes) {
-    bin += String.fromCharCode(b);
-  }
-  return btoa(bin)
-    .replace(B64_PLUS_RE, "-")
-    .replace(B64_SLASH_RE, "_")
-    .replace(B64_PAD_RE, "");
-}
-
 function ImportExportSection() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [importError, setImportError] = useState<string | null>(null);
@@ -898,7 +883,14 @@ function ImportExportSection() {
       setImportError("No custom bangs to share");
       return;
     }
-    const url = `${window.location.origin}/#bangs=${encodeShare(map)}`;
+    let token: string;
+    try {
+      token = await encodeShare(map);
+    } catch {
+      setImportError("Failed to encode share link");
+      return;
+    }
+    const url = `${window.location.origin}/#bangs=${token}`;
     try {
       await navigator.clipboard.writeText(url);
     } catch {

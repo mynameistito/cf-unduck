@@ -1,0 +1,27 @@
+src/components/landing.tsx
+  s_bb37e97d1f7ab6::t_0975aa6b5cc563 60-74
+src/components/settings-modal.tsx
+  s_bb37e97d1f7ab6::t_864b85333226c6 16
+  s_bb37e97d1f7ab6::t_658a451a8826fc 886
+src/lib/share-bangs.ts
+  s_bb37e97d1f7ab6::t_92aa00580c17d2 3-8,10-29,41,43-46,48-60,62-63,65,68-80
+  s_bb37e97d1f7ab6::t_aaaaddd03af5bd 30,33
+  s_bb37e97d1f7ab6::t_b9e8f716ccced2 31-32,35
+  s_bb37e97d1f7ab6::t_601982b40527e8 34,36-40,42,47
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "0ce16468bba3238d2dddc9e779312ae98df28415",
+  "prompts": {},
+  "sessions": {
+    "s_bb37e97d1f7ab6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "43d6fd6d-d87e-490d-9573-17cf96cc2a88",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Tito <github@mynameistito.com>"
+    }
+  }
+}

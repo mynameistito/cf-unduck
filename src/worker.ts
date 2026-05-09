@@ -7,7 +7,8 @@ interface WorkerEnv {
   ASSETS: Fetcher;
 }
 
-const SUGGEST_UPSTREAM = "https://duckduckgo.com/ac/?type=list&q=";
+const SUGGEST_UPSTREAM =
+  "https://suggestqueries.google.com/complete/search?client=firefox&q=";
 const SUGGESTION_CACHE_TTL_SECONDS = 60;
 
 function isHandledPath(path: string): string | null {

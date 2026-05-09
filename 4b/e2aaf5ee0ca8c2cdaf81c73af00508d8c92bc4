@@ -1,0 +1,19 @@
+src/worker.ts
+  s_cb1a23b95c8a46::t_dd7c1c41a2d7a9 10-11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "4be2aaf5ee0ca8c2cdaf81c73af00508d8c92bc4",
+  "prompts": {},
+  "sessions": {
+    "s_cb1a23b95c8a46": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c402b702-448c-408f-ae20-7fef380092d5",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Tito <github@mynameistito.com>"
+    }
+  }
+}

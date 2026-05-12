@@ -17,14 +17,14 @@
     "prepare": "lefthook install"
   },
   "dependencies": {
-    "@tanstack/react-router": "^1.169.8",
+    "@tanstack/react-router": "^1.169.2",
     "react": "^19.2.6",
     "react-dom": "^19.2.6"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.15",
     "@tailwindcss/vite": "^4.3.0",
-    "@tanstack/router-plugin": "^1.167.41",
+    "@tanstack/router-plugin": "^1.167.35",
     "@types/bun": "^1.3.13",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
@@ -38,5 +38,13 @@
     "vite": "^8.0.12",
     "vite-plugin-pwa": "^1.3.0",
     "wrangler": "^4.90.0"
+  },
+  "overrides": {
+    "@babel/plugin-transform-modules-systemjs": "^7.29.4",
+    "fast-uri": "^3.1.2"
+  },
+  "resolutions": {
+    "@babel/plugin-transform-modules-systemjs": "^7.29.4",
+    "fast-uri": "^3.1.2"
   }
 }

@@ -17485,11 +17485,11 @@
   },
   {
     "s": "Diccionariu de l'Academia de la Llingua Asturiana",
-    "d": "asturianu.elahorcado.net",
+    "d": "www.diccionariu.alladixital.org",
     "t": "dalla",
-    "u": "https://asturianu.elahorcado.net/search.php?search={{{s}}}",
+    "u": "https://www.diccionariu.alladixital.org/index.php?pallabra={{{s}}}",
     "c": "Research",
-    "sc": "Academic"
+    "sc": "Reference (words intl)"
   },
   {
     "s": "The Dallas Morning News",
@@ -57403,15 +57403,10 @@
     "s": "The New York Times",
     "d": "www.nytimes.com",
     "t": "nytimes",
+    "ts": [
+      "nyt"
+    ],
     "u": "https://www.nytimes.com/search?query={{{s}}}",
-    "c": "News",
-    "sc": "Newspaper"
-  },
-  {
-    "s": "New York Times",
-    "d": "query.nytimes.com",
-    "t": "nyt",
-    "u": "https://query.nytimes.com/search/sitesearch?query={{{s}}}&srchst=cse",
     "c": "News",
     "sc": "Newspaper"
   },

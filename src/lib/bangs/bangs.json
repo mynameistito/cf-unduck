@@ -7172,7 +7172,7 @@
       "b&n",
       "bn"
     ],
-    "u": "https://www.barnesandnoble.com/s/{{{s}}}",
+    "u": "https://www.barnesandnoble.com/search?q={{{s}}}",
     "c": "Shopping",
     "sc": "Big box/department"
   },
@@ -90684,6 +90684,18 @@
     "d": "search.nixos.org",
     "t": "nixopt",
     "u": "https://search.nixos.org/options?query={{{s}}}",
+    "c": "Tech",
+    "sc": "Languages (nix)"
+  },
+  {
+    "s": "NixOS Home Manager Options Search",
+    "d": "search.nixos.org",
+    "t": "nixhopt",
+    "ts": [
+      "nixhmopt",
+      "nixhmo"
+    ],
+    "u": "https://search.nixos.org/options?query={{{s}}}&source=home_manager",
     "c": "Tech",
     "sc": "Languages (nix)"
   },

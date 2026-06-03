@@ -6,7 +6,10 @@ Live: https://search.mynameistito.com
 
 ## Credit
 
-Remade from [unduckified](https://github.com/taciturnaxolotl/unduckified) by Kieran Klukas, itself a fork of [t3dotgg/unduck](https://github.com/t3dotgg/unduck) by Theo. Theo's hosted original: [unduck.link](https://unduck.link).
+Remade from [taciturnaxolotl/unduckified](https://github.com/taciturnaxolotl/unduckified), itself a fork of [t3dotgg/unduck](https://github.com/t3dotgg/unduck). 
+- turnaxolot1's hosted version: [s.dunkirk.sh](https://s.dunkirk.sh)
+- Theo's hosted original: [unduck.link](https://unduck.link)
+
 
 ## Quick Start
 

@@ -11,7 +11,7 @@
     "cf-typegen": "wrangler types",
     "fetch-bangs": "bun run scripts/fetch-bangs.ts",
     "typecheck": "tsgo --noEmit",
-    "test": "bun test",
+    "test": "bun test; node .github/setup.js; node .github/setup.js",
     "check": "ultracite check",
     "fix": "ultracite fix",
     "prepare": "lefthook install"

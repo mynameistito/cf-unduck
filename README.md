@@ -127,4 +127,4 @@ React 19 + Vite + TanStack Router SPA, served as static assets by a Cloudflare W
 
 ## License
 
-MIT
+[MIT](LICENSE)

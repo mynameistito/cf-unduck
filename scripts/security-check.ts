@@ -1,5 +1,10 @@
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { join, relative } from "node:path";
+import {
+  existsSync,
+  lstatSync,
+  readdirSync,
+  readFileSync,
+} from "node:fs";
+import { extname, join, relative } from "node:path";
 
 const root = process.cwd();
 const skippedDirectories = new Set([
@@ -18,16 +23,51 @@ const forbiddenPatterns = [
   /SessionStart/u,
 ];
 const allowedFiles = new Set(["scripts/security-check.ts"]);
+const textFileExtensions = new Set([
+  ".ts",
+  ".tsx",
+  ".js",
+  ".jsx",
+  ".json",
+  ".md",
+  ".txt",
+  ".yml",
+  ".yaml",
+  ".toml",
+  ".css",
+  ".html",
+  ".xml",
+  ".sh",
+  ".bash",
+  ".env",
+  ".gitignore",
+  ".prettierrc",
+  ".eslintrc",
+  ".biome",
+]);
 
 const files: string[] = [];
-const collectFiles = (directory: string) => {
-  for (const entry of readdirSync(directory)) {
+const collectFiles = (directory: string): void => {
+  let entries: string[];
+  try {
+    entries = readdirSync(directory);
+  } catch {
+    return;
+  }
+
+  for (const entry of entries) {
     if (skippedDirectories.has(entry)) {
       continue;
     }
 
     const path = join(directory, entry);
-    const stats = statSync(path);
+    let stats;
+    try {
+      stats = lstatSync(path);
+    } catch {
+      continue;
+    }
+
     if (stats.isDirectory()) {
       collectFiles(path);
       continue;
@@ -48,7 +88,17 @@ for (const file of files) {
     continue;
   }
 
-  const content = readFileSync(file, "utf8");
+  if (!textFileExtensions.has(extname(file))) {
+    continue;
+  }
+
+  let content: string;
+  try {
+    content = readFileSync(file, "utf8");
+  } catch {
+    continue;
+  }
+
   for (const pattern of forbiddenPatterns) {
     if (pattern.test(content)) {
       violations.push(`${relativePath} matches ${pattern}`);

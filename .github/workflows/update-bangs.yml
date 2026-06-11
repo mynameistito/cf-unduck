@@ -40,7 +40,11 @@ jobs:
           git commit -m "chore: update bangs.json"
           git push --force-with-lease origin automation/update-bangs
 
-          gh pr view automation/update-bangs --json number || gh pr create \
+          gh pr list \
+            --head automation/update-bangs \
+            --state open \
+            --json number \
+            --jq 'length > 0' | grep -q true || gh pr create \
             --base main \
             --head automation/update-bangs \
             --title "chore: update bangs.json" \

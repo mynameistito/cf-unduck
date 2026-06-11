@@ -1,13 +1,16 @@
-import { type RefObject, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import type { RefObject } from "react";
+
 import {
   useLocalStorage,
   useLocalStorageString,
 } from "@/hooks/use-local-storage";
 import { DEFAULT_BANG_SHORTCUT, LS_KEYS } from "@/lib/constants";
-import { type RedirectResult, resolveBangRedirect } from "@/lib/redirect";
+import { resolveBangRedirect } from "@/lib/redirect";
+import type { RedirectResult } from "@/lib/redirect";
 import type { BangMap } from "@/lib/types";
 
-function PreviewLine({ preview }: { preview: RedirectResult }) {
+const PreviewLine = ({ preview }: { preview: RedirectResult }) => {
   if (preview.kind === "redirect") {
     return (
       <p className="mt-2 break-all text-fg-muted text-xs">
@@ -23,13 +26,13 @@ function PreviewLine({ preview }: { preview: RedirectResult }) {
     );
   }
   return <p className="mt-2 break-all text-fg-muted text-xs">(no match)</p>;
-}
+};
 
 interface Props {
   inputRef?: RefObject<HTMLInputElement | null>;
 }
 
-export function BangTester({ inputRef }: Props) {
+export const BangTester = ({ inputRef }: Props) => {
   const [query, setQuery] = useState("");
   const [bangs, setBangs] = useState<BangMap | null>(null);
   const [defaultBang] = useLocalStorageString(
@@ -40,18 +43,20 @@ export function BangTester({ inputRef }: Props) {
 
   useEffect(() => {
     let cancelled = false;
-    import("@/lib/bangs/hashbang")
-      .then((m) => {
+    const loadBangs = async () => {
+      try {
+        const m = await import("@/lib/bangs/hashbang");
         if (!cancelled) {
           setBangs(m.bangs);
         }
-      })
-      .catch((err) => {
-        console.error("Failed to load bangs", err);
+      } catch (error) {
+        console.error("Failed to load bangs", error);
         if (!cancelled) {
           setBangs({});
         }
-      });
+      }
+    };
+    void loadBangs();
     return () => {
       cancelled = true;
     };
@@ -59,10 +64,10 @@ export function BangTester({ inputRef }: Props) {
 
   const preview = bangs
     ? resolveBangRedirect({
-        query,
         bangs,
         customBangs,
         defaultBangShortcut: defaultBang,
+        query,
       })
     : null;
 
@@ -100,4 +105,4 @@ export function BangTester({ inputRef }: Props) {
       {query.trim() && preview ? <PreviewLine preview={preview} /> : null}
     </form>
   );
-}
+};

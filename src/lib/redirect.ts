@@ -1,11 +1,11 @@
 import type { Bang, BangMap } from "./types";
 
-const BANG_MATCH_RE = /^!(\S+)|!(\S+)$/i;
-export const BANG_STRIP_RE = /!\S+\s*|^(\S+!|!\S+)$/i;
-const KAGI_SITE_BANG_RE = /^\/search\?q=\{\{\{s\}\}\}\+site:/;
-const KAGI_SITE_EXTRACT_RE = /\+site:([^\s&]+)/;
-const TRAILING_SLASH_RE = /\/$/;
-const ENCODE_SLASH_RE = /%2F/g;
+const BANG_MATCH_RE = /^!(?<prefix>\S+)|!(?<suffix>\S+)$/iu;
+export const BANG_STRIP_RE = /!\S+\s*|^(?<bang>\S+!|!\S+)$/iu;
+const KAGI_SITE_BANG_RE = /^\/search\?q=\{\{\{s\}\}\}\+site:/u;
+const KAGI_SITE_EXTRACT_RE = /\+site:(?<site>[^\s&]+)/u;
+const TRAILING_SLASH_RE = /\/$/u;
+const ENCODE_SLASH_RE = /%2F/gu;
 
 export interface RedirectInput {
   bangs: BangMap;
@@ -19,22 +19,63 @@ export type RedirectResult =
   | { kind: "landing" }
   | { kind: "notfound" };
 
-function ensureProtocol(url: string, defaultProtocol = "https://"): string {
+const ensureProtocol = (url: string, defaultProtocol = "https://"): string => {
   try {
     return new URL(url).href;
   } catch {
     return `${defaultProtocol}${url}`;
   }
-}
+};
 
-function encodeQuery(query: string): string {
-  return encodeURIComponent(query).replace(ENCODE_SLASH_RE, "/");
-}
+const encodeQuery = (query: string): string =>
+  encodeURIComponent(query).replace(ENCODE_SLASH_RE, "/");
 
-export function resolveBangRedirect(
+const redirectResult = (
+  bang: Bang,
+  bangShortcut: string,
+  url: string
+): RedirectResult => ({
+  bang,
+  bangShortcut,
+  kind: "redirect",
+  url: ensureProtocol(url),
+});
+
+const getBangBaseUrl = (bang: Bang): string => {
+  const alternateDomain = bang.ad?.trim();
+  return alternateDomain ? (bang.ad ?? bang.d) : bang.d;
+};
+
+const resolveKagiSiteRedirect = (
+  selectedBang: Bang,
+  defaultBang: Bang | undefined,
+  bangShortcut: string,
+  cleanQuery: string
+): RedirectResult | null => {
+  const isKagiSiteBang =
+    selectedBang.s.includes("(Kagi Search)") &&
+    KAGI_SITE_BANG_RE.test(selectedBang.u);
+  if (!(isKagiSiteBang && defaultBang?.u)) {
+    return null;
+  }
+
+  const site = selectedBang.u.match(KAGI_SITE_EXTRACT_RE)?.groups?.site;
+  if (!site) {
+    return null;
+  }
+
+  const queryWithSite = `${cleanQuery} site:${site}`;
+  return redirectResult(
+    selectedBang,
+    bangShortcut,
+    defaultBang.u.replace("{{{s}}}", encodeQuery(queryWithSite))
+  );
+};
+
+export const resolveBangRedirect = (
   input: RedirectInput,
   pathname = "/"
-): RedirectResult {
+): RedirectResult => {
   const cleanPath = pathname.replace(TRAILING_SLASH_RE, "");
   if (cleanPath !== "" && cleanPath !== "/search") {
     return { kind: "notfound" };
@@ -47,7 +88,11 @@ export function resolveBangRedirect(
 
   const match = query.match(BANG_MATCH_RE);
   const bangShortcut = match
-    ? (match[1] ?? match[2] ?? input.defaultBangShortcut).toLowerCase()
+    ? (
+        match.groups?.prefix ??
+        match.groups?.suffix ??
+        input.defaultBangShortcut
+      ).toLowerCase()
     : input.defaultBangShortcut;
 
   const selectedBang =
@@ -62,44 +107,27 @@ export function resolveBangRedirect(
     return { kind: "landing" };
   }
 
-  if (!cleanQuery && selectedBang.d) {
-    return {
-      kind: "redirect",
-      url: ensureProtocol(selectedBang.ad ?? selectedBang.d),
+  if (!cleanQuery) {
+    return redirectResult(
+      selectedBang,
       bangShortcut,
-      bang: selectedBang,
-    };
+      getBangBaseUrl(selectedBang)
+    );
   }
 
-  const isKagiSiteBang =
-    selectedBang.s.includes("(Kagi Search)") &&
-    KAGI_SITE_BANG_RE.test(selectedBang.u);
-
-  if (isKagiSiteBang && defaultBang?.u) {
-    const siteMatch = selectedBang.u.match(KAGI_SITE_EXTRACT_RE);
-    if (siteMatch?.[1]) {
-      const queryWithSite = `${cleanQuery} site:${siteMatch[1]}`;
-      const redirectUrl = defaultBang.u.replace(
-        "{{{s}}}",
-        encodeQuery(queryWithSite)
-      );
-      return {
-        kind: "redirect",
-        url: ensureProtocol(redirectUrl),
-        bangShortcut,
-        bang: selectedBang,
-      };
-    }
-  }
-
-  const redirectUrl = selectedBang.u.replace(
-    "{{{s}}}",
-    encodeQuery(cleanQuery)
-  );
-  return {
-    kind: "redirect",
-    url: ensureProtocol(redirectUrl),
+  const kagiSiteRedirect = resolveKagiSiteRedirect(
+    selectedBang,
+    defaultBang,
     bangShortcut,
-    bang: selectedBang,
-  };
-}
+    cleanQuery
+  );
+  if (kagiSiteRedirect) {
+    return kagiSiteRedirect;
+  }
+
+  return redirectResult(
+    selectedBang,
+    bangShortcut,
+    selectedBang.u.replace("{{{s}}}", encodeQuery(cleanQuery))
+  );
+};

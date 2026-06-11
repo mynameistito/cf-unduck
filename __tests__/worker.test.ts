@@ -1,29 +1,29 @@
 import { describe, expect, it, mock } from "bun:test";
+
 import worker from "@/worker";
 
-function makeEnv() {
-  return {
-    ASSETS: {
-      fetch: mock(
-        (req: Request) =>
-          new Response(`asset:${new URL(req.url).pathname}`, { status: 200 })
-      ),
-    },
-  };
-}
+const makeEnv = () => ({
+  ASSETS: {
+    fetch: mock(
+      (request: Request) =>
+        new Response(`asset:${new URL(request.url).pathname}`, {
+          status: 200,
+        })
+    ),
+  },
+});
 
 const ctx = {
-  waitUntil: () => {
+  passThroughOnException: () => {
     /* noop */
   },
-  passThroughOnException: () => {
+  waitUntil: () => {
     /* noop */
   },
 } as unknown as ExecutionContext;
 
-function req(url: string, init?: RequestInit): Request {
-  return new Request(url, init);
-}
+const req = (url: string, init?: RequestInit): Request =>
+  new Request(url, init);
 
 describe("worker fetch", () => {
   it("redirects on /?q=!g foo", async () => {

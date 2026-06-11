@@ -1,12 +1,12 @@
 import { useEffect, useRef } from "react";
 
 const SOURCES = {
+  click: "/click-button.opus",
+  copy: "/foot-switch.opus",
   spin: "/heavier-tick-sprite.opus",
   toggleOff: "/toggle-button-off.opus",
   toggleOn: "/toggle-button-on.opus",
-  click: "/click-button.opus",
   warning: "/double-button.opus",
-  copy: "/foot-switch.opus",
 } as const;
 
 export type AudioName = keyof typeof SOURCES;
@@ -20,7 +20,7 @@ export interface AudioController {
   reset: (name: AudioName) => void;
 }
 
-export function useAudio(enabled: boolean): AudioController {
+export const useAudio = (enabled: boolean): AudioController => {
   const ref = useRef<Partial<Record<AudioName, HTMLAudioElement>>>({});
   const enabledRef = useRef(enabled);
   enabledRef.current = enabled;
@@ -50,9 +50,14 @@ export function useAudio(enabled: boolean): AudioController {
       a.playbackRate = opts.rate;
     }
     a.currentTime = opts?.from ?? 0;
-    a.play().catch(() => {
-      /* autoplay blocked or interrupted */
-    });
+    const playAudio = async () => {
+      try {
+        await a.play();
+      } catch {
+        // Autoplay can be blocked or interrupted by rapid UI changes.
+      }
+    };
+    void playAudio();
   };
 
   const pause: AudioController["pause"] = (name) => {
@@ -72,5 +77,5 @@ export function useAudio(enabled: boolean): AudioController {
     a.currentTime = 0;
   };
 
-  return { play, pause, reset };
-}
+  return { pause, play, reset };
+};

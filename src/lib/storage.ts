@@ -3,7 +3,7 @@ const isBrowser = typeof window !== "undefined";
 type Listener = () => void;
 const listeners = new Map<string, Set<Listener>>();
 
-function notify(key: string): void {
+const notify = (key: string): void => {
   const set = listeners.get(key);
   if (!set) {
     return;
@@ -11,7 +11,7 @@ function notify(key: string): void {
   for (const fn of set) {
     fn();
   }
-}
+};
 
 if (isBrowser) {
   window.addEventListener("storage", (e) => {

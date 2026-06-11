@@ -10,8 +10,9 @@ interface WorkerEnv {
 const SUGGEST_UPSTREAM =
   "https://suggestqueries.google.com/complete/search?client=firefox&q=";
 const SUGGESTION_CACHE_TTL_SECONDS = 60;
+const SUGGESTION_FETCH_TIMEOUT_MS = 1500;
 
-function isHandledPath(path: string): string | null {
+const isHandledPath = (path: string): string | null => {
   if (path === "/") {
     return "/";
   }
@@ -19,54 +20,63 @@ function isHandledPath(path: string): string | null {
     return "/search";
   }
   return null;
-}
+};
 
-async function handleSuggest(url: URL): Promise<Response> {
+const emptySuggestions = (status: number): Response =>
+  new Response("[]", {
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Cache-Control": "no-store",
+      "Content-Type": "application/json; charset=utf-8",
+    },
+    status,
+  });
+
+const handleSuggest = async (url: URL): Promise<Response> => {
   const q = url.searchParams.get("q") ?? "";
   if (!q) {
     return new Response("[]", {
       headers: {
-        "Content-Type": "application/json; charset=utf-8",
         "Cache-Control": `public, max-age=${SUGGESTION_CACHE_TTL_SECONDS}`,
+        "Content-Type": "application/json; charset=utf-8",
       },
     });
   }
+  const controller = new AbortController();
+  const timeout = setTimeout(() => {
+    controller.abort();
+  }, SUGGESTION_FETCH_TIMEOUT_MS);
   try {
     const upstream = await fetch(SUGGEST_UPSTREAM + encodeURIComponent(q), {
       cf: {
-        cacheTtl: SUGGESTION_CACHE_TTL_SECONDS,
         cacheEverything: true,
+        cacheTtl: SUGGESTION_CACHE_TTL_SECONDS,
       },
+      signal: controller.signal,
     });
     if (!upstream.ok) {
       return emptySuggestions(upstream.status);
     }
     const body = await upstream.text();
     return new Response(body, {
-      status: upstream.status,
       headers: {
-        "Content-Type": "application/json; charset=utf-8",
-        "Cache-Control": `public, max-age=${SUGGESTION_CACHE_TTL_SECONDS}`,
         "Access-Control-Allow-Origin": "*",
+        "Cache-Control": `public, max-age=${SUGGESTION_CACHE_TTL_SECONDS}`,
+        "Content-Type": "application/json; charset=utf-8",
       },
+      status: upstream.status,
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      return emptySuggestions(504);
+    }
     return emptySuggestions(502);
+  } finally {
+    clearTimeout(timeout);
   }
-}
+};
 
-function emptySuggestions(status: number): Response {
-  return new Response("[]", {
-    status,
-    headers: {
-      "Content-Type": "application/json; charset=utf-8",
-      "Cache-Control": "no-store",
-      "Access-Control-Allow-Origin": "*",
-    },
-  });
-}
-
-const PREFS_COOKIE_RE = /(?:^|;\s*)udprefs=/;
+const PREFS_COOKIE_RE = /(?:^|;\s*)udprefs=/u;
 const REDIRECT_EDGE_TTL_SECONDS = 86_400;
 
 export default {
@@ -110,7 +120,7 @@ export default {
     const defaultBangShortcut = prefs.d || DEFAULT_BANG_SHORTCUT;
 
     const result = resolveBangRedirect(
-      { query: q, bangs, customBangs: prefs.c ?? {}, defaultBangShortcut },
+      { bangs, customBangs: prefs.c ?? {}, defaultBangShortcut, query: q },
       handledPath
     );
 
@@ -135,7 +145,7 @@ export default {
         `public, s-maxage=${REDIRECT_EDGE_TTL_SECONDS}, max-age=0`;
     }
 
-    const response = new Response(null, { status: 302, headers });
+    const response = new Response(null, { headers, status: 302 });
 
     if (!hasPrefs && cache) {
       ctx.waitUntil(cache.put(request, response.clone()));

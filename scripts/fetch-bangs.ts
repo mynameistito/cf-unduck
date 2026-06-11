@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 import { mkdir, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import path from "node:path";
 
 const BANGS_URL =
   "https://raw.githubusercontent.com/kagisearch/bangs/refs/heads/main/data/bangs.json";
@@ -21,21 +21,21 @@ interface RuntimeBang {
   u: string;
 }
 
+const RESERVED_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+
+const isSafeBangKey = (key: unknown): key is string =>
+  typeof key === "string" && key.trim().length > 0 && !RESERVED_KEYS.has(key);
+
 const curatedSeed: Record<string, RuntimeBang> = {
-  t3: {
-    d: "www.t3.chat",
-    s: "T3 Chat",
-    u: "https://www.t3.chat/new?q={{{s}}}",
+  assistant: {
+    d: "kagi.com",
+    s: "Kagi Assistant",
+    u: "https://kagi.com/assistant?q={{{s}}}",
   },
-  m2: {
-    d: "meta.dunkirk.sh",
-    s: "metasearch2",
-    u: "https://meta.dunkirk.sh/search?q={{{s}}}",
-  },
-  tiktok: {
-    d: "www.tiktok.com",
-    s: "TikTok",
-    u: "https://www.tiktok.com/search?q={{{s}}}",
+  fastgpt: {
+    d: "kagi.com",
+    s: "Kagi FastGPT",
+    u: "https://kagi.com/fastgpt?q={{{s}}}",
   },
   image: {
     d: "duckduckgo.com",
@@ -47,76 +47,81 @@ const curatedSeed: Record<string, RuntimeBang> = {
     s: "Kagi Search",
     u: "https://kagi.com/search?q={{{s}}}",
   },
+  ka: {
+    d: "kagi.com",
+    s: "Kagi Assistant",
+    u: "https://kagi.com/assistant?q={{{s}}}",
+  },
   kagi: {
     d: "kagi.com",
     s: "Kagi Search",
     u: "https://kagi.com/search?q={{{s}}}",
-  },
-  ki: {
-    d: "kagi.com",
-    s: "Kagi Images",
-    u: "https://kagi.com/images?q={{{s}}}",
   },
   kagii: {
     d: "kagi.com",
     s: "Kagi Images",
     u: "https://kagi.com/images?q={{{s}}}",
   },
-  kv: {
-    d: "kagi.com",
-    s: "Kagi Videos",
-    u: "https://kagi.com/videos?q={{{s}}}",
-  },
-  kagiv: {
-    d: "kagi.com",
-    s: "Kagi Videos",
-    u: "https://kagi.com/videos?q={{{s}}}",
-  },
-  kn: { d: "kagi.com", s: "Kagi News", u: "https://kagi.com/news?q={{{s}}}" },
-  kagin: {
-    d: "kagi.com",
-    s: "Kagi News",
-    u: "https://kagi.com/news?q={{{s}}}",
-  },
-  km: { d: "kagi.com", s: "Kagi Maps", u: "https://kagi.com/maps?q={{{s}}}" },
   kagim: {
     d: "kagi.com",
     s: "Kagi Maps",
     u: "https://kagi.com/maps?q={{{s}}}",
   },
-  kp: {
+  kagin: {
     d: "kagi.com",
-    s: "Kagi Podcasts",
-    u: "https://kagi.com/podcasts?q={{{s}}}",
+    s: "Kagi News",
+    u: "https://kagi.com/news?q={{{s}}}",
   },
   kagip: {
     d: "kagi.com",
     s: "Kagi Podcasts",
     u: "https://kagi.com/podcasts?q={{{s}}}",
   },
+  kagiv: {
+    d: "kagi.com",
+    s: "Kagi Videos",
+    u: "https://kagi.com/videos?q={{{s}}}",
+  },
   kf: {
     d: "kagi.com",
     s: "Kagi FastGPT",
     u: "https://kagi.com/fastgpt?q={{{s}}}",
   },
-  fastgpt: {
+  ki: {
     d: "kagi.com",
-    s: "Kagi FastGPT",
-    u: "https://kagi.com/fastgpt?q={{{s}}}",
+    s: "Kagi Images",
+    u: "https://kagi.com/images?q={{{s}}}",
   },
-  ka: {
+  km: { d: "kagi.com", s: "Kagi Maps", u: "https://kagi.com/maps?q={{{s}}}" },
+  kn: { d: "kagi.com", s: "Kagi News", u: "https://kagi.com/news?q={{{s}}}" },
+  kp: {
     d: "kagi.com",
-    s: "Kagi Assistant",
-    u: "https://kagi.com/assistant?q={{{s}}}",
+    s: "Kagi Podcasts",
+    u: "https://kagi.com/podcasts?q={{{s}}}",
   },
-  assistant: {
+  kv: {
     d: "kagi.com",
-    s: "Kagi Assistant",
-    u: "https://kagi.com/assistant?q={{{s}}}",
+    s: "Kagi Videos",
+    u: "https://kagi.com/videos?q={{{s}}}",
+  },
+  m2: {
+    d: "meta.dunkirk.sh",
+    s: "metasearch2",
+    u: "https://meta.dunkirk.sh/search?q={{{s}}}",
+  },
+  t3: {
+    d: "www.t3.chat",
+    s: "T3 Chat",
+    u: "https://www.t3.chat/new?q={{{s}}}",
+  },
+  tiktok: {
+    d: "www.tiktok.com",
+    s: "TikTok",
+    u: "https://www.tiktok.com/search?q={{{s}}}",
   },
 };
 
-async function main(): Promise<void> {
+const main = async (): Promise<void> => {
   console.log(`fetching ${BANGS_URL}`);
   const res = await fetch(BANGS_URL);
   if (!res.ok) {
@@ -130,20 +135,26 @@ async function main(): Promise<void> {
   let raw: RawBang[];
   try {
     raw = JSON.parse(text);
-  } catch (err) {
-    throw new Error(`invalid JSON: ${(err as Error).message}`);
+  } catch (error) {
+    throw new Error(`invalid JSON: ${(error as Error).message}`, {
+      cause: error,
+    });
   }
 
   if (!Array.isArray(raw)) {
-    throw new Error("expected array at root");
+    throw new TypeError("expected array at root");
   }
 
-  const hashbang: Record<string, RuntimeBang> = { ...curatedSeed };
+  const hashbang: Record<string, RuntimeBang> = Object.create(null) as Record<
+    string,
+    RuntimeBang
+  >;
+  Object.assign(hashbang, curatedSeed);
   let skipped = 0;
 
   for (const bang of raw) {
-    if (!(bang.t && bang.u && bang.s && bang.d)) {
-      skipped++;
+    if (!(isSafeBangKey(bang.t) && bang.u && bang.s && bang.d)) {
+      skipped += 1;
       continue;
     }
     const entry: RuntimeBang = { d: bang.d, s: bang.s, u: bang.u };
@@ -154,23 +165,28 @@ async function main(): Promise<void> {
     hashbang[bang.t] = entry;
     if (bang.ts) {
       for (const trigger of bang.ts) {
+        if (!isSafeBangKey(trigger)) {
+          continue;
+        }
         hashbang[trigger] = entry;
       }
     }
   }
 
-  const outDir = join(process.cwd(), "src", "lib", "bangs");
+  const outDir = path.join(process.cwd(), "src", "lib", "bangs");
   await mkdir(outDir, { recursive: true });
 
-  const jsonPath = join(outDir, "bangs.json");
+  const jsonPath = path.join(outDir, "bangs.json");
   await writeFile(jsonPath, text);
 
-  const tsPath = join(outDir, "hashbang.ts");
+  const tsPath = path.join(outDir, "hashbang.ts");
   // V8 parses JSON.parse('...') ~2-3x faster than equivalent object literals
   // for large payloads. See https://v8.dev/blog/cost-of-javascript-2019.
   const escaped = JSON.stringify(hashbang)
-    .replace(/\\/g, "\\\\")
-    .replace(/'/g, "\\'");
+    .replaceAll("\\", "\\\\")
+    .replaceAll("'", "\\'")
+    .replaceAll("\u2028", "\\u2028")
+    .replaceAll("\u2029", "\\u2029");
   const code = `// Auto-generated by scripts/fetch-bangs.ts. Do not edit by hand.
 import type { BangMap } from "@/lib/types";
 
@@ -181,6 +197,6 @@ export const bangs: BangMap = JSON.parse('${escaped}') as BangMap;
   console.log(
     `wrote ${Object.keys(hashbang).length} bangs (${skipped} skipped) to ${tsPath}`
   );
-}
+};
 
 await main();

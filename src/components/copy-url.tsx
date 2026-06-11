@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+
 import type { AudioController } from "@/hooks/use-audio";
 import { ANIMATION_DURATION_MS } from "@/lib/constants";
 import { SITE } from "@/site.config";
@@ -8,11 +9,11 @@ interface Props {
   reducedMotion: boolean;
 }
 
-export function CopyUrl({ audio, reducedMotion }: Props) {
+export const CopyUrl = ({ audio, reducedMotion }: Props) => {
   const [url, setUrl] = useState(`https://${SITE.domain}?q=%s`);
   const [copied, setCopied] = useState(false);
   const [flashing, setFlashing] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setUrl(`${window.location.protocol}//${window.location.host}?q=%s`);
@@ -25,7 +26,9 @@ export function CopyUrl({ audio, reducedMotion }: Props) {
     if (!reducedMotion) {
       setFlashing(true);
     }
-    clearTimeout(timerRef.current);
+    if (timerRef.current !== null) {
+      clearTimeout(timerRef.current);
+    }
     timerRef.current = setTimeout(() => {
       setCopied(false);
       setFlashing(false);
@@ -56,4 +59,4 @@ export function CopyUrl({ audio, reducedMotion }: Props) {
       </button>
     </div>
   );
-}
+};

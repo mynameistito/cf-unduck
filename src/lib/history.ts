@@ -2,30 +2,30 @@ import { LS_KEYS, MAX_HISTORY } from "./constants";
 import { storage } from "./storage";
 import type { SearchHistoryEntry } from "./types";
 
-export function getSearchHistory(): SearchHistoryEntry[] {
+export const getSearchHistory = (): SearchHistoryEntry[] => {
   try {
     const raw = JSON.parse(storage.get(LS_KEYS.SEARCH_HISTORY) ?? "[]");
     return Array.isArray(raw) ? (raw as SearchHistoryEntry[]) : [];
   } catch {
     return [];
   }
-}
+};
 
-export function addToSearchHistory(
+export const addToSearchHistory = (
   query: string,
   bang: { bang: string; name: string }
-): void {
+): void => {
   const history = getSearchHistory();
   history.unshift({
-    query,
     bang: bang.bang,
     name: bang.name,
+    query,
     timestamp: Date.now(),
   });
   history.splice(MAX_HISTORY);
   storage.set(LS_KEYS.SEARCH_HISTORY, JSON.stringify(history));
-}
+};
 
-export function clearSearchHistory(): void {
+export const clearSearchHistory = (): void => {
   storage.set(LS_KEYS.SEARCH_HISTORY, "[]");
-}
+};

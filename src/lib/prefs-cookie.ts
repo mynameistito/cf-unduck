@@ -2,7 +2,7 @@ import { LS_KEYS } from "./constants";
 import { readCustomBangs } from "./custom-bangs";
 import type { BangMap } from "./types";
 
-export const PREFS_COOKIE = "udprefs";
+const PREFS_COOKIE = "udprefs";
 const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365;
 const MAX_COOKIE_BYTES = 4000;
 

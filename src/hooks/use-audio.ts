@@ -9,7 +9,7 @@ const SOURCES = {
   warning: "/double-button.opus",
 } as const;
 
-export type AudioName = keyof typeof SOURCES;
+type AudioName = keyof typeof SOURCES;
 
 export interface AudioController {
   pause: (name: AudioName) => void;

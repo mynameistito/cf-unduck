@@ -6,6 +6,21 @@ export const PREFS_COOKIE = "udprefs";
 const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365;
 const MAX_COOKIE_BYTES = 4000;
 
+const setCookie = (
+  name: string,
+  value: string,
+  options: { maxAge: number; path: string; sameSite: "Lax" }
+): void => {
+  const parts = [
+    `${name}=${value}`,
+    `path=${options.path}`,
+    `max-age=${options.maxAge}`,
+    `SameSite=${options.sameSite}`,
+  ];
+  // oxlint-disable-next-line unicorn/no-document-cookie -- Cookie Store API is not available in all browsers; this cookie is read by the edge Worker.
+  document.cookie = parts.join("; ");
+};
+
 export interface Prefs {
   c?: BangMap;
   d?: string;
@@ -59,6 +74,9 @@ export const syncPrefsCookie = (): void => {
       value = encodeURIComponent(JSON.stringify({}));
     }
   }
-  // oxlint-disable-next-line unicorn/no-document-cookie -- Cookie Store API is not available in all browsers; this cookie is read by the edge Worker.
-  document.cookie = `${PREFS_COOKIE}=${value}; path=/; max-age=${ONE_YEAR_SECONDS}; SameSite=Lax`;
+  setCookie(PREFS_COOKIE, value, {
+    maxAge: ONE_YEAR_SECONDS,
+    path: "/",
+    sameSite: "Lax",
+  });
 };

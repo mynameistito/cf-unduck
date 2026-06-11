@@ -10,6 +10,7 @@ interface WorkerEnv {
 const SUGGEST_UPSTREAM =
   "https://suggestqueries.google.com/complete/search?client=firefox&q=";
 const SUGGESTION_CACHE_TTL_SECONDS = 60;
+const SUGGESTION_FETCH_TIMEOUT_MS = 1500;
 
 const isHandledPath = (path: string): string | null => {
   if (path === "/") {
@@ -41,12 +42,17 @@ const handleSuggest = async (url: URL): Promise<Response> => {
       },
     });
   }
+  const controller = new AbortController();
+  const timeout = setTimeout(() => {
+    controller.abort();
+  }, SUGGESTION_FETCH_TIMEOUT_MS);
   try {
     const upstream = await fetch(SUGGEST_UPSTREAM + encodeURIComponent(q), {
       cf: {
         cacheEverything: true,
         cacheTtl: SUGGESTION_CACHE_TTL_SECONDS,
       },
+      signal: controller.signal,
     });
     if (!upstream.ok) {
       return emptySuggestions(upstream.status);
@@ -60,8 +66,13 @@ const handleSuggest = async (url: URL): Promise<Response> => {
       },
       status: upstream.status,
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      return emptySuggestions(504);
+    }
     return emptySuggestions(502);
+  } finally {
+    clearTimeout(timeout);
   }
 };
 

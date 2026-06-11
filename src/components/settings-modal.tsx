@@ -11,6 +11,7 @@ import {
   ANIMATION_DURATION_MS,
   DEFAULT_BANG_SHORTCUT,
   LS_KEYS,
+  MAX_HISTORY,
 } from "@/lib/constants";
 import { clearSearchHistory, getSearchHistory } from "@/lib/history";
 import { syncPrefsCookie } from "@/lib/prefs-cookie";
@@ -657,7 +658,9 @@ const HistorySection = ({
   onClear: () => void;
 }) => (
   <div className={sectionCls}>
-    <h3 className={sectionHeadingCls}>Search History ({historyCount}/500)</h3>
+    <h3 className={sectionHeadingCls}>
+      Search History ({historyCount}/{MAX_HISTORY})
+    </h3>
     <div className="flex items-center justify-between gap-3">
       <label
         className="flex cursor-pointer items-center gap-2.5 text-fg"
@@ -685,6 +688,40 @@ const isBoolString = (v: unknown): v is "true" | "false" =>
 
 const isMissing = (v: unknown): boolean => v === undefined || v === null;
 
+const isRecord = (v: unknown): v is Record<string, unknown> =>
+  Boolean(v) && typeof v === "object" && !Array.isArray(v);
+
+const sanitizeBangMap = (value: unknown): BangMap | null => {
+  if (!isRecord(value)) {
+    return null;
+  }
+  const bangsMap: BangMap = {};
+  for (const [shortcut, bang] of Object.entries(value)) {
+    if (!(shortcut && isRecord(bang))) {
+      return null;
+    }
+    const { ad, d, s, u } = bang;
+    if (
+      !(typeof d === "string" && typeof s === "string" && typeof u === "string")
+    ) {
+      return null;
+    }
+    if (ad !== undefined && typeof ad !== "string") {
+      return null;
+    }
+    bangsMap[shortcut] = ad === undefined ? { d, s, u } : { ad, d, s, u };
+  }
+  return bangsMap;
+};
+
+const parseCustomBangs = (value: string): BangMap | null => {
+  try {
+    return sanitizeBangMap(JSON.parse(value) as unknown);
+  } catch {
+    return null;
+  }
+};
+
 const validateImport = (d: Record<string, unknown>): string | null => {
   if (!isMissing(d.defaultBang) && typeof d.defaultBang !== "string") {
     return "Invalid defaultBang";
@@ -692,15 +729,12 @@ const validateImport = (d: Record<string, unknown>): string | null => {
   if (!isMissing(d.customBangs) && typeof d.customBangs !== "string") {
     return "Invalid customBangs";
   }
-  if (typeof d.customBangs === "string" && d.customBangs) {
-    try {
-      const parsed = JSON.parse(d.customBangs) as unknown;
-      if (!parsed || typeof parsed !== "object") {
-        return "Invalid customBangs shape";
-      }
-    } catch {
-      return "Invalid customBangs JSON";
-    }
+  if (
+    typeof d.customBangs === "string" &&
+    d.customBangs &&
+    !parseCustomBangs(d.customBangs)
+  ) {
+    return "Invalid customBangs shape";
   }
   if (!(isMissing(d.historyEnabled) || isBoolString(d.historyEnabled))) {
     return "Invalid historyEnabled";
@@ -724,7 +758,11 @@ const applyImport = (data: unknown): string | null => {
     localStorage.setItem(LS_KEYS.DEFAULT_BANG, d.defaultBang);
   }
   if (typeof d.customBangs === "string") {
-    localStorage.setItem(LS_KEYS.CUSTOM_BANGS, d.customBangs);
+    const parsed = parseCustomBangs(d.customBangs);
+    if (!parsed) {
+      return "Invalid customBangs shape";
+    }
+    localStorage.setItem(LS_KEYS.CUSTOM_BANGS, JSON.stringify(parsed));
   }
   if (isBoolString(d.historyEnabled)) {
     localStorage.setItem(LS_KEYS.HISTORY_ENABLED, d.historyEnabled);

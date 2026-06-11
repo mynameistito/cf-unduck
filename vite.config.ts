@@ -10,6 +10,7 @@ import { VitePWA } from "vite-plugin-pwa";
 import { SITE } from "./src/site.config";
 
 const root = path.resolve(import.meta.dirname);
+const CHUNK_SIZE_WARNING_LIMIT_KB = 1600;
 
 const XML_ENTITIES: ReadonlyMap<string, string> = new Map([
   ["&", "&amp;"],
@@ -128,7 +129,7 @@ const siteConfigPlugin = (): Plugin => {
 
 export default defineConfig({
   build: {
-    chunkSizeWarningLimit: 1600,
+    chunkSizeWarningLimit: CHUNK_SIZE_WARNING_LIMIT_KB,
     sourcemap: false,
     target: "esnext",
   },

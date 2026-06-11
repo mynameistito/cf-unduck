@@ -20,41 +20,48 @@ export const Route = createFileRoute("/")({
     useEffect(() => {
       let cancelled = false;
       const redirect = async () => {
-        const query = q ?? "";
-        const defaultBangShortcut =
-          storage.get(LS_KEYS.DEFAULT_BANG) ?? DEFAULT_BANG_SHORTCUT;
-        const customBangs = readCustomBangs();
-        const { bangs } = await import("@/lib/bangs/hashbang");
-        if (cancelled) {
-          return;
-        }
-        const result = resolveBangRedirect({
-          bangs,
-          customBangs,
-          defaultBangShortcut,
-          query,
-        });
-
-        if (result.kind === "landing" || result.kind === "notfound") {
-          setShowLanding(true);
-          return;
-        }
-
-        const prev = Number.parseInt(
-          storage.get(LS_KEYS.SEARCH_COUNT) ?? "0",
-          10
-        );
-        const count = ((Number.isNaN(prev) ? 0 : prev) + 1).toString();
-        storage.set(LS_KEYS.SEARCH_COUNT, count);
-
-        if (storage.get(LS_KEYS.HISTORY_ENABLED) === "true") {
-          addToSearchHistory(query.replace(BANG_STRIP_RE, "").trim(), {
-            bang: result.bangShortcut,
-            name: result.bang.s,
+        try {
+          const query = q ?? "";
+          const defaultBangShortcut =
+            storage.get(LS_KEYS.DEFAULT_BANG) ?? DEFAULT_BANG_SHORTCUT;
+          const customBangs = readCustomBangs();
+          const { bangs } = await import("@/lib/bangs/hashbang");
+          if (cancelled) {
+            return;
+          }
+          const result = resolveBangRedirect({
+            bangs,
+            customBangs,
+            defaultBangShortcut,
+            query,
           });
-        }
 
-        window.location.replace(result.url);
+          if (result.kind === "landing" || result.kind === "notfound") {
+            setShowLanding(true);
+            return;
+          }
+
+          const prev = Number.parseInt(
+            storage.get(LS_KEYS.SEARCH_COUNT) ?? "0",
+            10
+          );
+          const count = ((Number.isNaN(prev) ? 0 : prev) + 1).toString();
+          storage.set(LS_KEYS.SEARCH_COUNT, count);
+
+          if (storage.get(LS_KEYS.HISTORY_ENABLED) === "true") {
+            addToSearchHistory(query.replace(BANG_STRIP_RE, "").trim(), {
+              bang: result.bangShortcut,
+              name: result.bang.s,
+            });
+          }
+
+          window.location.replace(result.url);
+        } catch (error) {
+          console.error("Failed to resolve redirect", error);
+          if (!cancelled) {
+            setShowLanding(true);
+          }
+        }
       };
       void redirect();
       return () => {

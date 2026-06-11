@@ -41,6 +41,11 @@ const redirectResult = (
   url: ensureProtocol(url),
 });
 
+const getBangBaseUrl = (bang: Bang): string => {
+  const alternateDomain = bang.ad?.trim();
+  return alternateDomain ? (bang.ad ?? bang.d) : bang.d;
+};
+
 const resolveKagiSiteRedirect = (
   selectedBang: Bang,
   defaultBang: Bang | undefined,
@@ -106,7 +111,7 @@ export const resolveBangRedirect = (
     return redirectResult(
       selectedBang,
       bangShortcut,
-      selectedBang.ad ?? selectedBang.d
+      getBangBaseUrl(selectedBang)
     );
   }
 

@@ -5,37 +5,43 @@
  */
 
 import { readdir, unlink } from "node:fs/promises";
-import { join } from "node:path";
+import path from "node:path";
 
-const TARGET_PATTERNS = [/^tmpclaude-/, /^nul$/i];
+const TARGET_PATTERNS = [/^tmpclaude-/u, /^nul$/iu];
 const SKIP_DIRS = new Set(["node_modules", ".git"]);
 
-function shouldDeleteFile(filename: string): boolean {
-  return TARGET_PATTERNS.some((pattern) => pattern.test(filename));
-}
+const shouldDeleteFile = (filename: string): boolean =>
+  TARGET_PATTERNS.some((pattern) => pattern.test(filename));
 
-function shouldSkipDir(dirname: string): boolean {
-  return SKIP_DIRS.has(dirname);
-}
+const shouldSkipDir = (dirname: string): boolean => SKIP_DIRS.has(dirname);
 
-async function cleanup(dir: string): Promise<void> {
+const removeFile = async (filePath: string): Promise<void> => {
+  try {
+    await unlink(filePath);
+  } catch {
+    // Ignore errors - file may already be deleted.
+  }
+};
+
+const cleanup = async (dir: string): Promise<void> => {
   const entries = await readdir(dir, { withFileTypes: true }).catch(() => []);
+  const tasks: Promise<void>[] = [];
 
   for (const entry of entries) {
     const entryName = String(entry.name);
-    const fullPath = join(dir, entryName);
+    const fullPath = path.join(dir, entryName);
 
     if (entry.isDirectory()) {
       if (!shouldSkipDir(entryName)) {
-        await cleanup(fullPath);
+        tasks.push(cleanup(fullPath));
       }
     } else if (entry.isFile() && shouldDeleteFile(entryName)) {
-      await unlink(fullPath).catch(() => {
-        // Ignore errors - file may already be deleted
-      });
+      tasks.push(removeFile(fullPath));
     }
   }
-}
+
+  await Promise.all(tasks);
+};
 
 (async () => {
   await cleanup(".");

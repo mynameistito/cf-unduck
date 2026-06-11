@@ -11,7 +11,9 @@ export interface Prefs {
   d?: string;
 }
 
-export function readPrefsFromCookieHeader(cookieHeader: string | null): Prefs {
+export const readPrefsFromCookieHeader = (
+  cookieHeader: string | null
+): Prefs => {
   if (!cookieHeader) {
     return {};
   }
@@ -31,9 +33,9 @@ export function readPrefsFromCookieHeader(cookieHeader: string | null): Prefs {
     }
   }
   return {};
-}
+};
 
-export function syncPrefsCookie(): void {
+export const syncPrefsCookie = (): void => {
   if (typeof document === "undefined") {
     return;
   }
@@ -57,6 +59,6 @@ export function syncPrefsCookie(): void {
       value = encodeURIComponent(JSON.stringify({}));
     }
   }
-  // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API not available in all browsers; this cookie is read by the edge Worker
+  // oxlint-disable-next-line unicorn/no-document-cookie -- Cookie Store API is not available in all browsers; this cookie is read by the edge Worker.
   document.cookie = `${PREFS_COOKIE}=${value}; path=/; max-age=${ONE_YEAR_SECONDS}; SameSite=Lax`;
-}
+};

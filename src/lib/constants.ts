@@ -2,15 +2,18 @@ export const MAX_HISTORY = 500;
 export const ANIMATION_DURATION_MS = 375;
 
 export const LS_KEYS = {
-  SEARCH_HISTORY: "search-history",
-  SEARCH_COUNT: "search-count",
-  HISTORY_ENABLED: "history-enabled",
-  DEFAULT_BANG: "default-bang",
   CUSTOM_BANGS: "custom-bangs",
+  DEFAULT_BANG: "default-bang",
+  HISTORY_ENABLED: "history-enabled",
+  SEARCH_COUNT: "search-count",
+  SEARCH_HISTORY: "search-history",
   SOUND_ENABLED: "sound-enabled",
 } as const;
 
 export const CUTIES = {
+  DOWN: ["(↓°□°)↓", "(´◕‿◕)↓", "↓(´・ω・)↓"],
+  IDLE: "┐( ˘_˘ )┌",
+  LEFT: ["╰（°□°╰）", "(◕‿◕´)", "(・ω・´)"],
   NOTFOUND: [
     "(╯︵╰,)",
     "(｡•́︿•̀｡)",
@@ -22,11 +25,8 @@ export const CUTIES = {
     "(✧ω✧)",
     "(•́_•̀)",
   ],
-  IDLE: "┐( ˘_˘ )┌",
-  LEFT: ["╰（°□°╰）", "(◕‿◕´)", "(・ω・´)"],
   RIGHT: ["(╯°□°）╯", "(｀◕‿◕)", "(｀・ω・)"],
   UP: ["(↑°□°)↑", "(´◕‿◕)↑", "↑(´・ω・)↑"],
-  DOWN: ["(↓°□°)↓", "(´◕‿◕)↓", "↓(´・ω・)↓"],
 } as const;
 
 export const DEFAULT_BANG_SHORTCUT = "ddg";

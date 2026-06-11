@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
+
 import { getSearchHistory } from "@/lib/history";
 
 interface Props {
@@ -8,16 +9,16 @@ interface Props {
 const FOCUSABLE_SEL =
   'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-function getFocusables(root: HTMLElement | null): HTMLElement[] {
+const getFocusables = (root: HTMLElement | null): HTMLElement[] => {
   if (!root) {
     return [];
   }
-  return Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE_SEL)).filter(
+  return [...root.querySelectorAll<HTMLElement>(FOCUSABLE_SEL)].filter(
     (el) => !el.hasAttribute("aria-hidden")
   );
-}
+};
 
-export function HistoryModal({ onClose }: Props) {
+export const HistoryModal = ({ onClose }: Props) => {
   const dialogRef = useRef<HTMLDivElement>(null);
   const history = useMemo(() => getSearchHistory(), []);
 
@@ -36,7 +37,7 @@ export function HistoryModal({ onClose }: Props) {
         return;
       }
       const focusables = getFocusables(dialogRef.current);
-      const firstEl = focusables[0];
+      const [firstEl] = focusables;
       const lastEl = focusables.at(-1);
       if (!(firstEl && lastEl)) {
         return;
@@ -57,11 +58,11 @@ export function HistoryModal({ onClose }: Props) {
   }, [onClose]);
 
   return (
-    <div
+    <dialog
       aria-labelledby="history-title"
       aria-modal="true"
-      className="fixed inset-0 z-[1000] flex h-full w-full items-center justify-center text-fg"
-      role="dialog"
+      className="fixed inset-0 z-[1000] flex h-full w-full max-w-none items-center justify-center border-0 bg-transparent p-0 text-fg"
+      open
     >
       <button
         aria-label="Close history"
@@ -107,6 +108,6 @@ export function HistoryModal({ onClose }: Props) {
           )}
         </div>
       </div>
-    </div>
+    </dialog>
   );
-}
+};

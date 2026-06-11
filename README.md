@@ -6,10 +6,10 @@ Live: https://search.mynameistito.com
 
 ## Credit
 
-Remade from [taciturnaxolotl/unduckified](https://github.com/taciturnaxolotl/unduckified), itself a fork of [t3dotgg/unduck](https://github.com/t3dotgg/unduck). 
+Remade from [taciturnaxolotl/unduckified](https://github.com/taciturnaxolotl/unduckified), itself a fork of [t3dotgg/unduck](https://github.com/t3dotgg/unduck).
+
 - turnaxolot1's hosted version: [s.dunkirk.sh](https://s.dunkirk.sh)
 - Theo's hosted original: [unduck.link](https://unduck.link)
-
 
 ## Quick Start
 
@@ -66,6 +66,7 @@ https://www.google.com/complete/search?client=chrome&q=%s
 Prereqs: [Bun](https://bun.com), Cloudflare account, `wrangler` logged in (`bun x wrangler login`).
 
 1. **Clone & install**
+
    ```bash
    git clone https://github.com/mynameistito/cf-unduck
    cd cf-unduck
@@ -89,9 +90,7 @@ Prereqs: [Bun](https://bun.com), Cloudflare account, `wrangler` logged in (`bun 
    ```jsonc
    {
      "name": "your-worker-name",
-     "routes": [
-       { "pattern": "search.yourdomain.com", "custom_domain": true }
-     ]
+     "routes": [{ "pattern": "search.yourdomain.com", "custom_domain": true }],
    }
    ```
 

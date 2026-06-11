@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+
 import type { AudioController } from "@/hooks/use-audio";
 import {
   useLocalStorage,
@@ -24,12 +25,12 @@ interface Props {
 }
 
 const SEARCH_DEBOUNCE_MS = 150;
-const STRIP_BANG_PREFIX_RE = /^!+/;
-const KAGI_SEARCH_SUFFIX_RE = /\s*\(Kagi Search\)\s*$/i;
-const STRIP_WWW_RE = /^www\./i;
-const HAS_PROTOCOL_RE = /^https?:\/\//i;
+const STRIP_BANG_PREFIX_RE = /^!+/u;
+const KAGI_SEARCH_SUFFIX_RE = /\s*\(Kagi Search\)\s*$/iu;
+const STRIP_WWW_RE = /^www\./iu;
+const HAS_PROTOCOL_RE = /^https?:\/\//iu;
 
-function deriveBaseDomain(searchUrl: string): string {
+const deriveBaseDomain = (searchUrl: string): string => {
   const trimmed = searchUrl.trim();
   if (!trimmed) {
     return "";
@@ -43,7 +44,7 @@ function deriveBaseDomain(searchUrl: string): string {
   } catch {
     return "";
   }
-}
+};
 
 const sectionCls =
   "border-b border-border pb-3 mb-3 last:border-b-0 last:pb-0 last:mb-0";
@@ -68,7 +69,7 @@ interface BangFormFields {
 
 const FIELD_LABEL_CLS = "text-fg-muted text-xs";
 
-function BangForm({
+const BangForm = ({
   fields,
   onChange,
   firstFieldRef,
@@ -78,7 +79,7 @@ function BangForm({
   onChange: (next: BangFormFields) => void;
   firstFieldRef?: React.Ref<HTMLInputElement>;
   idPrefix: string;
-}) {
+}) => {
   const set = <K extends keyof BangFormFields>(
     key: K,
     value: BangFormFields[K]
@@ -150,24 +151,24 @@ function BangForm({
       />
     </>
   );
-}
+};
 
 const ALL_FIELDS_REQUIRED = "All fields required";
 
 const FOCUSABLE_SEL =
   'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-function getFocusables(root: HTMLElement | null): HTMLElement[] {
+const getFocusables = (root: HTMLElement | null): HTMLElement[] => {
   if (!root) {
     return [];
   }
-  return Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE_SEL)).filter(
+  return [...root.querySelectorAll<HTMLElement>(FOCUSABLE_SEL)].filter(
     (el) => !el.hasAttribute("aria-hidden")
   );
-}
+};
 
-function handleTrapTab(e: KeyboardEvent, list: HTMLElement[]): void {
-  const firstEl = list[0];
+const handleTrapTab = (e: KeyboardEvent, list: HTMLElement[]): void => {
+  const [firstEl] = list;
   const lastEl = list.at(-1);
   if (!(firstEl && lastEl)) {
     return;
@@ -179,13 +180,13 @@ function handleTrapTab(e: KeyboardEvent, list: HTMLElement[]): void {
     e.preventDefault();
     firstEl.focus();
   }
-}
+};
 
-function useFocusTrap(
+const useFocusTrap = (
   active: boolean,
   ref: React.RefObject<HTMLElement | null>,
   onEscape: () => void
-): void {
+): void => {
   const onEscapeRef = useRef(onEscape);
   useEffect(() => {
     onEscapeRef.current = onEscape;
@@ -214,12 +215,14 @@ function useFocusTrap(
       previouslyFocused?.focus?.();
     };
   }, [active, ref]);
-}
+};
 
-function cleanBangFields(fields: BangFormFields): {
+const cleanBangFields = (
+  fields: BangFormFields
+): {
   shortcut: string;
   bang: Bang;
-} | null {
+} | null => {
   const trimmedName = fields.name.trim();
   const cleanShortcut = fields.shortcut
     .trim()
@@ -231,152 +234,19 @@ function cleanBangFields(fields: BangFormFields): {
     return null;
   }
   return {
+    bang: { d: trimmedBase, s: trimmedName, u: trimmedSearch },
     shortcut: cleanShortcut,
-    bang: { s: trimmedName, u: trimmedSearch, d: trimmedBase },
   };
-}
-
-const EMPTY_FIELDS: BangFormFields = {
-  name: "",
-  shortcut: "",
-  searchUrl: "",
-  baseUrl: "",
 };
 
-export function SettingsModal({ open, onClose, audio, reducedMotion }: Props) {
-  const [defaultBang, setDefaultBang] = useLocalStorageString(
-    LS_KEYS.DEFAULT_BANG,
-    DEFAULT_BANG_SHORTCUT
-  );
-  const [historyEnabled, setHistoryEnabled] = useLocalStorageBool(
-    LS_KEYS.HISTORY_ENABLED,
-    false
-  );
-  const [soundEnabled, setSoundEnabled] = useLocalStorageBool(
-    LS_KEYS.SOUND_ENABLED,
-    true
-  );
-  const [customBangs, setCustomBangs] = useLocalStorage<BangMap>(
-    LS_KEYS.CUSTOM_BANGS,
-    {}
-  );
+const EMPTY_FIELDS: BangFormFields = {
+  baseUrl: "",
+  name: "",
+  searchUrl: "",
+  shortcut: "",
+};
 
-  const [bangInput, setBangInput] = useState(defaultBang);
-  const [bangError, setBangError] = useState(false);
-
-  useEffect(() => {
-    setBangInput(defaultBang);
-  }, [defaultBang]);
-
-  const currentBang =
-    customBangs[defaultBang] ?? bangs[defaultBang] ?? undefined;
-
-  const onDefaultBangChange = (raw: string) => {
-    const shortcut = raw.replace(STRIP_BANG_PREFIX_RE, "").toLowerCase();
-    const found = customBangs[shortcut] ?? bangs[shortcut];
-    if (!found) {
-      setBangError(true);
-      audio.play("warning");
-      setTimeout(() => setBangError(false), ANIMATION_DURATION_MS);
-      return;
-    }
-    setDefaultBang(shortcut);
-    syncPrefsCookie();
-    audio.play("click");
-  };
-
-  const history = useMemo(() => (open ? getSearchHistory() : []), [open]);
-
-  const backdropRef = useRef<HTMLDivElement>(null);
-  const dialogRef = useRef<HTMLDivElement>(null);
-  useFocusTrap(open, dialogRef, onClose);
-
-  if (!open) {
-    return null;
-  }
-
-  return (
-    <div
-      aria-labelledby="settings-title"
-      aria-modal="true"
-      className="fixed inset-0 z-[1000] h-full w-full text-fg"
-      ref={backdropRef}
-      role="dialog"
-    >
-      <button
-        aria-label="Close settings"
-        className="absolute inset-0 h-full w-full cursor-default bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-        type="button"
-      />
-      <div
-        className="themed-scrollbar relative mx-auto my-[5vh] max-h-[90vh] w-[calc(100%-2rem)] max-w-[480px] overflow-y-auto rounded-lg border border-border bg-bg px-5 py-4 text-fg shadow-[0_20px_60px_rgba(0,0,0,0.4)]"
-        ref={dialogRef}
-      >
-        <button
-          aria-label="Close settings"
-          className="absolute top-2.5 right-2.5 flex h-7 w-7 items-center justify-center rounded-md text-fg-muted leading-none transition hover:bg-bg-hover hover:text-fg"
-          onClick={onClose}
-          type="button"
-        >
-          &times;
-        </button>
-        <h2
-          className="mb-3 border-border border-b pb-2 font-semibold text-fg text-lg"
-          id="settings-title"
-        >
-          Settings
-        </h2>
-
-        <DefaultBangSection
-          bang={currentBang}
-          error={bangError}
-          onChange={onDefaultBangChange}
-          onValueChange={setBangInput}
-          value={bangInput}
-        />
-
-        <BangSearchSection customBangs={customBangs} />
-
-        <CustomBangsSection
-          audio={audio}
-          customBangs={customBangs}
-          onChange={setCustomBangs}
-        />
-
-        <SoundSection
-          enabled={soundEnabled}
-          onToggle={(checked) => {
-            setSoundEnabled(checked);
-            audio.play(checked ? "toggleOn" : "toggleOff", { force: true });
-          }}
-        />
-
-        <HistorySection
-          enabled={historyEnabled}
-          historyCount={history.length}
-          onClear={() => {
-            audio.play("warning");
-            clearSearchHistory();
-            if (reducedMotion) {
-              window.location.reload();
-            } else {
-              setTimeout(() => window.location.reload(), ANIMATION_DURATION_MS);
-            }
-          }}
-          onToggle={(checked) => {
-            setHistoryEnabled(checked);
-            audio.play(checked ? "toggleOn" : "toggleOff");
-          }}
-        />
-
-        <ImportExportSection />
-      </div>
-    </div>
-  );
-}
-
-function DefaultBangSection({
+const DefaultBangSection = ({
   bang,
   error,
   onChange,
@@ -388,58 +258,59 @@ function DefaultBangSection({
   onChange: (raw: string) => void;
   value: string;
   onValueChange: (raw: string) => void;
-}) {
-  return (
-    <div className={sectionCls}>
-      <h3 className={sectionHeadingCls}>Bangs</h3>
-      <label
-        className="block text-fg"
-        htmlFor="default-bang"
-        id="bang-description"
-      >
-        Default Bang: {bang?.s ?? "Unknown bang"}
-      </label>
-      <div className="relative mt-1.5">
-        <input
-          className={`${inputCls} pr-9 ${error ? "shake flash-red" : ""}`}
-          id="default-bang"
-          onBlur={(e) => onChange(e.target.value)}
-          onChange={(e) => onValueChange(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              onChange(e.currentTarget.value);
-            }
-          }}
-          type="text"
-          value={value}
-        />
-        <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-fg-muted">
-          ↵
-        </span>
-      </div>
-      <p className="mt-2 text-fg-muted text-sm">
-        The best way to add new bangs is by submitting them on{" "}
-        <a
-          className="text-fg-muted underline hover:text-fg-strong"
-          href="https://duckduckgo.com/newbang"
-          rel="noopener"
-          target="_blank"
-        >
-          DuckDuckGo
-        </a>{" "}
-        but you can also add them below
-      </p>
+}) => (
+  <div className={sectionCls}>
+    <h3 className={sectionHeadingCls}>Bangs</h3>
+    <label
+      className="block text-fg"
+      htmlFor="default-bang"
+      id="bang-description"
+    >
+      Default Bang: {bang?.s ?? "Unknown bang"}
+    </label>
+    <div className="relative mt-1.5">
+      <input
+        aria-labelledby="bang-description"
+        className={`${inputCls} pr-9 ${error ? "shake flash-red" : ""}`}
+        id="default-bang"
+        onBlur={(e) => onChange(e.target.value)}
+        onChange={(e) => onValueChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            onChange(e.currentTarget.value);
+          }
+        }}
+        type="text"
+        value={value}
+      />
+      <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-fg-muted">
+        ↵
+      </span>
     </div>
-  );
-}
+    <p className="mt-2 text-fg-muted text-sm">
+      The best way to add new bangs is by submitting them on{" "}
+      <a
+        className="text-fg-muted underline hover:text-fg-strong"
+        href="https://duckduckgo.com/newbang"
+        rel="noopener"
+        target="_blank"
+      >
+        DuckDuckGo
+      </a>{" "}
+      but you can also add them below
+    </p>
+  </div>
+);
 
-function BangSearchSection({ customBangs }: { customBangs: BangMap }) {
+const BangSearchSection = ({ customBangs }: { customBangs: BangMap }) => {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<[string, Bang][]>([]);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    clearTimeout(timerRef.current);
+    if (timerRef.current !== null) {
+      clearTimeout(timerRef.current);
+    }
     const q = query.trim().toLowerCase();
     if (!q) {
       setResults([]);
@@ -451,7 +322,7 @@ function BangSearchSection({ customBangs }: { customBangs: BangMap }) {
         .filter(([shortcut, b]) =>
           `${shortcut} ${b.s} ${b.d}`.toLowerCase().includes(q)
         )
-        .sort(([sa, ba], [sb, bb]) => {
+        .toSorted(([sa, ba], [sb, bb]) => {
           const aStart = sa.startsWith(q) || ba.s.toLowerCase().startsWith(q);
           const bStart = sb.startsWith(q) || bb.s.toLowerCase().startsWith(q);
           if (aStart && !bStart) {
@@ -465,13 +336,21 @@ function BangSearchSection({ customBangs }: { customBangs: BangMap }) {
         .slice(0, 20);
       setResults(filtered);
     }, SEARCH_DEBOUNCE_MS);
-    return () => clearTimeout(timerRef.current);
+    return () => {
+      if (timerRef.current !== null) {
+        clearTimeout(timerRef.current);
+      }
+    };
   }, [query, customBangs]);
 
   return (
     <div className={sectionCls}>
       <h3 className={sectionHeadingCls}>Search Bangs</h3>
+      <label className="sr-only" htmlFor="bang-search">
+        Search bangs
+      </label>
       <input
+        aria-label="Search bangs"
         className={inputCls}
         id="bang-search"
         onChange={(e) => setQuery(e.target.value)}
@@ -509,9 +388,125 @@ function BangSearchSection({ customBangs }: { customBangs: BangMap }) {
       ) : null}
     </div>
   );
-}
+};
 
-function CustomBangsSection({
+const EditBangPopup = ({
+  bang,
+  shortcut,
+  existingKeys,
+  onSave,
+  onCancel,
+}: {
+  bang: Bang;
+  shortcut: string;
+  existingKeys: string[];
+  onSave: (next: { key: string; bang: Bang }) => void;
+  onCancel: () => void;
+}) => {
+  const [fields, setFields] = useState<BangFormFields>({
+    baseUrl: bang.d,
+    name: bang.s,
+    searchUrl: bang.u,
+    shortcut,
+  });
+  const [error, setError] = useState<string | null>(null);
+  const firstFieldRef = useRef<HTMLInputElement>(null);
+  const titleId = "edit-bang-title";
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopImmediatePropagation();
+        onCancel();
+      }
+    };
+    document.addEventListener("keydown", onKey, true);
+    return () => document.removeEventListener("keydown", onKey, true);
+  }, [onCancel]);
+
+  useEffect(() => {
+    firstFieldRef.current?.focus();
+    firstFieldRef.current?.select();
+  }, []);
+
+  const submit = () => {
+    const cleaned = cleanBangFields(fields);
+    if (!cleaned) {
+      setError(ALL_FIELDS_REQUIRED);
+      return;
+    }
+    if (
+      cleaned.shortcut !== shortcut &&
+      existingKeys.includes(cleaned.shortcut)
+    ) {
+      setError("Shortcut already exists");
+      return;
+    }
+    onSave({ bang: cleaned.bang, key: cleaned.shortcut });
+  };
+
+  return (
+    <dialog
+      aria-labelledby={titleId}
+      aria-modal="true"
+      className="fixed inset-0 z-[1100] flex h-full w-full max-w-none items-center justify-center border-0 bg-transparent p-0 text-fg"
+      open
+    >
+      <button
+        aria-label="Cancel edit"
+        className="absolute inset-0 h-full w-full cursor-default bg-black/60 backdrop-blur-sm"
+        onClick={onCancel}
+        type="button"
+      />
+      <div className="relative w-[calc(100%-2rem)] max-w-[420px] rounded-lg border border-border bg-bg px-5 py-4 shadow-[0_20px_60px_rgba(0,0,0,0.4)]">
+        <button
+          aria-label="Cancel edit"
+          className="absolute top-2.5 right-2.5 flex h-7 w-7 items-center justify-center rounded-md text-fg-muted leading-none transition hover:bg-bg-hover hover:text-fg"
+          onClick={onCancel}
+          type="button"
+        >
+          &times;
+        </button>
+        <h3
+          className="mb-3 border-border border-b pb-2 font-semibold text-base text-fg"
+          id={titleId}
+        >
+          Edit Custom Bang
+        </h3>
+        <div className="flex flex-col gap-1.5">
+          <BangForm
+            fields={fields}
+            firstFieldRef={firstFieldRef}
+            idPrefix="edit-bang"
+            onChange={(next) => {
+              setError(null);
+              setFields(next);
+            }}
+          />
+          {error ? (
+            <p className="text-danger text-sm" role="alert">
+              {error}
+            </p>
+          ) : null}
+          <div className="mt-1 flex justify-end gap-2">
+            <button
+              className={secondaryBtnCls}
+              onClick={onCancel}
+              type="button"
+            >
+              Cancel
+            </button>
+            <button className={primaryBtnCls} onClick={submit} type="button">
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
+    </dialog>
+  );
+};
+
+const CustomBangsSection = ({
   audio,
   customBangs,
   onChange,
@@ -519,7 +514,7 @@ function CustomBangsSection({
   audio: AudioController;
   customBangs: BangMap;
   onChange: (next: BangMap) => void;
-}) {
+}) => {
   const [fields, setFields] = useState<BangFormFields>(EMPTY_FIELDS);
   const [addError, setAddError] = useState<string | null>(null);
   const [editingKey, setEditingKey] = useState<string | null>(null);
@@ -537,7 +532,7 @@ function CustomBangsSection({
       return;
     }
     setAddError(null);
-    audio.play("click", { rate: 2, from: 0.1 });
+    audio.play("click", { from: 0.1, rate: 2 });
     onChange({ ...customBangs, [cleaned.shortcut]: cleaned.bang });
     setFields(EMPTY_FIELDS);
   };
@@ -549,7 +544,7 @@ function CustomBangsSection({
   };
 
   const saveEdit = (originalKey: string, next: { key: string; bang: Bang }) => {
-    audio.play("click", { rate: 2, from: 0.1 });
+    audio.play("click", { from: 0.1, rate: 2 });
     const { [originalKey]: _removed, ...rest } = customBangs;
     onChange({ ...rest, [next.key]: next.bang });
     setEditingKey(null);
@@ -622,152 +617,35 @@ function CustomBangsSection({
       ) : null}
     </div>
   );
-}
+};
 
-function EditBangPopup({
-  bang,
-  shortcut,
-  existingKeys,
-  onSave,
-  onCancel,
-}: {
-  bang: Bang;
-  shortcut: string;
-  existingKeys: string[];
-  onSave: (next: { key: string; bang: Bang }) => void;
-  onCancel: () => void;
-}) {
-  const [fields, setFields] = useState<BangFormFields>({
-    name: bang.s,
-    shortcut,
-    searchUrl: bang.u,
-    baseUrl: bang.d,
-  });
-  const [error, setError] = useState<string | null>(null);
-  const firstFieldRef = useRef<HTMLInputElement>(null);
-  const titleId = "edit-bang-title";
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.stopImmediatePropagation();
-        onCancel();
-      }
-    };
-    document.addEventListener("keydown", onKey, true);
-    return () => document.removeEventListener("keydown", onKey, true);
-  }, [onCancel]);
-
-  useEffect(() => {
-    firstFieldRef.current?.focus();
-    firstFieldRef.current?.select();
-  }, []);
-
-  const submit = () => {
-    const cleaned = cleanBangFields(fields);
-    if (!cleaned) {
-      setError(ALL_FIELDS_REQUIRED);
-      return;
-    }
-    if (
-      cleaned.shortcut !== shortcut &&
-      existingKeys.includes(cleaned.shortcut)
-    ) {
-      setError("Shortcut already exists");
-      return;
-    }
-    onSave({ key: cleaned.shortcut, bang: cleaned.bang });
-  };
-
-  return (
-    <div
-      aria-labelledby={titleId}
-      aria-modal="true"
-      className="fixed inset-0 z-[1100] flex h-full w-full items-center justify-center text-fg"
-      role="dialog"
-    >
-      <button
-        aria-label="Cancel edit"
-        className="absolute inset-0 h-full w-full cursor-default bg-black/60 backdrop-blur-sm"
-        onClick={onCancel}
-        type="button"
-      />
-      <div className="relative w-[calc(100%-2rem)] max-w-[420px] rounded-lg border border-border bg-bg px-5 py-4 shadow-[0_20px_60px_rgba(0,0,0,0.4)]">
-        <button
-          aria-label="Cancel edit"
-          className="absolute top-2.5 right-2.5 flex h-7 w-7 items-center justify-center rounded-md text-fg-muted leading-none transition hover:bg-bg-hover hover:text-fg"
-          onClick={onCancel}
-          type="button"
-        >
-          &times;
-        </button>
-        <h3
-          className="mb-3 border-border border-b pb-2 font-semibold text-base text-fg"
-          id={titleId}
-        >
-          Edit Custom Bang
-        </h3>
-        <div className="flex flex-col gap-1.5">
-          <BangForm
-            fields={fields}
-            firstFieldRef={firstFieldRef}
-            idPrefix="edit-bang"
-            onChange={(next) => {
-              setError(null);
-              setFields(next);
-            }}
-          />
-          {error ? (
-            <p className="text-danger text-sm" role="alert">
-              {error}
-            </p>
-          ) : null}
-          <div className="mt-1 flex justify-end gap-2">
-            <button
-              className={secondaryBtnCls}
-              onClick={onCancel}
-              type="button"
-            >
-              Cancel
-            </button>
-            <button className={primaryBtnCls} onClick={submit} type="button">
-              Save
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function SoundSection({
+const SoundSection = ({
   enabled,
   onToggle,
 }: {
   enabled: boolean;
   onToggle: (checked: boolean) => void;
-}) {
-  return (
-    <div className={sectionCls}>
-      <h3 className={sectionHeadingCls}>Sound</h3>
-      <label
-        className="flex cursor-pointer items-center justify-between gap-2.5 text-fg"
-        htmlFor="sound-toggle"
-      >
-        <span>Enable sounds</span>
-        <input
-          checked={enabled}
-          className="toggle"
-          id="sound-toggle"
-          onChange={(e) => onToggle(e.target.checked)}
-          type="checkbox"
-        />
-      </label>
-    </div>
-  );
-}
+}) => (
+  <div className={sectionCls}>
+    <h3 className={sectionHeadingCls}>Sound</h3>
+    <label
+      className="flex cursor-pointer items-center justify-between gap-2.5 text-fg"
+      htmlFor="sound-toggle"
+    >
+      <span>Enable sounds</span>
+      <input
+        aria-label="Enable sounds"
+        checked={enabled}
+        className="toggle"
+        id="sound-toggle"
+        onChange={(e) => onToggle(e.target.checked)}
+        type="checkbox"
+      />
+    </label>
+  </div>
+);
 
-function HistorySection({
+const HistorySection = ({
   enabled,
   historyCount,
   onToggle,
@@ -777,41 +655,37 @@ function HistorySection({
   historyCount: number;
   onToggle: (checked: boolean) => void;
   onClear: () => void;
-}) {
-  return (
-    <div className={sectionCls}>
-      <h3 className={sectionHeadingCls}>Search History ({historyCount}/500)</h3>
-      <div className="flex items-center justify-between gap-3">
-        <label
-          className="flex cursor-pointer items-center gap-2.5 text-fg"
-          htmlFor="history-toggle"
-        >
-          <span>Enable Search History</span>
-          <input
-            checked={enabled}
-            className="toggle"
-            id="history-toggle"
-            onChange={(e) => onToggle(e.target.checked)}
-            type="checkbox"
-          />
-        </label>
-        <button className={dangerBtnCls} onClick={onClear} type="button">
-          Clear History
-        </button>
-      </div>
+}) => (
+  <div className={sectionCls}>
+    <h3 className={sectionHeadingCls}>Search History ({historyCount}/500)</h3>
+    <div className="flex items-center justify-between gap-3">
+      <label
+        className="flex cursor-pointer items-center gap-2.5 text-fg"
+        htmlFor="history-toggle"
+      >
+        <span>Enable Search History</span>
+        <input
+          aria-label="Enable Search History"
+          checked={enabled}
+          className="toggle"
+          id="history-toggle"
+          onChange={(e) => onToggle(e.target.checked)}
+          type="checkbox"
+        />
+      </label>
+      <button className={dangerBtnCls} onClick={onClear} type="button">
+        Clear History
+      </button>
     </div>
-  );
-}
+  </div>
+);
 
-function isBoolString(v: unknown): v is "true" | "false" {
-  return v === "true" || v === "false";
-}
+const isBoolString = (v: unknown): v is "true" | "false" =>
+  v === "true" || v === "false";
 
-function isMissing(v: unknown): boolean {
-  return v === undefined || v === null;
-}
+const isMissing = (v: unknown): boolean => v === undefined || v === null;
 
-function validateImport(d: Record<string, unknown>): string | null {
+const validateImport = (d: Record<string, unknown>): string | null => {
   if (!isMissing(d.defaultBang) && typeof d.defaultBang !== "string") {
     return "Invalid defaultBang";
   }
@@ -835,9 +709,9 @@ function validateImport(d: Record<string, unknown>): string | null {
     return "Invalid soundEnabled";
   }
   return null;
-}
+};
 
-function applyImport(data: unknown): string | null {
+const applyImport = (data: unknown): string | null => {
   if (!data || typeof data !== "object") {
     return "Invalid file";
   }
@@ -859,9 +733,28 @@ function applyImport(data: unknown): string | null {
     localStorage.setItem(LS_KEYS.SOUND_ENABLED, d.soundEnabled);
   }
   return null;
-}
+};
 
-function ImportExportSection() {
+const onExport = () => {
+  const settingsData = {
+    customBangs: localStorage.getItem(LS_KEYS.CUSTOM_BANGS),
+    defaultBang: localStorage.getItem(LS_KEYS.DEFAULT_BANG),
+    exportDate: new Date().toISOString(),
+    historyEnabled: localStorage.getItem(LS_KEYS.HISTORY_ENABLED),
+    soundEnabled: localStorage.getItem(LS_KEYS.SOUND_ENABLED),
+  };
+  const blob = new Blob([JSON.stringify(settingsData, null, 2)], {
+    type: "application/json",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `cf-unduck-settings-${new Date().toISOString().split("T")[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+const ImportExportSection = () => {
   const fileRef = useRef<HTMLInputElement>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const [shareCopied, setShareCopied] = useState(false);
@@ -901,25 +794,6 @@ function ImportExportSection() {
     setTimeout(() => setShareCopied(false), 1500);
   };
 
-  const onExport = () => {
-    const settingsData = {
-      defaultBang: localStorage.getItem(LS_KEYS.DEFAULT_BANG),
-      customBangs: localStorage.getItem(LS_KEYS.CUSTOM_BANGS),
-      historyEnabled: localStorage.getItem(LS_KEYS.HISTORY_ENABLED),
-      soundEnabled: localStorage.getItem(LS_KEYS.SOUND_ENABLED),
-      exportDate: new Date().toISOString(),
-    };
-    const blob = new Blob([JSON.stringify(settingsData, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `cf-unduck-settings-${new Date().toISOString().split("T")[0]}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
   const onImport = async (file: File) => {
     let data: unknown;
     try {
@@ -955,13 +829,18 @@ function ImportExportSection() {
         </button>
         <input
           accept=".json"
+          aria-label="Import settings file"
           className="hidden"
           id="import-file"
-          onChange={(e) => {
+          onChange={async (e) => {
             const f = e.target.files?.[0];
             if (f) {
               setImportError(null);
-              onImport(f).catch(() => setImportError("Import failed"));
+              try {
+                await onImport(f);
+              } catch {
+                setImportError("Import failed");
+              }
             }
           }}
           ref={fileRef}
@@ -975,4 +854,142 @@ function ImportExportSection() {
       ) : null}
     </div>
   );
-}
+};
+
+export const SettingsModal = ({
+  open,
+  onClose,
+  audio,
+  reducedMotion,
+}: Props) => {
+  const [defaultBang, setDefaultBang] = useLocalStorageString(
+    LS_KEYS.DEFAULT_BANG,
+    DEFAULT_BANG_SHORTCUT
+  );
+  const [historyEnabled, setHistoryEnabled] = useLocalStorageBool(
+    LS_KEYS.HISTORY_ENABLED,
+    false
+  );
+  const [soundEnabled, setSoundEnabled] = useLocalStorageBool(
+    LS_KEYS.SOUND_ENABLED,
+    true
+  );
+  const [customBangs, setCustomBangs] = useLocalStorage<BangMap>(
+    LS_KEYS.CUSTOM_BANGS,
+    {}
+  );
+
+  const [bangInput, setBangInput] = useState(defaultBang);
+  const [bangError, setBangError] = useState(false);
+
+  useEffect(() => {
+    setBangInput(defaultBang);
+  }, [defaultBang]);
+
+  const currentBang =
+    customBangs[defaultBang] ?? bangs[defaultBang] ?? undefined;
+
+  const onDefaultBangChange = (raw: string) => {
+    const shortcut = raw.replace(STRIP_BANG_PREFIX_RE, "").toLowerCase();
+    const found = customBangs[shortcut] ?? bangs[shortcut];
+    if (!found) {
+      setBangError(true);
+      audio.play("warning");
+      setTimeout(() => setBangError(false), ANIMATION_DURATION_MS);
+      return;
+    }
+    setDefaultBang(shortcut);
+    syncPrefsCookie();
+    audio.play("click");
+  };
+
+  const history = useMemo(() => (open ? getSearchHistory() : []), [open]);
+
+  const backdropRef = useRef<HTMLDialogElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(open, dialogRef, onClose);
+
+  if (!open) {
+    return null;
+  }
+
+  return (
+    <dialog
+      aria-labelledby="settings-title"
+      aria-modal="true"
+      className="fixed inset-0 z-[1000] h-full w-full max-w-none border-0 bg-transparent p-0 text-fg"
+      open
+      ref={backdropRef}
+    >
+      <button
+        aria-label="Close settings"
+        className="absolute inset-0 h-full w-full cursor-default bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+        type="button"
+      />
+      <div
+        className="themed-scrollbar relative mx-auto my-[5vh] max-h-[90vh] w-[calc(100%-2rem)] max-w-[480px] overflow-y-auto rounded-lg border border-border bg-bg px-5 py-4 text-fg shadow-[0_20px_60px_rgba(0,0,0,0.4)]"
+        ref={dialogRef}
+      >
+        <button
+          aria-label="Close settings"
+          className="absolute top-2.5 right-2.5 flex h-7 w-7 items-center justify-center rounded-md text-fg-muted leading-none transition hover:bg-bg-hover hover:text-fg"
+          onClick={onClose}
+          type="button"
+        >
+          &times;
+        </button>
+        <h2
+          className="mb-3 border-border border-b pb-2 font-semibold text-fg text-lg"
+          id="settings-title"
+        >
+          Settings
+        </h2>
+
+        <DefaultBangSection
+          bang={currentBang}
+          error={bangError}
+          onChange={onDefaultBangChange}
+          onValueChange={setBangInput}
+          value={bangInput}
+        />
+
+        <BangSearchSection customBangs={customBangs} />
+
+        <CustomBangsSection
+          audio={audio}
+          customBangs={customBangs}
+          onChange={setCustomBangs}
+        />
+
+        <SoundSection
+          enabled={soundEnabled}
+          onToggle={(checked) => {
+            setSoundEnabled(checked);
+            audio.play(checked ? "toggleOn" : "toggleOff", { force: true });
+          }}
+        />
+
+        <HistorySection
+          enabled={historyEnabled}
+          historyCount={history.length}
+          onClear={() => {
+            audio.play("warning");
+            clearSearchHistory();
+            if (reducedMotion) {
+              window.location.reload();
+            } else {
+              setTimeout(() => window.location.reload(), ANIMATION_DURATION_MS);
+            }
+          }}
+          onToggle={(checked) => {
+            setHistoryEnabled(checked);
+            audio.play(checked ? "toggleOn" : "toggleOff");
+          }}
+        />
+
+        <ImportExportSection />
+      </div>
+    </dialog>
+  );
+};

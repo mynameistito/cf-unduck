@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
+
 import { CUTIES } from "@/lib/constants";
 
 const MIN_DELTA = 100;
 
-function pick<T>(arr: readonly T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)] as T;
-}
+const pick = <T,>(arr: readonly T[]): T =>
+  arr[Math.floor(Math.random() * arr.length)] as T;
 
-export function Cutie({ reducedMotion }: { reducedMotion: boolean }) {
+export const Cutie = ({ reducedMotion }: { reducedMotion: boolean }) => {
   const [face, setFace] = useState<string>(CUTIES.IDLE);
 
   useEffect(() => {
@@ -28,4 +28,4 @@ export function Cutie({ reducedMotion }: { reducedMotion: boolean }) {
   }, [reducedMotion]);
 
   return <h1 id="cutie">{face}</h1>;
-}
+};

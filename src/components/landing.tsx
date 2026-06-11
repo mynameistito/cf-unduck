@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
+
 import { useAudio } from "@/hooks/use-audio";
 import {
   useLocalStorageBool,
@@ -14,16 +15,18 @@ import { decodeShare, isValidBangMap } from "@/lib/share-bangs";
 import { storage } from "@/lib/storage";
 import type { BangMap } from "@/lib/types";
 import { SITE } from "@/site.config";
+
 import { BangTester } from "./bang-tester";
 import { CopyUrl } from "./copy-url";
 import { Cutie } from "./cutie";
 import { TopBar } from "./top-bar";
 
-const SettingsModal = lazy(() =>
-  import("./settings-modal").then((m) => ({ default: m.SettingsModal }))
-);
+const SettingsModal = lazy(async () => {
+  const m = await import("./settings-modal");
+  return { default: m.SettingsModal };
+});
 
-function shouldIgnoreShortcut(e: KeyboardEvent): boolean {
+const shouldIgnoreShortcut = (e: KeyboardEvent): boolean => {
   if (e.ctrlKey || e.metaKey || e.altKey) {
     return true;
   }
@@ -35,9 +38,9 @@ function shouldIgnoreShortcut(e: KeyboardEvent): boolean {
     );
   }
   return false;
-}
+};
 
-export function Landing() {
+export const Landing = () => {
   const reducedMotion = usePrefersReducedMotion();
   const [soundEnabled] = useLocalStorageBool(LS_KEYS.SOUND_ENABLED, true);
   const audio = useAudio(!reducedMotion && soundEnabled);
@@ -53,7 +56,7 @@ export function Landing() {
   } | null>(null);
 
   useEffect(() => {
-    const hash = window.location.hash;
+    const { hash } = window.location;
     if (!hash.startsWith("#bangs=")) {
       return;
     }
@@ -67,7 +70,7 @@ export function Landing() {
       if (count === 0) {
         return;
       }
-      setShareImport({ map, count });
+      setShareImport({ count, map });
     })();
     return () => {
       cancelled = true;
@@ -243,4 +246,4 @@ export function Landing() {
       ) : null}
     </div>
   );
-}
+};

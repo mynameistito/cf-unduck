@@ -1,19 +1,15 @@
 import { describe, expect, it } from "bun:test";
+
 import { resolveBangRedirect } from "@/lib/redirect";
 import type { BangMap } from "@/lib/types";
 
 const bangs: BangMap = {
-  g: { d: "google.com", s: "Google", u: "https://google.com/search?q={{{s}}}" },
   ddg: {
     d: "duckduckgo.com",
     s: "DuckDuckGo",
     u: "https://duckduckgo.com/?q={{{s}}}",
   },
-  yt: {
-    d: "youtube.com",
-    s: "YouTube",
-    u: "https://youtube.com/results?search_query={{{s}}}",
-  },
+  g: { d: "google.com", s: "Google", u: "https://google.com/search?q={{{s}}}" },
   ghr: {
     d: "github.com",
     s: "GitHub Repo",
@@ -23,6 +19,11 @@ const bangs: BangMap = {
     d: "github.com",
     s: "GitHub (Kagi Search)",
     u: "/search?q={{{s}}}+site:github.com",
+  },
+  yt: {
+    d: "youtube.com",
+    s: "YouTube",
+    u: "https://youtube.com/results?search_query={{{s}}}",
   },
 };
 
@@ -142,8 +143,8 @@ describe("resolveBangRedirect", () => {
   it("handles uses ad (alt domain) over d when present", () => {
     const customBangs: BangMap = {
       alt: {
-        d: "primary.com",
         ad: "alt.com",
+        d: "primary.com",
         s: "Alt",
         u: "https://primary.com/?q={{{s}}}",
       },

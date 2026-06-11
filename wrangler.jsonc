@@ -3,6 +3,9 @@
   "name": "cf-unduck",
   "main": "src/worker.ts",
   "compatibility_date": "2026-06-10",
+  "placement": {
+    "mode": "smart",
+  },
   "preview_urls": true,
   "assets": {
     "directory": "./dist",

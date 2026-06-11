@@ -4,16 +4,12 @@
  * Cross-platform replacement for Unix find command
  */
 
-import { readdir, unlink } from "node:fs/promises";
-import path from "node:path";
+import { unlink } from "node:fs/promises";
 
-const TARGET_PATTERNS = [/^tmpclaude-/u, /^nul$/iu];
-const SKIP_DIRS = new Set(["node_modules", ".git"]);
+import { Glob } from "bun";
 
-const shouldDeleteFile = (filename: string): boolean =>
-  TARGET_PATTERNS.some((pattern) => pattern.test(filename));
-
-const shouldSkipDir = (dirname: string): boolean => SKIP_DIRS.has(dirname);
+const TARGET_GLOBS = ["**/tmpclaude-*", "**/nul"];
+const SKIP_DIRS = ["node_modules", ".git"];
 
 const removeFile = async (filePath: string): Promise<void> => {
   try {
@@ -24,21 +20,17 @@ const removeFile = async (filePath: string): Promise<void> => {
 };
 
 const cleanup = async (dir: string): Promise<void> => {
-  const entries = await readdir(dir, { withFileTypes: true }).catch(() => []);
-  const tasks: Promise<void>[] = [];
-
-  for (const entry of entries) {
-    const entryName = String(entry.name);
-    const fullPath = path.join(dir, entryName);
-
-    if (entry.isDirectory()) {
-      if (!shouldSkipDir(entryName)) {
-        tasks.push(cleanup(fullPath));
+  const tasks = TARGET_GLOBS.map(async (pattern) => {
+    const glob = new Glob(pattern);
+    for await (const filePath of glob.scan({ cwd: dir, onlyFiles: true })) {
+      if (
+        SKIP_DIRS.some((skipDir) => filePath.split(/[\\/]/u).includes(skipDir))
+      ) {
+        continue;
       }
-    } else if (entry.isFile() && shouldDeleteFile(entryName)) {
-      tasks.push(removeFile(fullPath));
+      await removeFile(filePath);
     }
-  }
+  });
 
   await Promise.all(tasks);
 };

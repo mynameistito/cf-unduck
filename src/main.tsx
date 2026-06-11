@@ -9,7 +9,11 @@ import "./styles/global.css";
 
 const loadDevTools = async (): Promise<void> => {
   if (import.meta.env.DEV) {
-    await import("react-grab");
+    try {
+      await import("react-grab");
+    } catch (error) {
+      console.error("Failed to load dev tools", error);
+    }
   }
 };
 
@@ -24,8 +28,8 @@ const preloadBangs = async (): Promise<void> => {
   }
 };
 
-await loadDevTools();
-await preloadBangs();
+void loadDevTools();
+void preloadBangs();
 
 syncPrefsCookie();
 

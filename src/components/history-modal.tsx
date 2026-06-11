@@ -19,7 +19,8 @@ const getFocusables = (root: HTMLElement | null): HTMLElement[] => {
 };
 
 export const HistoryModal = ({ onClose }: Props) => {
-  const dialogRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const history = useMemo(() => getSearchHistory(), []);
 
   useEffect(() => {
@@ -27,7 +28,11 @@ export const HistoryModal = ({ onClose }: Props) => {
       document.activeElement instanceof HTMLElement
         ? document.activeElement
         : null;
-    dialogRef.current?.focus();
+    const dialog = dialogRef.current;
+    if (dialog && !dialog.open) {
+      dialog.showModal();
+    }
+    contentRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         onClose();
@@ -36,7 +41,7 @@ export const HistoryModal = ({ onClose }: Props) => {
       if (e.key !== "Tab") {
         return;
       }
-      const focusables = getFocusables(dialogRef.current);
+      const focusables = getFocusables(contentRef.current);
       const [firstEl] = focusables;
       const lastEl = focusables.at(-1);
       if (!(firstEl && lastEl)) {
@@ -53,6 +58,7 @@ export const HistoryModal = ({ onClose }: Props) => {
     document.addEventListener("keydown", onKey);
     return () => {
       document.removeEventListener("keydown", onKey);
+      dialog?.close();
       previouslyFocused?.focus?.();
     };
   }, [onClose]);
@@ -62,7 +68,7 @@ export const HistoryModal = ({ onClose }: Props) => {
       aria-labelledby="history-title"
       aria-modal="true"
       className="fixed inset-0 z-[1000] flex h-full w-full max-w-none items-center justify-center border-0 bg-transparent p-0 text-fg"
-      open
+      ref={dialogRef}
     >
       <button
         aria-label="Close history"
@@ -72,7 +78,7 @@ export const HistoryModal = ({ onClose }: Props) => {
       />
       <div
         className="themed-scrollbar relative flex max-h-[90vh] w-[calc(100%-2rem)] max-w-[640px] flex-col rounded-lg border border-border bg-bg px-5 py-4 text-fg shadow-[0_20px_60px_rgba(0,0,0,0.4)]"
-        ref={dialogRef}
+        ref={contentRef}
         tabIndex={-1}
       >
         <button

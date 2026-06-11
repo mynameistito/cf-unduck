@@ -1,21 +1,4 @@
 {
-  "name": "cf-unduck",
-  "version": "0.1.0",
-  "private": false,
-  "type": "module",
-  "scripts": {
-    "dev": "portless cf-unduck vite dev",
-    "build": "vite build && tsgo --noEmit",
-    "preview": "vite preview",
-    "deploy": "bun run build && wrangler deploy",
-    "cf-typegen": "wrangler types",
-    "fetch-bangs": "bun run scripts/fetch-bangs.ts",
-    "typecheck": "tsgo --noEmit",
-    "test": "bun test",
-    "check": "ultracite check",
-    "fix": "ultracite fix",
-    "prepare": "lefthook install"
-  },
   "dependencies": {
     "@tanstack/react-router": "^1.170.15",
     "react": "^19.2.7",
@@ -40,6 +23,23 @@
     "vite-plugin-pwa": "^1.3.0",
     "wrangler": "^4.99.0"
   },
+  "name": "cf-unduck",
+  "scripts": {
+    "dev": "portless cf-unduck vite dev",
+    "build": "vite build && tsgo --noEmit",
+    "preview": "vite preview",
+    "deploy": "bun run build && wrangler deploy",
+    "cf-typegen": "wrangler types",
+    "fetch-bangs": "bun run scripts/fetch-bangs.ts",
+    "typecheck": "tsgo --noEmit",
+    "test": "bun test",
+    "check": "ultracite check",
+    "fix": "ultracite fix",
+    "prepare": "lefthook install"
+  },
+  "type": "module",
+  "version": "0.1.0",
+  "private": false,
   "overrides": {
     "ws": ">=8.20.1"
   }

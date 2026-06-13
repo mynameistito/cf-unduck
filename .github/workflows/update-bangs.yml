@@ -26,6 +26,9 @@ jobs:
       - name: Fetch + regenerate bangs
         run: bun run fetch-bangs
 
+      - name: Format generated files
+        run: bun run fix
+
       - name: Validate generated files
         run: |
           bun run typecheck

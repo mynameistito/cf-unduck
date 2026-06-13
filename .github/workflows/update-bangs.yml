@@ -63,9 +63,7 @@ jobs:
               --base main \
               --head automation/update-bangs \
               --title "chore: update bangs.json" \
-              --body "Automated bang data refresh." \
-              --label automated \
-              --label bangs
+              --body "Automated bang data refresh."
 
             pr_number=$(gh pr view automation/update-bangs \
               --json number \

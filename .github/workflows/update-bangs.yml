@@ -42,11 +42,11 @@ jobs:
 
           git fetch origin main automation/update-bangs || true
           if git show-ref --verify --quiet refs/remotes/origin/automation/update-bangs; then
-            git switch --create automation/update-bangs origin/automation/update-bangs
-            git reset --soft origin/main
+            git branch -f automation/update-bangs origin/main
           else
-            git switch --create automation/update-bangs
+            git branch automation/update-bangs origin/main
           fi
+          git switch automation/update-bangs
 
           git add src/lib/bangs/bangs.json src/lib/bangs/hashbang.ts
           git commit -m "chore: update bangs.json"
@@ -68,6 +68,6 @@ jobs:
             --label bangs \
             --json number \
             --jq .number)
-
-            gh pr merge "$pr_number" --auto --squash
           fi
+
+          gh pr merge "$pr_number" --auto --squash

@@ -59,15 +59,17 @@ jobs:
             --jq '.[0].number // empty')
 
           if [ -z "$pr_number" ]; then
-            pr_number=$(gh pr create \
-            --base main \
-            --head automation/update-bangs \
-            --title "chore: update bangs.json" \
-            --body "Automated bang data refresh." \
-            --label automated \
-            --label bangs \
-            --json number \
-            --jq .number)
+            gh pr create \
+              --base main \
+              --head automation/update-bangs \
+              --title "chore: update bangs.json" \
+              --body "Automated bang data refresh." \
+              --label automated \
+              --label bangs
+
+            pr_number=$(gh pr view automation/update-bangs \
+              --json number \
+              --jq .number)
           fi
 
           gh pr merge "$pr_number" --auto --squash

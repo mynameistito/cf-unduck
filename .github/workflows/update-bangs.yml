@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
 
 concurrency:
   group: ${{ github.workflow }}
@@ -27,9 +26,17 @@ jobs:
       - name: Fetch + regenerate bangs
         run: bun run fetch-bangs
 
-      - name: Create pull request
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Format generated files
+        run: bun run fix
+
+      - name: Validate generated files
+        run: |
+          bun run typecheck
+          bun run check
+          bun test
+          bun run build
+
+      - name: Commit generated files
         run: |
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
@@ -40,34 +47,5 @@ jobs:
             exit 0
           fi
 
-          git fetch origin main automation/update-bangs || true
-          if git show-ref --verify --quiet refs/remotes/origin/automation/update-bangs; then
-            git branch -f automation/update-bangs origin/main
-          else
-            git branch automation/update-bangs origin/main
-          fi
-          git switch automation/update-bangs
-
-          git add src/lib/bangs/bangs.json src/lib/bangs/hashbang.ts
           git commit -m "chore: update bangs.json"
-          git push --force-with-lease origin automation/update-bangs
-
-          pr_number=$(gh pr list \
-            --head automation/update-bangs \
-            --state open \
-            --json number \
-            --jq '.[0].number // empty')
-
-          if [ -z "$pr_number" ]; then
-            gh pr create \
-              --base main \
-              --head automation/update-bangs \
-              --title "chore: update bangs.json" \
-              --body "Automated bang data refresh."
-
-            pr_number=$(gh pr view automation/update-bangs \
-              --json number \
-              --jq .number)
-          fi
-
-          gh pr merge "$pr_number" --auto --squash
+          git push origin HEAD:main

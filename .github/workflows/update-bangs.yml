@@ -63,11 +63,5 @@ jobs:
               --base main \
               --head automation/update-bangs \
               --title "chore: update bangs.json" \
-              --body "Automated bang data refresh."
-
-            pr_number=$(gh pr view automation/update-bangs \
-              --json number \
-              --jq .number)
+              --body "Automated bang data refresh. GitHub does not run required pull_request checks for PRs created by GITHUB_TOKEN, so this PR is intentionally left for manual review and merge."
           fi
-
-          gh pr merge "$pr_number" --auto --squash

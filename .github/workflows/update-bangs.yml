@@ -9,6 +9,10 @@ permissions:
   contents: write
   pull-requests: write
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
 jobs:
   refresh:
     runs-on: ubuntu-latest
@@ -36,20 +40,34 @@ jobs:
             exit 0
           fi
 
-          git switch --create automation/update-bangs
+          git fetch origin main automation/update-bangs || true
+          if git show-ref --verify --quiet refs/remotes/origin/automation/update-bangs; then
+            git branch -f automation/update-bangs origin/main
+          else
+            git branch automation/update-bangs origin/main
+          fi
+          git switch automation/update-bangs
+
+          git add src/lib/bangs/bangs.json src/lib/bangs/hashbang.ts
           git commit -m "chore: update bangs.json"
           git push --force-with-lease origin automation/update-bangs
 
-          gh pr list \
+          pr_number=$(gh pr list \
             --head automation/update-bangs \
             --state open \
             --json number \
-            --jq 'length > 0' | grep -q true || gh pr create \
+            --jq '.[0].number // empty')
+
+          if [ -z "$pr_number" ]; then
+            pr_number=$(gh pr create \
             --base main \
             --head automation/update-bangs \
             --title "chore: update bangs.json" \
             --body "Automated bang data refresh." \
             --label automated \
-            --label bangs
+            --label bangs \
+            --json number \
+            --jq .number)
+          fi
 
-          gh pr merge automation/update-bangs --auto --squash
+          gh pr merge "$pr_number" --auto --squash

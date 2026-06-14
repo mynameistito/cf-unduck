@@ -40,7 +40,7 @@ jobs:
         run: |
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
-          git add src/lib/bangs/bangs.json src/lib/bangs/hashbang.ts
+          git add src/lib/bangs/hashbang.ts
 
           if git diff --staged --quiet; then
             echo "No changes."

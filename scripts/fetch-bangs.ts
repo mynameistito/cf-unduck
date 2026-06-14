@@ -176,9 +176,6 @@ const main = async (): Promise<void> => {
   const outDir = path.join(process.cwd(), "src", "lib", "bangs");
   await mkdir(outDir, { recursive: true });
 
-  const jsonPath = path.join(outDir, "bangs.json");
-  await writeFile(jsonPath, text);
-
   const tsPath = path.join(outDir, "hashbang.ts");
   // V8 parses JSON.parse('...') ~2-3x faster than equivalent object literals
   // for large payloads. See https://v8.dev/blog/cost-of-javascript-2019.

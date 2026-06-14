@@ -21,6 +21,11 @@ interface RuntimeBang {
   u: string;
 }
 
+interface NormalizedBang extends RuntimeBang {
+  t: string;
+  ts?: string[];
+}
+
 const RESERVED_KEYS = new Set(["__proto__", "constructor", "prototype"]);
 
 const isSafeBangKey = (key: unknown): key is string =>
@@ -149,6 +154,7 @@ const main = async (): Promise<void> => {
     string,
     RuntimeBang
   >;
+  const normalizedBangs: NormalizedBang[] = [];
   Object.assign(hashbang, curatedSeed);
   let skipped = 0;
 
@@ -163,21 +169,28 @@ const main = async (): Promise<void> => {
     }
 
     hashbang[bang.t] = entry;
+    const normalizedBang: NormalizedBang = { ...entry, t: bang.t };
     if (bang.ts) {
+      const safeTriggers: string[] = [];
       for (const trigger of bang.ts) {
         if (!isSafeBangKey(trigger)) {
           continue;
         }
+        safeTriggers.push(trigger);
         hashbang[trigger] = entry;
       }
+      if (safeTriggers.length > 0) {
+        normalizedBang.ts = safeTriggers;
+      }
     }
+    normalizedBangs.push(normalizedBang);
   }
 
   const outDir = path.join(process.cwd(), "src", "lib", "bangs");
   await mkdir(outDir, { recursive: true });
 
   const jsonPath = path.join(outDir, "bangs.json");
-  await writeFile(jsonPath, text);
+  await writeFile(jsonPath, `${JSON.stringify(normalizedBangs, null, 2)}\n`);
 
   const tsPath = path.join(outDir, "hashbang.ts");
   // V8 parses JSON.parse('...') ~2-3x faster than equivalent object literals

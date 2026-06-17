@@ -17,30 +17,32 @@
     "prepare": "lefthook install"
   },
   "dependencies": {
-    "@tanstack/react-router": "^1.170.15",
+    "@tanstack/react-router": "^1.170.16",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.3.0",
+    "@tailwindcss/vite": "^4.3.1",
     "@tanstack/router-plugin": "^1.168.18",
     "@types/bun": "^1.3.14",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
-    "@typescript/native-preview": "^7.0.0-dev.20260610.1",
+    "@typescript/native-preview": "^7.0.0-dev.20260616.1",
     "@vitejs/plugin-react": "^6.0.2",
     "lefthook": "^2.1.9",
-    "oxfmt": "^0.54.0",
-    "oxlint": "^1.69.0",
-    "react-grab": "^0.1.44",
-    "tailwindcss": "^4.3.0",
+    "oxfmt": "^0.55.0",
+    "oxlint": "^1.70.0",
+    "react-grab": "^0.1.46",
+    "tailwindcss": "^4.3.1",
     "typescript": "^6.0.3",
     "ultracite": "7.8.3",
     "vite": "^8.0.16",
     "vite-plugin-pwa": "^1.3.0",
-    "wrangler": "^4.99.0"
+    "wrangler": "^4.101.0"
   },
   "overrides": {
-    "ws": ">=8.20.1"
+    "@babel/core": ">=7.30.0",
+    "esbuild": ">=0.28.1",
+    "ws": ">=8.21.0"
   }
 }

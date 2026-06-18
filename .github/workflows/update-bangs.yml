@@ -6,7 +6,9 @@ on:
   workflow_dispatch:
 
 permissions:
+  actions: write
   contents: write
+  pull-requests: write
 
 concurrency:
   group: ${{ github.workflow }}
@@ -36,8 +38,12 @@ jobs:
           bun test
           bun run build
 
-      - name: Commit generated files
+      - name: Create update pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
+          branch="automation/update-bangs"
+
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
           git add src/lib/bangs/hashbang.ts
@@ -48,4 +54,22 @@ jobs:
           fi
 
           git commit -m "chore: update bangs.json"
-          git push origin HEAD:main
+          git fetch --no-tags --depth=1 origin "${branch}:refs/remotes/origin/${branch}" || true
+          git push --force-with-lease origin "HEAD:${branch}"
+
+          pr_number="$(gh pr list --head "${branch}" --state open --json number --jq '.[0].number // empty')"
+
+          if [ -z "${pr_number}" ]; then
+            gh pr create \
+              --base main \
+              --head "${branch}" \
+              --title "chore: update bangs.json" \
+              --body "Automated refresh of the generated Kagi bangs data."
+          else
+            gh pr edit "${pr_number}" \
+              --title "chore: update bangs.json" \
+              --body "Automated refresh of the generated Kagi bangs data."
+          fi
+
+          gh workflow run ci.yml --ref "${branch}"
+          gh workflow run codeql.yml --ref "${branch}"

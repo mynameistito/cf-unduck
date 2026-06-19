@@ -55,8 +55,14 @@ jobs:
           fi
 
           git commit -m "chore: update bangs.json"
-          git fetch --no-tags --depth=1 origin "${branch}:refs/remotes/origin/${branch}" || true
-          git push --force-with-lease "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:${branch}"
+          remote_url="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          remote_sha="$(git ls-remote --heads "${remote_url}" "${branch}" | cut -f1)"
+
+          if [ -z "${remote_sha}" ]; then
+            git push "${remote_url}" "HEAD:${branch}"
+          else
+            git push --force-with-lease="refs/heads/${branch}:${remote_sha}" "${remote_url}" "HEAD:${branch}"
+          fi
 
           pr_number="$(gh pr list --head "${branch}" --state open --json number --jq '.[0].number // empty')"
 

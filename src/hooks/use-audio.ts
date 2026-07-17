@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 
 const SOURCES = {
   click: "/click-button.opus",
@@ -23,7 +23,10 @@ export interface AudioController {
 export const useAudio = (enabled: boolean): AudioController => {
   const ref = useRef<Partial<Record<AudioName, HTMLAudioElement>>>({});
   const enabledRef = useRef(enabled);
-  enabledRef.current = enabled;
+
+  useLayoutEffect(() => {
+    enabledRef.current = enabled;
+  }, [enabled]);
 
   useEffect(() => {
     if (Object.keys(ref.current).length > 0) {

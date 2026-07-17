@@ -138,14 +138,14 @@ export const Landing = () => {
       <div className="content-container">
         <Cutie reducedMotion={reducedMotion} />
         <p>
-          DuckDuckGo's bang redirects are too slow. Add the following URL as a
-          custom search engine to your browser. Enables{" "}
+          DuckDuckGo&apos;s bang redirects are too slow. Add the following URL
+          as a custom search engine to your browser. Enables{" "}
           <a
             href="https://duckduckgo.com/bang.html"
-            rel="noopener"
+            rel="noreferrer"
             target="_blank"
           >
-            all of DuckDuckGo's bangs.
+            all of DuckDuckGo&apos;s bangs.
           </a>
         </p>
         <CopyUrl audio={audio} reducedMotion={reducedMotion} />
@@ -213,13 +213,13 @@ export const Landing = () => {
 
       <footer className="footer">
         made with ♥ by{" "}
-        <a href={SITE.author.url} rel="noopener" target="_blank">
+        <a href={SITE.author.url} rel="noreferrer" target="_blank">
           {SITE.author.name}
         </a>{" "}
         —{" "}
         <a
           href={`https://github.com/${SITE.githubUser}/${SITE.repo}`}
-          rel="noopener"
+          rel="noreferrer"
           target="_blank"
         >
           source
@@ -227,7 +227,7 @@ export const Landing = () => {
         , forked from{" "}
         <a
           href="https://github.com/taciturnaxolotl/unduckified"
-          rel="noopener"
+          rel="noreferrer"
           target="_blank"
         >
           unduckified

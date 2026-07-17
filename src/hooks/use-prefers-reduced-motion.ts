@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 
 export const usePrefersReducedMotion = (): boolean => {
-  const [prefers, setPrefers] = useState(false);
+  const [prefers, setPrefers] = useState(
+    () => window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setPrefers(mq.matches);
     const handler = (e: MediaQueryListEvent) => setPrefers(e.matches);
     mq.addEventListener("change", handler);
     return () => mq.removeEventListener("change", handler);

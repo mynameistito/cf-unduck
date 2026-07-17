@@ -293,7 +293,7 @@ const DefaultBangSection = ({
       <a
         className="text-fg-muted underline hover:text-fg-strong"
         href="https://duckduckgo.com/newbang"
-        rel="noopener"
+        rel="noreferrer"
         target="_blank"
       >
         DuckDuckGo
@@ -313,11 +313,11 @@ const BangSearchSection = ({ customBangs }: { customBangs: BangMap }) => {
       clearTimeout(timerRef.current);
     }
     const q = query.trim().toLowerCase();
-    if (!q) {
-      setResults([]);
-      return;
-    }
     timerRef.current = setTimeout(() => {
+      if (!q) {
+        setResults([]);
+        return;
+      }
       const all: BangMap = { ...bangs, ...customBangs };
       const filtered = Object.entries(all)
         .filter(([shortcut, b]) =>
@@ -920,10 +920,6 @@ export const SettingsModal = ({
   const [bangInput, setBangInput] = useState(defaultBang);
   const [bangError, setBangError] = useState(false);
 
-  useEffect(() => {
-    setBangInput(defaultBang);
-  }, [defaultBang]);
-
   const currentBang =
     customBangs[defaultBang] ?? bangs[defaultBang] ?? undefined;
 
@@ -937,6 +933,7 @@ export const SettingsModal = ({
       return;
     }
     setDefaultBang(shortcut);
+    setBangInput(shortcut);
     syncPrefsCookie();
     audio.play("click");
   };

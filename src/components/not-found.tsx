@@ -5,17 +5,25 @@ import { CUTIES, LS_KEYS } from "@/lib/constants";
 
 import { TopBar } from "./top-bar";
 
-export const NotFound = () => {
-  const [searchCount] = useLocalStorageString(LS_KEYS.SEARCH_COUNT, "0");
-  const [face] = useState(
+const useRandomNotFoundFace = () => {
+  const [notFoundFace, setNotFoundFace] = useState(
     () => CUTIES.NOTFOUND[Math.floor(Math.random() * CUTIES.NOTFOUND.length)]
   );
+  return [notFoundFace, setNotFoundFace] as const;
+};
+
+export const NotFound = () => {
+  const [searchCount] = useLocalStorageString(LS_KEYS.SEARCH_COUNT, "0");
+  const [notFoundFace] = useRandomNotFoundFace();
+
   return (
     <div className="flex h-screen flex-col items-center justify-center">
       <TopBar searchCount={searchCount} />
       <div className="content-container">
-        <h1 id="cutie">{face}</h1>
-        <p>404 Page not found</p>
+        <h1 aria-hidden="true" id="cutie">
+          {notFoundFace}
+        </h1>
+        <h1>404 Page not found</h1>
       </div>
     </div>
   );

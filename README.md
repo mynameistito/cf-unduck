@@ -118,7 +118,7 @@ React 19 + Vite + TanStack Router SPA, served as static assets by a Cloudflare W
 ## Scripts
 
 - `bun run dev` — Vite dev server (via portless)
-- `bun run build` — build + typecheck (`tsgo`)
+- `bun run build` — build + typecheck (`tsc`)
 - `bun run deploy` — build + `wrangler deploy`
 - `bun run fetch-bangs` — refresh bangs list
 - `bun run check` / `fix` — Ultracite lint

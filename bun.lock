@@ -28,6 +28,7 @@
         "wrangler": "^4.111.0",
       },
       "optionalDependencies": {
+        "@rollup/rollup-linux-x64-gnu": "4.60.3",
         "lightningcss-linux-x64-gnu": "1.32.0",
       },
     },
@@ -472,6 +473,8 @@
     "@rollup/plugin-terser": ["@rollup/plugin-terser@1.0.0", "", { "dependencies": { "serialize-javascript": "^7.0.3", "smob": "^1.0.0", "terser": "^5.17.4" }, "peerDependencies": { "rollup": "^2.0.0||^3.0.0||^4.0.0" } }, ""],
 
     "@rollup/pluginutils": ["@rollup/pluginutils@5.3.0", "", { "dependencies": { "@types/estree": "^1.0.0", "estree-walker": "^2.0.2", "picomatch": "^4.0.2" }, "peerDependencies": { "rollup": "^1.20.0||^2.0.0||^3.0.0||^4.0.0" } }, ""],
+
+    "@rollup/rollup-linux-x64-gnu": ["@rollup/rollup-linux-x64-gnu@4.60.3", "", { "os": "linux", "cpu": "x64" }, "sha512-DAZDBHQfG2oQuhY7mc6I3/qB4LU2fQCjRvxbDwd/Jdvb9fypP4IJ4qmtu6lNjes6B531AI8cg1aKC2di97bUxA=="],
 
     "@rollup/rollup-win32-x64-gnu": ["@rollup/rollup-win32-x64-gnu@4.60.3", "", { "os": "win32", "cpu": "x64" }, ""],
 

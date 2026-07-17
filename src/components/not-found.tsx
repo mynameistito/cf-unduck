@@ -20,8 +20,10 @@ export const NotFound = () => {
     <div className="flex h-screen flex-col items-center justify-center">
       <TopBar searchCount={searchCount} />
       <div className="content-container">
-        <h1 id="cutie">{notFoundFace}</h1>
-        <p>404 Page not found</p>
+        <h1 aria-hidden="true" id="cutie">
+          {notFoundFace}
+        </h1>
+        <h1>404 Page not found</h1>
       </div>
     </div>
   );

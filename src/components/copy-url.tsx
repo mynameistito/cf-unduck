@@ -15,8 +15,13 @@ export const CopyUrl = ({ audio, reducedMotion }: Props) => {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const onCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      return;
+    }
+
     audio.play("copy");
-    await navigator.clipboard.writeText(url);
     setCopied(true);
     if (!reducedMotion) {
       setFlashing(true);

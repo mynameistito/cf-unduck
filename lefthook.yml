@@ -4,7 +4,7 @@ pre-commit:
       glob: "**/*.{js,jsx,ts,tsx,json,jsonc,css}"
       stage_fixed: true
 
-    - run: bun tsgo --noEmit
+    - run: bun tsc --noEmit
       glob: "**/*.{ts,tsx}"
 
     - run: bun run scripts/cleanup.ts

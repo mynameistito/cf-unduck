@@ -18,8 +18,8 @@
   },
   "dependencies": {
     "@tanstack/react-router": "^1.170.18",
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
@@ -40,7 +40,7 @@
     "wrangler": "^4.112.0"
   },
   "optionalDependencies": {
-    "@rollup/rollup-linux-x64-gnu": "4.62.2",
+    "@rollup/rollup-linux-x64-gnu": "4.62.3",
     "lightningcss-linux-x64-gnu": "1.33.0"
   },
   "overrides": {

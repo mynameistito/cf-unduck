@@ -7,7 +7,7 @@ import type { Plugin } from "vite";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
-import { SITE } from "./src/site.config";
+import { SITE } from "./src/site.config.ts";
 
 const root = path.resolve(import.meta.dirname);
 const CHUNK_SIZE_WARNING_LIMIT_KB = 1600;

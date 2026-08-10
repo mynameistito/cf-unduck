@@ -13,19 +13,19 @@ import type { BangMap } from "@/lib/types";
 const PreviewLine = ({ preview }: { preview: RedirectResult }) => {
   if (preview.kind === "redirect") {
     return (
-      <p className="mt-2 break-all text-fg-muted text-xs">
+      <p className="text-fg-muted mt-2 text-xs break-all">
         <span className="text-fg">→</span> {preview.url}
       </p>
     );
   }
   if (preview.kind === "landing") {
     return (
-      <p className="mt-2 break-all text-fg-muted text-xs">
+      <p className="text-fg-muted mt-2 text-xs break-all">
         (landing page — type a query)
       </p>
     );
   }
-  return <p className="mt-2 break-all text-fg-muted text-xs">(no match)</p>;
+  return <p className="text-fg-muted mt-2 text-xs break-all">(no match)</p>;
 };
 
 interface Props {
@@ -85,7 +85,7 @@ export const BangTester = ({ inputRef }: Props) => {
         <input
           aria-label="Test a bang query"
           autoComplete="off"
-          className="flex-1 rounded-md border border-border bg-bg-muted px-3 py-2 text-fg outline-none focus:outline-2 focus:outline-fg-muted"
+          className="border-border bg-bg-muted text-fg focus:outline-fg-muted flex-1 rounded-md border px-3 py-2 outline-none focus:outline-2"
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Try it: !gh react"
           ref={inputRef}
@@ -95,7 +95,7 @@ export const BangTester = ({ inputRef }: Props) => {
         />
         <button
           aria-label="Run query"
-          className="rounded-md bg-fg px-3 py-2 font-medium text-bg text-sm transition hover:brightness-90 active:scale-[0.97] disabled:opacity-50"
+          className="bg-fg text-bg rounded-md px-3 py-2 text-sm font-medium transition hover:brightness-90 active:scale-[0.97] disabled:opacity-50"
           disabled={!query.trim()}
           type="submit"
         >

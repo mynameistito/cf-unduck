@@ -67,7 +67,7 @@ export const HistoryModal = ({ onClose }: Props) => {
     <dialog
       aria-labelledby="history-title"
       aria-modal="true"
-      className="fixed inset-0 z-[1000] flex h-full w-full max-w-none items-center justify-center border-0 bg-transparent p-0 text-fg"
+      className="text-fg fixed inset-0 z-[1000] flex h-full w-full max-w-none items-center justify-center border-0 bg-transparent p-0"
       ref={dialogRef}
     >
       <button
@@ -77,27 +77,27 @@ export const HistoryModal = ({ onClose }: Props) => {
         type="button"
       />
       <div
-        className="themed-scrollbar relative flex max-h-[90vh] w-[calc(100%-2rem)] max-w-[640px] flex-col rounded-lg border border-border bg-bg px-5 py-4 text-fg shadow-[0_20px_60px_rgba(0,0,0,0.4)]"
+        className="themed-scrollbar border-border bg-bg text-fg relative flex max-h-[90vh] w-[calc(100%-2rem)] max-w-[640px] flex-col rounded-lg border px-5 py-4 shadow-[0_20px_60px_rgba(0,0,0,0.4)]"
         ref={contentRef}
         tabIndex={-1}
       >
         <button
           aria-label="Close history"
-          className="absolute top-2.5 right-2.5 flex h-7 w-7 items-center justify-center rounded-md text-fg-muted leading-none transition hover:bg-bg-hover hover:text-fg"
+          className="text-fg-muted hover:bg-bg-hover hover:text-fg absolute top-2.5 right-2.5 flex h-7 w-7 items-center justify-center rounded-md leading-none transition"
           onClick={onClose}
           type="button"
         >
           &times;
         </button>
         <h2
-          className="mb-3 border-border border-b pb-2 font-semibold text-fg text-lg"
+          className="border-border text-fg mb-3 border-b pb-2 text-lg font-semibold"
           id="history-title"
         >
           Recent Searches ({history.length})
         </h2>
         <div className="flex-1 overflow-y-auto text-left">
           {history.length === 0 ? (
-            <div className="p-2 text-center text-fg-muted">
+            <div className="text-fg-muted p-2 text-center">
               No search history
             </div>
           ) : (
@@ -106,7 +106,7 @@ export const HistoryModal = ({ onClose }: Props) => {
                 <a href={`/?q=${encodeURIComponent(`!${s.bang} ${s.query}`)}`}>
                   {s.name}: {s.query}
                 </a>
-                <span className="float-right text-fg-muted">
+                <span className="text-fg-muted float-right">
                   {new Date(s.timestamp).toLocaleString()}
                 </span>
               </div>

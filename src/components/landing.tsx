@@ -151,7 +151,7 @@ export const Landing = () => {
         <CopyUrl audio={audio} reducedMotion={reducedMotion} />
         {shareImport ? (
           <div
-            className="mt-4 flex flex-col gap-2 rounded-md border border-border bg-bg-muted p-3 text-left text-sm"
+            className="border-border bg-bg-muted mt-4 flex flex-col gap-2 rounded-md border p-3 text-left text-sm"
             role="alert"
           >
             <span>
@@ -160,14 +160,14 @@ export const Landing = () => {
             </span>
             <div className="flex justify-end gap-2">
               <button
-                className="rounded-md border border-border bg-bg px-3 py-1 text-fg text-sm transition hover:bg-bg-hover"
+                className="border-border bg-bg text-fg hover:bg-bg-hover rounded-md border px-3 py-1 text-sm transition"
                 onClick={dismissShareImport}
                 type="button"
               >
                 Dismiss
               </button>
               <button
-                className="rounded-md bg-fg px-3 py-1 text-bg text-sm transition hover:brightness-90"
+                className="bg-fg text-bg rounded-md px-3 py-1 text-sm transition hover:brightness-90"
                 onClick={acceptShareImport}
                 type="button"
               >
@@ -177,7 +177,7 @@ export const Landing = () => {
           </div>
         ) : null}
         <BangTester inputRef={testerInputRef} />
-        <p className="mt-2 text-fg-muted text-xs">
+        <p className="text-fg-muted mt-2 text-xs">
           Shortcuts: <kbd>/</kbd> focus tester · <kbd>s</kbd> settings
         </p>
 
@@ -200,7 +200,7 @@ export const Landing = () => {
                     <a href={`?q=!${s.bang} ${s.query}`}>
                       {s.name}: {s.query}
                     </a>
-                    <span className="float-right text-fg-muted">
+                    <span className="text-fg-muted float-right">
                       {new Date(s.timestamp).toLocaleString()}
                     </span>
                   </div>

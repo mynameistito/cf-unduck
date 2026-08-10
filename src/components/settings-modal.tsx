@@ -263,7 +263,7 @@ const DefaultBangSection = ({
   <div className={sectionCls}>
     <h3 className={sectionHeadingCls}>Bangs</h3>
     <label
-      className="block text-fg"
+      className="text-fg block"
       htmlFor="default-bang"
       id="bang-description"
     >
@@ -284,14 +284,14 @@ const DefaultBangSection = ({
         type="text"
         value={value}
       />
-      <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-fg-muted">
+      <span className="text-fg-muted pointer-events-none absolute top-1/2 right-3 -translate-y-1/2">
         ↵
       </span>
     </div>
-    <p className="mt-2 text-fg-muted text-sm">
+    <p className="text-fg-muted mt-2 text-sm">
       The best way to add new bangs is by submitting them on{" "}
       <a
-        className="text-fg-muted underline hover:text-fg-strong"
+        className="text-fg-muted hover:text-fg-strong underline"
         href="https://duckduckgo.com/newbang"
         rel="noreferrer"
         target="_blank"
@@ -360,9 +360,9 @@ const BangSearchSection = ({ customBangs }: { customBangs: BangMap }) => {
         value={query}
       />
       {(query && results.length === 0) || results.length > 0 ? (
-        <div className="mt-2.5 max-h-[220px] overflow-y-auto rounded-md border border-border">
+        <div className="border-border mt-2.5 max-h-[220px] overflow-y-auto rounded-md border">
           {query && results.length === 0 ? (
-            <div className="bg-bg-muted p-3 text-center text-fg-muted">
+            <div className="bg-bg-muted text-fg-muted p-3 text-center">
               No bangs found
             </div>
           ) : (
@@ -373,10 +373,10 @@ const BangSearchSection = ({ customBangs }: { customBangs: BangMap }) => {
               );
               return (
                 <div
-                  className="flex items-center gap-3 border-border border-b bg-bg-muted px-3 py-2 last:border-b-0"
+                  className="border-border bg-bg-muted flex items-center gap-3 border-b px-3 py-2 last:border-b-0"
                   key={shortcut}
                 >
-                  <code className="min-w-[60px] rounded bg-bg-active px-1.5 py-0.5 text-xs">
+                  <code className="bg-bg-active min-w-[60px] rounded px-1.5 py-0.5 text-xs">
                     !{shortcut}
                   </code>
                   <span className="flex-1 font-medium">{display}</span>
@@ -450,7 +450,7 @@ const EditBangPopup = ({
     <dialog
       aria-labelledby={titleId}
       aria-modal="true"
-      className="fixed inset-0 z-[1100] flex h-full w-full max-w-none items-center justify-center border-0 bg-transparent p-0 text-fg"
+      className="text-fg fixed inset-0 z-[1100] flex h-full w-full max-w-none items-center justify-center border-0 bg-transparent p-0"
       open
     >
       <button
@@ -459,17 +459,17 @@ const EditBangPopup = ({
         onClick={onCancel}
         type="button"
       />
-      <div className="relative w-[calc(100%-2rem)] max-w-[420px] rounded-lg border border-border bg-bg px-5 py-4 shadow-[0_20px_60px_rgba(0,0,0,0.4)]">
+      <div className="border-border bg-bg relative w-[calc(100%-2rem)] max-w-[420px] rounded-lg border px-5 py-4 shadow-[0_20px_60px_rgba(0,0,0,0.4)]">
         <button
           aria-label="Cancel edit"
-          className="absolute top-2.5 right-2.5 flex h-7 w-7 items-center justify-center rounded-md text-fg-muted leading-none transition hover:bg-bg-hover hover:text-fg"
+          className="text-fg-muted hover:bg-bg-hover hover:text-fg absolute top-2.5 right-2.5 flex h-7 w-7 items-center justify-center rounded-md leading-none transition"
           onClick={onCancel}
           type="button"
         >
           &times;
         </button>
         <h3
-          className="mb-3 border-border border-b pb-2 font-semibold text-base text-fg"
+          className="border-border text-fg mb-3 border-b pb-2 text-base font-semibold"
           id={titleId}
         >
           Edit Custom Bang
@@ -554,7 +554,7 @@ const CustomBangsSection = ({
   return (
     <div className={sectionCls}>
       <h3 className={sectionHeadingCls}>Add Custom Bang</h3>
-      <div className="flex flex-col gap-1.5 rounded-md border border-border bg-bg-muted p-2">
+      <div className="border-border bg-bg-muted flex flex-col gap-1.5 rounded-md border p-2">
         <BangForm fields={fields} idPrefix="add-bang" onChange={updateFields} />
         {addError ? (
           <p className="text-danger text-sm" role="alert">
@@ -569,23 +569,23 @@ const CustomBangsSection = ({
       </div>
       {Object.keys(customBangs).length > 0 ? (
         <>
-          <h4 className="mt-4 mb-2 font-semibold text-fg text-sm">
+          <h4 className="text-fg mt-4 mb-2 text-sm font-semibold">
             Your Custom Bangs
           </h4>
           <div className="flex flex-col gap-2">
             {Object.entries(customBangs).map(([key, b]) => (
               <div
-                className="flex flex-col gap-1.5 rounded-md border border-border bg-bg-muted p-2"
+                className="border-border bg-bg-muted flex flex-col gap-1.5 rounded-md border p-2"
                 key={key}
               >
                 <div className="flex flex-wrap items-center gap-3">
                   <span className="font-medium">{b.s}</span>
-                  <code className="rounded bg-bg-active px-1.5 py-0.5 text-xs">
+                  <code className="bg-bg-active rounded px-1.5 py-0.5 text-xs">
                     !{key}
                   </code>
                   <span className="text-fg-muted text-sm">{b.d}</span>
                 </div>
-                <div className="break-all text-fg-muted text-sm">{b.u}</div>
+                <div className="text-fg-muted text-sm break-all">{b.u}</div>
                 <div className="flex justify-end gap-2">
                   <button
                     className={`${secondaryBtnCls} px-3 py-1 text-sm`}
@@ -630,7 +630,7 @@ const SoundSection = ({
   <div className={sectionCls}>
     <h3 className={sectionHeadingCls}>Sound</h3>
     <label
-      className="flex cursor-pointer items-center justify-between gap-2.5 text-fg"
+      className="text-fg flex cursor-pointer items-center justify-between gap-2.5"
       htmlFor="sound-toggle"
     >
       <span>Enable sounds</span>
@@ -663,7 +663,7 @@ const HistorySection = ({
     </h3>
     <div className="flex items-center justify-between gap-3">
       <label
-        className="flex cursor-pointer items-center gap-2.5 text-fg"
+        className="text-fg flex cursor-pointer items-center gap-2.5"
         htmlFor="history-toggle"
       >
         <span>Enable Search History</span>
@@ -886,7 +886,7 @@ const ImportExportSection = () => {
         />
       </div>
       {importError ? (
-        <p className="mt-2 text-danger text-sm" role="alert">
+        <p className="text-danger mt-2 text-sm" role="alert">
           {importError}
         </p>
       ) : null}
@@ -952,7 +952,7 @@ export const SettingsModal = ({
     <dialog
       aria-labelledby="settings-title"
       aria-modal="true"
-      className="fixed inset-0 z-[1000] h-full w-full max-w-none border-0 bg-transparent p-0 text-fg"
+      className="text-fg fixed inset-0 z-[1000] h-full w-full max-w-none border-0 bg-transparent p-0"
       open
       ref={backdropRef}
     >
@@ -963,19 +963,19 @@ export const SettingsModal = ({
         type="button"
       />
       <div
-        className="themed-scrollbar relative mx-auto my-[5vh] max-h-[90vh] w-[calc(100%-2rem)] max-w-[480px] overflow-y-auto rounded-lg border border-border bg-bg px-5 py-4 text-fg shadow-[0_20px_60px_rgba(0,0,0,0.4)]"
+        className="themed-scrollbar border-border bg-bg text-fg relative mx-auto my-[5vh] max-h-[90vh] w-[calc(100%-2rem)] max-w-[480px] overflow-y-auto rounded-lg border px-5 py-4 shadow-[0_20px_60px_rgba(0,0,0,0.4)]"
         ref={dialogRef}
       >
         <button
           aria-label="Close settings"
-          className="absolute top-2.5 right-2.5 flex h-7 w-7 items-center justify-center rounded-md text-fg-muted leading-none transition hover:bg-bg-hover hover:text-fg"
+          className="text-fg-muted hover:bg-bg-hover hover:text-fg absolute top-2.5 right-2.5 flex h-7 w-7 items-center justify-center rounded-md leading-none transition"
           onClick={onClose}
           type="button"
         >
           &times;
         </button>
         <h2
-          className="mb-3 border-border border-b pb-2 font-semibold text-fg text-lg"
+          className="border-border text-fg mb-3 border-b pb-2 text-lg font-semibold"
           id="settings-title"
         >
           Settings

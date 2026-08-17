@@ -17,7 +17,7 @@
     "prepare": "lefthook install"
   },
   "dependencies": {
-    "@tanstack/react-router": "^1.170.25",
+    "@tanstack/react-router": "^1.170.27",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },

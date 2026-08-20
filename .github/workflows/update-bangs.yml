@@ -1,8 +1,6 @@
-name: Daily bang refresh
+name: Refresh bangs
 
 on:
-  schedule:
-    - cron: "0 0 * * *"
   workflow_dispatch:
 
 concurrency:
@@ -12,7 +10,6 @@ concurrency:
 jobs:
   refresh:
     permissions:
-      actions: write
       contents: write
       pull-requests: write
     runs-on: ubuntu-latest
@@ -32,7 +29,7 @@ jobs:
       - name: Format generated files
         run: bun run fix
 
-      - name: Validate generated files
+      - name: Validate
         run: |
           bun run typecheck
           bun run check
@@ -55,28 +52,12 @@ jobs:
           fi
 
           git commit -m "chore: update bangs.json"
-          remote_url="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          remote_sha="$(git ls-remote --heads "${remote_url}" "${branch}" | cut -f1)"
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:${branch}" --force
 
-          if [ -z "${remote_sha}" ]; then
-            git push "${remote_url}" "HEAD:${branch}"
-          else
-            git push --force-with-lease="refs/heads/${branch}:${remote_sha}" "${remote_url}" "HEAD:${branch}"
-          fi
-
-          pr_number="$(gh pr list --head "${branch}" --state open --json number --jq '.[0].number // empty')"
-
-          if [ -z "${pr_number}" ]; then
+          if ! gh pr list --head "${branch}" --state open --json number --jq '.[0].number' | grep -q .; then
             gh pr create \
               --base main \
               --head "${branch}" \
               --title "chore: update bangs.json" \
               --body "Automated refresh of the generated Kagi bangs data."
-          else
-            gh pr edit "${pr_number}" \
-              --title "chore: update bangs.json" \
-              --body "Automated refresh of the generated Kagi bangs data."
           fi
-
-          gh workflow run ci.yml --ref "${branch}"
-          gh workflow run codeql.yml --ref "${branch}"

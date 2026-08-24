@@ -2,11 +2,14 @@ import { useCallback, useRef, useSyncExternalStore } from "react";
 
 import { storage } from "@/lib/storage";
 
+const defaultParse = <T>(raw: string): T => JSON.parse(raw) as T;
+const defaultSerialize = <T>(value: T): string => JSON.stringify(value);
+
 export const useLocalStorage = <T>(
   key: string,
   initial: T,
-  parse: (raw: string) => T = (raw) => JSON.parse(raw) as T,
-  serialize: (value: T) => string = (value) => JSON.stringify(value)
+  parse: (raw: string) => T = defaultParse,
+  serialize: (value: T) => string = defaultSerialize
 ): [T, (value: T) => void] => {
   const cacheRef = useRef<{ raw: string | null; value: T } | null>(null);
 

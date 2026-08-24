@@ -540,13 +540,19 @@ const CustomBangsSection = ({
 
   const remove = (key: string) => {
     audio.play("warning");
-    const { [key]: _removed, ...rest } = customBangs;
+    const rest: BangMap = Object.fromEntries(
+      Object.entries(customBangs).filter(([entryKey]) => entryKey !== key)
+    );
     onChange(rest);
   };
 
   const saveEdit = (originalKey: string, next: { key: string; bang: Bang }) => {
     audio.play("click", { from: 0.1, rate: 2 });
-    const { [originalKey]: _removed, ...rest } = customBangs;
+    const rest: BangMap = Object.fromEntries(
+      Object.entries(customBangs).filter(
+        ([entryKey]) => entryKey !== originalKey
+      )
+    );
     onChange({ ...rest, [next.key]: next.bang });
     setEditingKey(null);
   };

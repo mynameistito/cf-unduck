@@ -2,6 +2,7 @@ import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
 import { Landing } from "@/components/landing";
+import { bangs } from "@/lib/bangs/hashbang";
 import { DEFAULT_BANG_SHORTCUT, LS_KEYS } from "@/lib/constants";
 import { readCustomBangs } from "@/lib/custom-bangs";
 import { addToSearchHistory } from "@/lib/history";
@@ -18,13 +19,12 @@ const IndexRoute = () => {
 
   useEffect(() => {
     let cancelled = false;
-    const redirect = async () => {
+    const redirect = () => {
       try {
         const query = q ?? "";
         const defaultBangShortcut =
           storage.get(LS_KEYS.DEFAULT_BANG) ?? DEFAULT_BANG_SHORTCUT;
         const customBangs = readCustomBangs();
-        const { bangs } = await import("@/lib/bangs/hashbang");
         if (cancelled) {
           return;
         }
@@ -61,7 +61,7 @@ const IndexRoute = () => {
         }
       }
     };
-    void redirect();
+    redirect();
     return () => {
       cancelled = true;
     };

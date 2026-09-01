@@ -195,6 +195,8 @@ import type { BangMap } from "@/lib/types";
 
 export const bangs: BangMap = JSON.parse('${escaped}') as BangMap;
 `;
+  // codeql[js/http-to-file-access]: This fixed-path generated source contains only
+  // validated entries from the fixed HTTPS GitHub bangs endpoint.
   await writeFile(tsPath, code);
 
   console.log(

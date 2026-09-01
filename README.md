@@ -85,7 +85,7 @@ Prereqs: [Bun](https://bun.com) and a Cloudflare account. Alchemy stores local c
    } as const;
    ```
 
-3. **Edit `alchemy.run.ts`** — change `APP_NAME` if you are deploying a fork under a different Worker name. The production domain comes from `src/site.config.ts`; preview stages use isolated `workers.dev` names.
+3. **Edit `alchemy.run.ts`** — change `APP_NAME` if you are deploying a fork under a different Worker name. The production domain comes from `src/site.config.ts`; only `pr-*` preview stages use isolated `workers.dev` names.
 
 4. **(Optional) Refresh bangs**
 

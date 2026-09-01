@@ -46,6 +46,7 @@ export const Site = Website.StaticSite(
       placement: {
         mode: "smart",
       },
+      workersDev: /^pr-\d+$/u.test(stack.stage),
     };
   })
 );

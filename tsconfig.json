@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "target": "ES2023",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "jsx": "react-jsx",
@@ -15,17 +15,10 @@
     "verbatimModuleSyntax": false,
     "noEmit": true,
     "allowImportingTsExtensions": true,
-    "types": ["@types/bun", "vite/client"],
+    "types": ["@cloudflare/workers-types", "@types/bun", "vite/client"],
     "paths": {
       "@/*": ["./src/*"]
     }
   },
-  "include": [
-    "src",
-    "scripts",
-    "__tests__",
-    "vite.config.ts",
-    "app.config.ts",
-    "worker-configuration.d.ts"
-  ]
+  "include": ["src", "scripts", "__tests__", "vite.config.ts", "alchemy.run.ts"]
 }

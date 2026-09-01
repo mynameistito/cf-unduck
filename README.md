@@ -63,7 +63,7 @@ https://www.google.com/complete/search?client=chrome&q=%s
 
 ## Self-hosting
 
-Prereqs: [Bun](https://bun.com), Cloudflare account, `wrangler` logged in (`bun x wrangler login`).
+Prereqs: [Bun](https://bun.com) and a Cloudflare account. Alchemy stores local credentials in its `default` profile; CI uses the Cloudflare secrets described below.
 
 1. **Clone & install**
 
@@ -85,14 +85,7 @@ Prereqs: [Bun](https://bun.com), Cloudflare account, `wrangler` logged in (`bun 
    } as const;
    ```
 
-3. **Edit `wrangler.jsonc`** — change `name` and route `pattern` to your domain (or remove `routes` to use default `*.workers.dev` URL):
-
-   ```jsonc
-   {
-     "name": "your-worker-name",
-     "routes": [{ "pattern": "search.yourdomain.com", "custom_domain": true }],
-   }
-   ```
+3. **Edit `alchemy.run.ts`** — change `APP_NAME` if you are deploying a fork under a different Worker name. The production domain comes from `src/site.config.ts`; preview stages use isolated `workers.dev` names.
 
 4. **(Optional) Refresh bangs**
 
@@ -100,26 +93,45 @@ Prereqs: [Bun](https://bun.com), Cloudflare account, `wrangler` logged in (`bun 
    bun run fetch-bangs
    ```
 
-5. **Dev**
+5. **Connect Alchemy to Cloudflare**
+
+   ```bash
+   bunx alchemy profile edit --add Cloudflare
+   ```
+
+6. **Dev**
 
    ```bash
    bun run dev
    ```
 
-6. **Deploy**
+7. **Deploy**
    ```bash
    bun run deploy
    ```
 
+## CI deployments
+
+`.github/workflows/deploy.yml` uses the latest pinned release of [`mynameistito/alchemy-deploy`](https://github.com/mynameistito/alchemy-deploy) after the `CI` workflow succeeds. It deploys `prod` from `main`, creates `pr-<number>` preview stages, and destroys previews when pull requests close.
+
+Configure these repository secrets before enabling production deployments:
+
+- `CLOUDFLARE_API_TOKEN` — a narrowly scoped token for the account
+- `CLOUDFLARE_ACCOUNT_ID` — the Cloudflare account that owns the Worker
+
+The first local production deployment uses the new Alchemy state store and creates the deleted Worker from scratch. Subsequent deployments are handled by the workflow.
+
 ## Stack
 
-React 19 + Vite + TanStack Router SPA, served as static assets by a Cloudflare Worker that also handles redirects and `/suggest`. Tailwind v4. Ultracite (Biome) for lint/format. Bun test runner.
+React 19 + Vite + TanStack Router SPA, served as static assets by an Alchemy-managed Cloudflare Worker that also handles redirects and `/suggest`. Tailwind v4. Ultracite (Biome) for lint/format. Bun test runner.
 
 ## Scripts
 
-- `bun run dev` — Vite dev server (via portless)
+- `bun run dev` — Alchemy local development with Vite HMR
 - `bun run build` — build + typecheck (`tsc`)
-- `bun run deploy` — build + `wrangler deploy`
+- `bun run plan` — preview the Alchemy infrastructure diff
+- `bun run deploy` — build and deploy with Alchemy
+- `bun run destroy` — destroy the selected Alchemy stage
 - `bun run fetch-bangs` — refresh bangs list
 - `bun run check` / `fix` — Ultracite lint
 - `bun test` — Bun test runner

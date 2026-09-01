@@ -9,7 +9,16 @@ const SOURCES = {
   warning: "/double-button.opus",
 } as const;
 
-type AudioName = keyof typeof SOURCES;
+const AUDIO_NAMES = [
+  "click",
+  "copy",
+  "spin",
+  "toggleOff",
+  "toggleOn",
+  "warning",
+] as const;
+
+type AudioName = (typeof AUDIO_NAMES)[number];
 
 export interface AudioController {
   pause: (name: AudioName) => void;
@@ -33,7 +42,7 @@ export const useAudio = (enabled: boolean): AudioController => {
       return;
     }
     const elements: Partial<Record<AudioName, HTMLAudioElement>> = {};
-    for (const key of Object.keys(SOURCES) as AudioName[]) {
+    for (const key of AUDIO_NAMES) {
       const a = new Audio();
       a.src = SOURCES[key];
       elements[key] = a;

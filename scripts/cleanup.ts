@@ -21,8 +21,16 @@ const removeFile = async (filePath: string): Promise<void> => {
   }
 };
 
+const readEntries = async (dir: string) => {
+  try {
+    return await readdir(dir, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+};
+
 const cleanup = async (dir: string): Promise<void> => {
-  const entries = await readdir(dir, { withFileTypes: true }).catch(() => []);
+  const entries = await readEntries(dir);
   const tasks: Promise<void>[] = [];
 
   for (const entry of entries) {

@@ -75,7 +75,7 @@ const IndexRoute = () => {
 
 export const Route = createFileRoute("/")({
   component: IndexRoute,
-  validateSearch: (raw: Record<string, unknown>): Search => ({
-    q: typeof raw.q === "string" ? raw.q : undefined,
+  validateSearch: (raw: { q?: unknown }): Search => ({
+    q: raw.q === undefined || raw.q === null ? undefined : String(raw.q),
   }),
 });

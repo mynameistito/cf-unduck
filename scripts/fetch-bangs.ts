@@ -23,10 +23,19 @@ interface RuntimeBang {
 
 const RESERVED_KEYS = new Set(["__proto__", "constructor", "prototype"]);
 
-const isSafeBangKey = (key: unknown): key is string =>
-  typeof key === "string" && key.trim().length > 0 && !RESERVED_KEYS.has(key);
+const isSafeBangKey = (key: string): boolean =>
+  key.trim().length > 0 && !RESERVED_KEYS.has(key);
 
-const curatedSeed: Record<string, RuntimeBang> = {
+const isCompleteBang = (
+  bang: RawBang
+): bang is RawBang & { d: string; s: string; t: string; u: string } => {
+  if (!bang.t || !bang.u || !bang.s || !bang.d) {
+    return false;
+  }
+  return isSafeBangKey(bang.t);
+};
+
+const curatedSeed = {
   assistant: {
     d: "kagi.com",
     s: "Kagi Assistant",
@@ -119,7 +128,7 @@ const curatedSeed: Record<string, RuntimeBang> = {
     s: "TikTok",
     u: "https://www.tiktok.com/search?q={{{s}}}",
   },
-};
+} satisfies Record<string, RuntimeBang>;
 
 const main = async (): Promise<void> => {
   console.log(`fetching ${BANGS_URL}`);
@@ -136,7 +145,8 @@ const main = async (): Promise<void> => {
   try {
     raw = JSON.parse(text);
   } catch (error) {
-    throw new Error(`invalid JSON: ${(error as Error).message}`, {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`invalid JSON: ${message}`, {
       cause: error,
     });
   }
@@ -145,15 +155,11 @@ const main = async (): Promise<void> => {
     throw new TypeError("expected array at root");
   }
 
-  const hashbang: Record<string, RuntimeBang> = Object.create(null) as Record<
-    string,
-    RuntimeBang
-  >;
-  Object.assign(hashbang, curatedSeed);
+  const hashbang = Object.fromEntries(Object.entries(curatedSeed));
   let skipped = 0;
 
   for (const bang of raw) {
-    if (!(isSafeBangKey(bang.t) && bang.u && bang.s && bang.d)) {
+    if (!isCompleteBang(bang)) {
       skipped += 1;
       continue;
     }

@@ -40,15 +40,13 @@ const TWITTER_TITLE_RE = /<meta\b[^>]*?\bname="twitter:title"[\s\S]*?>/u;
 const replaceOrThrow = (
   html: string,
   re: RegExp,
-  replacement: string | ((m: string) => string),
+  replacement: (match: string) => string,
   label: string
 ): string => {
   if (!re.test(html)) {
     throw new Error(`site-config: ${label} did not match index.html`);
   }
-  return typeof replacement === "function"
-    ? html.replace(re, replacement)
-    : html.replace(re, replacement);
+  return html.replace(re, replacement);
 };
 
 const siteConfigPlugin = (): Plugin => {
@@ -77,7 +75,7 @@ const siteConfigPlugin = (): Plugin => {
       let out = replaceOrThrow(
         html,
         TITLE_RE,
-        `<title>${safeName}</title>`,
+        () => `<title>${safeName}</title>`,
         "TITLE_RE"
       );
       out = replaceOrThrow(
@@ -87,7 +85,7 @@ const siteConfigPlugin = (): Plugin => {
           replaceOrThrow(
             match,
             TITLE_ATTR_RE,
-            `title="${safeName}"`,
+            () => `title="${safeName}"`,
             "OPENSEARCH title attr"
           ),
         "OPENSEARCH_LINK_RE"
@@ -95,31 +93,32 @@ const siteConfigPlugin = (): Plugin => {
       out = replaceOrThrow(
         out,
         CANONICAL_RE,
-        `<link rel="canonical" href="https://${safeDomain}/">`,
+        () => `<link rel="canonical" href="https://${safeDomain}/">`,
         "CANONICAL_RE"
       );
       out = replaceOrThrow(
         out,
         OG_URL_RE,
-        `<meta property="og:url" content="https://${safeDomain}/">`,
+        () => `<meta property="og:url" content="https://${safeDomain}/">`,
         "OG_URL_RE"
       );
       out = replaceOrThrow(
         out,
         OG_IMAGE_RE,
-        `<meta property="og:image" content="https://${safeDomain}/og.svg">`,
+        () =>
+          `<meta property="og:image" content="https://${safeDomain}/og.svg">`,
         "OG_IMAGE_RE"
       );
       out = replaceOrThrow(
         out,
         OG_TITLE_RE,
-        `<meta property="og:title" content="${safeName}">`,
+        () => `<meta property="og:title" content="${safeName}">`,
         "OG_TITLE_RE"
       );
       out = replaceOrThrow(
         out,
         TWITTER_TITLE_RE,
-        `<meta name="twitter:title" content="${safeName}">`,
+        () => `<meta name="twitter:title" content="${safeName}">`,
         "TWITTER_TITLE_RE"
       );
       return out;

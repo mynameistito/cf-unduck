@@ -26,32 +26,36 @@ export interface Prefs {
   d?: string;
 }
 
+const getCookiePart = (cookieHeader: string): string | null =>
+  cookieHeader
+    .split(";")
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(`${PREFS_COOKIE}=`)) ?? null;
+
 export const readPrefsFromCookieHeader = (
   cookieHeader: string | null
 ): Prefs => {
   if (!cookieHeader) {
     return {};
   }
-  for (const part of cookieHeader.split(";")) {
-    const eq = part.indexOf("=");
-    if (eq === -1) {
-      continue;
-    }
-    const name = part.slice(0, eq).trim();
-    if (name !== PREFS_COOKIE) {
-      continue;
-    }
-    try {
-      return JSON.parse(decodeURIComponent(part.slice(eq + 1).trim())) as Prefs;
-    } catch {
-      return {};
-    }
+  const part = getCookiePart(cookieHeader);
+  if (!part) {
+    return {};
   }
-  return {};
+  const eq = part.indexOf("=");
+  if (eq === -1) {
+    return {};
+  }
+  try {
+    const prefs: Prefs = JSON.parse(decodeURIComponent(part.slice(eq + 1)));
+    return prefs;
+  } catch {
+    return {};
+  }
 };
 
 export const syncPrefsCookie = (): void => {
-  if (typeof document === "undefined") {
+  if (!("document" in globalThis)) {
     return;
   }
   const d = localStorage.getItem(LS_KEYS.DEFAULT_BANG) ?? undefined;

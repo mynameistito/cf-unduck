@@ -4,8 +4,12 @@ import { CUTIES } from "@/lib/constants";
 
 const MIN_DELTA = 100;
 
-const pick = <T,>(arr: readonly T[]): T =>
-  arr[Math.floor(Math.random() * arr.length)] as T;
+const pick = <T,>(arr: readonly [T, ...T[]]): T =>
+  (() => {
+    const [randomValue = 0] = crypto.getRandomValues(new Uint32Array(1));
+    const [first, ...rest] = arr;
+    return rest[randomValue % rest.length] ?? first;
+  })();
 
 export const Cutie = ({ reducedMotion }: { reducedMotion: boolean }) => {
   const [face, setFace] = useState<string>(CUTIES.IDLE);

@@ -3,14 +3,15 @@ import { DEFAULT_BANG_SHORTCUT } from "./lib/constants";
 import { readPrefsFromCookieHeader } from "./lib/prefs-cookie";
 import { resolveBangRedirect } from "./lib/redirect";
 
-interface WorkerEnv {
-  ASSETS: Fetcher;
+export interface WorkerEnv {
+  ASSETS: Pick<Fetcher, "fetch">;
 }
 
 const SUGGEST_UPSTREAM =
   "https://suggestqueries.google.com/complete/search?client=firefox&q=";
 const SUGGESTION_CACHE_TTL_SECONDS = 60;
 const SUGGESTION_FETCH_TIMEOUT_MS = 1500;
+const JSON_CONTENT_TYPE = "application/json; charset=utf-8";
 
 const isHandledPath = (path: string): string | null => {
   if (path === "/") {
@@ -27,7 +28,7 @@ const emptySuggestions = (status: number): Response =>
     headers: {
       "Access-Control-Allow-Origin": "*",
       "Cache-Control": "no-store",
-      "Content-Type": "application/json; charset=utf-8",
+      "Content-Type": JSON_CONTENT_TYPE,
     },
     status,
   });
@@ -38,7 +39,7 @@ const handleSuggest = async (url: URL): Promise<Response> => {
     return new Response("[]", {
       headers: {
         "Cache-Control": `public, max-age=${SUGGESTION_CACHE_TTL_SECONDS}`,
-        "Content-Type": "application/json; charset=utf-8",
+        "Content-Type": JSON_CONTENT_TYPE,
       },
     });
   }
@@ -62,7 +63,7 @@ const handleSuggest = async (url: URL): Promise<Response> => {
       headers: {
         "Access-Control-Allow-Origin": "*",
         "Cache-Control": `public, max-age=${SUGGESTION_CACHE_TTL_SECONDS}`,
-        "Content-Type": "application/json; charset=utf-8",
+        "Content-Type": JSON_CONTENT_TYPE,
       },
       status: upstream.status,
     });
@@ -83,7 +84,7 @@ export default {
   async fetch(
     request: Request,
     env: WorkerEnv,
-    ctx: ExecutionContext
+    ctx: Pick<ExecutionContext, "waitUntil">
   ): Promise<Response> {
     if (request.method !== "GET" && request.method !== "HEAD") {
       return env.ASSETS.fetch(request);
@@ -105,9 +106,7 @@ export default {
     const cookieHeader = request.headers.get("Cookie");
     const hasPrefs = cookieHeader ? PREFS_COOKIE_RE.test(cookieHeader) : false;
     const cache =
-      typeof caches === "undefined"
-        ? null
-        : (caches as unknown as { default: Cache }).default;
+      "caches" in globalThis ? await caches.open("redirects") : null;
 
     if (!hasPrefs && cache) {
       const cached = await cache.match(request);
@@ -128,21 +127,23 @@ export default {
       return env.ASSETS.fetch(request);
     }
 
-    const headers: Record<string, string> = {
+    const headers = new Headers({
       Location: result.url,
       "Referrer-Policy": "no-referrer",
-    };
+    });
     if (hasPrefs) {
       // Vary on Cookie so any intermediate cache keys per-user; combined with
       // no-store this is defense-in-depth.
-      headers["Cache-Control"] = "private, no-store";
-      headers.Vary = "Cookie";
+      headers.set("Cache-Control", "private, no-store");
+      headers.set("Vary", "Cookie");
     } else {
       // Redirect target depends only on (path, query) for cookieless users —
       // omit Vary so unrelated cookies (analytics etc.) don't fragment the
       // edge cache key.
-      headers["Cache-Control"] =
-        `public, s-maxage=${REDIRECT_EDGE_TTL_SECONDS}, max-age=0`;
+      headers.set(
+        "Cache-Control",
+        `public, s-maxage=${REDIRECT_EDGE_TTL_SECONDS}, max-age=0`
+      );
     }
 
     const response = new Response(null, { headers, status: 302 });

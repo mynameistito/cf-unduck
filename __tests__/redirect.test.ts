@@ -29,7 +29,7 @@ const bangs: BangMap = {
 
 const base = {
   bangs,
-  customBangs: {} as BangMap,
+  customBangs: {},
   defaultBangShortcut: "ddg",
 };
 

@@ -66,11 +66,11 @@ export const decodeShare = async (token: string): Promise<BangMap | null> => {
   try {
     const bytes = b64UrlToBytes(token);
     const json = new TextDecoder().decode(await gunzip(bytes));
-    const parsed = JSON.parse(json) as unknown;
+    const parsed: unknown[] = JSON.parse(json);
     if (!Array.isArray(parsed)) {
       return null;
     }
-    const out = Object.create(null) as BangMap;
+    const out: BangMap = {};
     for (const row of parsed) {
       if (!Array.isArray(row) || row.length !== 4) {
         return null;
@@ -78,11 +78,11 @@ export const decodeShare = async (token: string): Promise<BangMap | null> => {
       // Index loop (not .some) — .some skips holes in sparse arrays, which would
       // let `undefined` slip through into the decoded map.
       for (let i = 0; i < 4; i += 1) {
-        if (typeof row[i] !== "string") {
+        if (Object.prototype.toString.call(row[i]) !== "[object String]") {
           return null;
         }
       }
-      const [t, s, u, d] = row as [string, string, string, string];
+      const [t, s, u, d] = row;
       out[t] = { d, s, u };
     }
     return out;
@@ -92,20 +92,8 @@ export const decodeShare = async (token: string): Promise<BangMap | null> => {
 };
 
 export const isValidBangMap = (m: BangMap): boolean => {
-  if (!m || typeof m !== "object" || Array.isArray(m)) {
-    return false;
-  }
   for (const v of Object.values(m)) {
-    if (
-      !(
-        v &&
-        typeof v === "object" &&
-        !Array.isArray(v) &&
-        typeof (v as { s?: unknown }).s === "string" &&
-        typeof (v as { u?: unknown }).u === "string" &&
-        typeof (v as { d?: unknown }).d === "string"
-      )
-    ) {
+    if (!(v.d && v.s && v.u)) {
       return false;
     }
   }

@@ -1,4 +1,4 @@
-const isBrowser = typeof window !== "undefined";
+const isBrowser = "window" in globalThis;
 
 type Listener = () => void;
 const listeners = new Map<string, Set<Listener>>();

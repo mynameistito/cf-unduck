@@ -4,25 +4,12 @@ import type { BangMap } from "./types";
 
 const UNSAFE_KEYS = new Set(["__proto__", "prototype", "constructor"]);
 
-const isBang = (v: unknown): v is BangMap[string] => {
-  if (!v || typeof v !== "object") {
-    return false;
-  }
-  const o = v as Record<string, unknown>;
-  return (
-    typeof o.s === "string" &&
-    typeof o.u === "string" &&
-    typeof o.d === "string"
-  );
-};
+const isBang = (v: BangMap[string]): boolean => Boolean(v.s && v.u && v.d);
 
 export const readCustomBangs = (): BangMap => {
   try {
-    const raw = JSON.parse(storage.get(LS_KEYS.CUSTOM_BANGS) ?? "{}") as Record<
-      string,
-      unknown
-    >;
-    const out = Object.create(null) as BangMap;
+    const raw: BangMap = JSON.parse(storage.get(LS_KEYS.CUSTOM_BANGS) ?? "{}");
+    const out: BangMap = {};
     for (const [k, v] of Object.entries(raw)) {
       const key = k.toLowerCase();
       if (UNSAFE_KEYS.has(key)) {
@@ -34,6 +21,6 @@ export const readCustomBangs = (): BangMap => {
     }
     return out;
   } catch {
-    return Object.create(null) as BangMap;
+    return {};
   }
 };

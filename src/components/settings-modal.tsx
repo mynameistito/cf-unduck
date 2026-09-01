@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import type { AudioController } from "@/hooks/use-audio";
 import {
@@ -689,30 +689,34 @@ const HistorySection = ({
   </div>
 );
 
-const isBoolString = (v: unknown): v is "true" | "false" =>
+type ImportValue = string | null | undefined | "true" | "false";
+
+interface ImportData {
+  customBangs?: ImportValue;
+  defaultBang?: ImportValue;
+  historyEnabled?: ImportValue;
+  soundEnabled?: ImportValue;
+}
+
+const isBoolString = (v: ImportValue): v is "true" | "false" =>
   v === "true" || v === "false";
 
-const isMissing = (v: unknown): boolean => v === undefined || v === null;
+const isMissing = (v: ImportValue): boolean => v === undefined || v === null;
 
-const isRecord = (v: unknown): v is Record<string, unknown> =>
-  Boolean(v) && typeof v === "object" && !Array.isArray(v);
+const isStringValue = (v: ImportValue): v is string =>
+  Object.prototype.toString.call(v) === "[object String]";
 
-const sanitizeBangMap = (value: unknown): BangMap | null => {
-  if (!isRecord(value)) {
-    return null;
-  }
+const sanitizeBangMap = (value: BangMap): BangMap | null => {
   const bangsMap: BangMap = {};
   for (const [shortcut, bang] of Object.entries(value)) {
-    if (!(shortcut && isRecord(bang))) {
+    if (!(shortcut && bang)) {
       return null;
     }
     const { ad, d, s, u } = bang;
-    if (
-      !(typeof d === "string" && typeof s === "string" && typeof u === "string")
-    ) {
+    if (!(d && s && u)) {
       return null;
     }
-    if (ad !== undefined && typeof ad !== "string") {
+    if (ad !== undefined && !ad) {
       return null;
     }
     bangsMap[shortcut] = ad === undefined ? { d, s, u } : { ad, d, s, u };
@@ -722,21 +726,22 @@ const sanitizeBangMap = (value: unknown): BangMap | null => {
 
 const parseCustomBangs = (value: string): BangMap | null => {
   try {
-    return sanitizeBangMap(JSON.parse(value) as unknown);
+    const parsed: BangMap = JSON.parse(value);
+    return sanitizeBangMap(parsed);
   } catch {
     return null;
   }
 };
 
-const validateImport = (d: Record<string, unknown>): string | null => {
-  if (!isMissing(d.defaultBang) && typeof d.defaultBang !== "string") {
+const validateImport = (d: ImportData): string | null => {
+  if (!isMissing(d.defaultBang) && !isStringValue(d.defaultBang)) {
     return "Invalid defaultBang";
   }
-  if (!isMissing(d.customBangs) && typeof d.customBangs !== "string") {
+  if (!isMissing(d.customBangs) && !isStringValue(d.customBangs)) {
     return "Invalid customBangs";
   }
   if (
-    typeof d.customBangs === "string" &&
+    isStringValue(d.customBangs) &&
     d.customBangs &&
     !parseCustomBangs(d.customBangs)
   ) {
@@ -751,19 +756,16 @@ const validateImport = (d: Record<string, unknown>): string | null => {
   return null;
 };
 
-const applyImport = (data: unknown): string | null => {
-  if (!data || typeof data !== "object") {
-    return "Invalid file";
-  }
-  const d = data as Record<string, unknown>;
-  const err = validateImport(d);
+const applyImport = (data: ImportData): string | null => {
+  const err = validateImport(data);
+  const d = data;
   if (err) {
     return err;
   }
-  if (typeof d.defaultBang === "string") {
+  if (isStringValue(d.defaultBang)) {
     localStorage.setItem(LS_KEYS.DEFAULT_BANG, d.defaultBang);
   }
-  if (typeof d.customBangs === "string") {
+  if (isStringValue(d.customBangs)) {
     const parsed = parseCustomBangs(d.customBangs);
     if (!parsed) {
       return "Invalid customBangs shape";
@@ -811,7 +813,7 @@ const ImportExportSection = () => {
     }
     let map: BangMap;
     try {
-      map = JSON.parse(raw) as BangMap;
+      map = JSON.parse(raw);
     } catch {
       setImportError("Custom bangs corrupt");
       return;
@@ -839,7 +841,7 @@ const ImportExportSection = () => {
   };
 
   const onImport = async (file: File) => {
-    let data: unknown;
+    let data: ImportData;
     try {
       data = JSON.parse(await file.text());
     } catch {
@@ -944,7 +946,7 @@ export const SettingsModal = ({
     audio.play("click");
   };
 
-  const history = useMemo(() => (open ? getSearchHistory() : []), [open]);
+  const history = open ? getSearchHistory() : [];
 
   const backdropRef = useRef<HTMLDialogElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);

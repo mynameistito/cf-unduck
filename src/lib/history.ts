@@ -4,8 +4,13 @@ import type { SearchHistoryEntry } from "./types";
 
 export const getSearchHistory = (): SearchHistoryEntry[] => {
   try {
-    const raw = JSON.parse(storage.get(LS_KEYS.SEARCH_HISTORY) ?? "[]");
-    return Array.isArray(raw) ? (raw as SearchHistoryEntry[]) : [];
+    const raw: SearchHistoryEntry[] = JSON.parse(
+      storage.get(LS_KEYS.SEARCH_HISTORY) ?? "[]"
+    );
+    if (!Array.isArray(raw)) {
+      return [];
+    }
+    return raw;
   } catch {
     return [];
   }

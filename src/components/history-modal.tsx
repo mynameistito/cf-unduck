@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 
 import { getSearchHistory } from "@/lib/history";
 
@@ -21,7 +21,7 @@ const getFocusables = (root: HTMLElement | null): HTMLElement[] => {
 export const HistoryModal = ({ onClose }: Props) => {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const history = useMemo(() => getSearchHistory(), []);
+  const history = getSearchHistory();
 
   useEffect(() => {
     const previouslyFocused =
@@ -101,16 +101,19 @@ export const HistoryModal = ({ onClose }: Props) => {
               No search history
             </div>
           ) : (
-            history.map((s) => (
-              <div className="border-border border-b p-2" key={s.timestamp}>
-                <a href={`/?q=${encodeURIComponent(`!${s.bang} ${s.query}`)}`}>
-                  {s.name}: {s.query}
-                </a>
-                <span className="text-fg-muted float-right">
-                  {new Date(s.timestamp).toLocaleString()}
-                </span>
-              </div>
-            ))
+            history.map((s) => {
+              const search = `!${s.bang} ${s.query}`;
+              return (
+                <div className="border-border border-b p-2" key={s.timestamp}>
+                  <a href={`/?q=${encodeURIComponent(search)}`}>
+                    {s.name}: {s.query}
+                  </a>
+                  <span className="text-fg-muted float-right">
+                    {new Date(s.timestamp).toLocaleString()}
+                  </span>
+                </div>
+              );
+            })
           )}
         </div>
       </div>

@@ -1,8 +1,8 @@
-import { useCallback, useRef, useSyncExternalStore } from "react";
+import { useRef, useSyncExternalStore } from "react";
 
 import { storage } from "@/lib/storage";
 
-const defaultParse = <T>(raw: string): T => JSON.parse(raw) as T;
+const defaultParse = <T>(raw: string): T => JSON.parse(raw);
 const defaultSerialize = <T>(value: T): string => JSON.stringify(value);
 
 export const useLocalStorage = <T>(
@@ -13,12 +13,9 @@ export const useLocalStorage = <T>(
 ): [T, (value: T) => void] => {
   const cacheRef = useRef<{ raw: string | null; value: T } | null>(null);
 
-  const subscribe = useCallback(
-    (listener: () => void) => storage.subscribe(key, listener),
-    [key]
-  );
+  const subscribe = (listener: () => void) => storage.subscribe(key, listener);
 
-  const getSnapshot = useCallback((): T => {
+  const getSnapshot = (): T => {
     const raw = storage.get(key);
     const cached = cacheRef.current;
     if (cached && cached.raw === raw) {
@@ -34,18 +31,15 @@ export const useLocalStorage = <T>(
     }
     cacheRef.current = { raw, value };
     return value;
-  }, [key, initial, parse]);
+  };
 
-  const getServerSnapshot = useCallback((): T => initial, [initial]);
+  const getServerSnapshot = (): T => initial;
 
   const value = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
-  const update = useCallback(
-    (next: T) => {
-      storage.set(key, serialize(next));
-    },
-    [key, serialize]
-  );
+  const update = (next: T): void => {
+    storage.set(key, serialize(next));
+  };
 
   return [value, update];
 };

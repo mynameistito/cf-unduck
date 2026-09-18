@@ -1,15 +1,12 @@
 import { useEffect, useState } from "react";
 
 import { CUTIES } from "@/lib/constants";
+import { randomIndex } from "@/lib/random";
 
 const MIN_DELTA = 100;
 
 const pick = <T,>(arr: readonly [T, ...T[]]): T =>
-  (() => {
-    const [randomValue = 0] = crypto.getRandomValues(new Uint32Array(1));
-    const [first, ...rest] = arr;
-    return rest[randomValue % rest.length] ?? first;
-  })();
+  arr[randomIndex(arr.length)] ?? arr[0];
 
 export const Cutie = ({ reducedMotion }: { reducedMotion: boolean }) => {
   const [face, setFace] = useState<string>(CUTIES.IDLE);

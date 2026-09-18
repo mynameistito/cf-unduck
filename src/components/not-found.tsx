@@ -2,19 +2,16 @@ import { useState } from "react";
 
 import { useLocalStorageString } from "@/hooks/use-local-storage";
 import { CUTIES, LS_KEYS } from "@/lib/constants";
+import { randomIndex } from "@/lib/random";
 
 import { TopBar } from "./top-bar";
 
 const useRandomNotFoundFace = () => {
-  const [notFoundFace, setNotFoundFace] = useState(() =>
-    (() => {
-      const [randomValue = 0] = crypto.getRandomValues(new Uint32Array(1));
-      return (
-        CUTIES.NOTFOUND[randomValue % CUTIES.NOTFOUND.length] ??
-        CUTIES.NOTFOUND[0] ??
-        ""
-      );
-    })()
+  const [notFoundFace, setNotFoundFace] = useState(
+    () =>
+      CUTIES.NOTFOUND[randomIndex(CUTIES.NOTFOUND.length)] ??
+      CUTIES.NOTFOUND[0] ??
+      ""
   );
   return [notFoundFace, setNotFoundFace] as const;
 };

@@ -77,7 +77,7 @@ export const HistoryModal = ({ onClose }: Props) => {
         type="button"
       />
       <div
-        className="themed-scrollbar border-border bg-bg text-fg relative flex max-h-[90vh] w-[calc(100%-2rem)] max-w-[640px] flex-col rounded-lg border px-5 py-4 shadow-[0_20px_60px_rgba(0,0,0,0.4)]"
+        className="themed-scrollbar border-border bg-bg text-fg shadow-modal relative flex max-h-[90vh] w-[calc(100%-2rem)] max-w-[640px] flex-col rounded-lg border px-5 py-4"
         ref={contentRef}
         tabIndex={-1}
       >

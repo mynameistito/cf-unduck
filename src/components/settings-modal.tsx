@@ -459,7 +459,7 @@ const EditBangPopup = ({
         onClick={onCancel}
         type="button"
       />
-      <div className="border-border bg-bg relative w-[calc(100%-2rem)] max-w-[420px] rounded-lg border px-5 py-4 shadow-[0_20px_60px_rgba(0,0,0,0.4)]">
+      <div className="border-border bg-bg shadow-modal relative w-[calc(100%-2rem)] max-w-[420px] rounded-lg border px-5 py-4">
         <button
           aria-label="Cancel edit"
           className="text-fg-muted hover:bg-bg-hover hover:text-fg absolute top-2.5 right-2.5 flex h-7 w-7 items-center justify-center rounded-md leading-none transition"
@@ -971,7 +971,7 @@ export const SettingsModal = ({
         type="button"
       />
       <div
-        className="themed-scrollbar border-border bg-bg text-fg relative mx-auto my-[5vh] max-h-[90vh] w-[calc(100%-2rem)] max-w-[480px] overflow-y-auto rounded-lg border px-5 py-4 shadow-[0_20px_60px_rgba(0,0,0,0.4)]"
+        className="themed-scrollbar border-border bg-bg text-fg shadow-modal relative mx-auto my-[5vh] max-h-[90vh] w-[calc(100%-2rem)] max-w-[480px] overflow-y-auto rounded-lg border px-5 py-4"
         ref={dialogRef}
       >
         <button

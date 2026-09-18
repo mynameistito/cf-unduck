@@ -47,6 +47,7 @@
   --color-bg-active: var(--bg-color-active);
   --color-danger: var(--bg-color-danger);
   --color-border: var(--border-color);
+  --shadow-modal: 0 20px 60px rgb(0 0 0 / 40%);
 }
 
 :root {

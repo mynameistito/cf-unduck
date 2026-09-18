@@ -60,7 +60,7 @@ export const BangTester = ({ inputRef }: Props) => {
   };
 
   return (
-    <form className="bang-tester mt-4 w-full" onSubmit={onSubmit}>
+    <form className="mt-4 w-full" onSubmit={onSubmit}>
       <div className="flex gap-2">
         <input
           aria-label="Test a bang query"

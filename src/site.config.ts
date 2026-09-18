@@ -6,7 +6,7 @@ export const SITE = {
     // Where the credit name links to.
     url: "https://mynameistito.com",
   },
-  // Your deployed URL, also set in wrangler.jsonc.
+  // Your production URL, also set in alchemy.run.ts.
   domain: "search.mynameistito.com",
   // GitHub user/org for the repo link.
   githubUser: "mynameistito",

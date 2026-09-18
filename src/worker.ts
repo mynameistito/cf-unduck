@@ -1,11 +1,14 @@
+import type { ExecutionContext } from "@cloudflare/workers-types";
+
+import type { WorkerEnv as AlchemyWorkerEnv } from "../alchemy.run.ts";
 import { bangs } from "./lib/bangs/hashbang";
 import { DEFAULT_BANG_SHORTCUT } from "./lib/constants";
 import { readPrefsFromCookieHeader } from "./lib/prefs-cookie";
 import { resolveBangRedirect } from "./lib/redirect";
 
-export interface WorkerEnv {
-  ASSETS: Pick<Fetcher, "fetch">;
-}
+export type WorkerEnv = Omit<AlchemyWorkerEnv, "ASSETS"> & {
+  ASSETS: Pick<AlchemyWorkerEnv["ASSETS"], "fetch">;
+};
 
 const SUGGEST_UPSTREAM =
   "https://suggestqueries.google.com/complete/search?client=firefox&q=";

@@ -23,7 +23,7 @@ jobs:
     steps:
       - name: Run Alchemy deployment
         # Same-repository preview code runs with Cloudflare credentials.
-        uses: mynameistito/alchemy-deploy@eb0bfa48c6f692119db4eefde9e8b093541767c7 # v2.3.1
+        uses: mynameistito/alchemy-deploy@ab55cb4e3da4defaaaaa406287c905ad4dad5e2b # v2.3.2
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

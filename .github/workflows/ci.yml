@@ -41,3 +41,11 @@ jobs:
 
       - name: Run task
         run: bun run ${{ matrix.task }}
+
+  validate:
+    name: Validate
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirm all checks passed
+        run: echo "All required checks passed."

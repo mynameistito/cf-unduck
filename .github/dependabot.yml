@@ -8,8 +8,7 @@ updates:
       time: "09:00"
       timezone: Etc/UTC
     commit-message:
-      prefix: chore
-      include: scope
+      prefix: chore(github-actions)
     groups:
       github-actions:
         patterns:
@@ -17,6 +16,8 @@ updates:
 
   - package-ecosystem: bun
     directory: /
+    cooldown:
+      default-days: 7
     schedule:
       interval: weekly
       day: monday

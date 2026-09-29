@@ -30,8 +30,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           worker-name: cf-unduck
-          deploy-command: bunx --no-install alchemy deploy --stage "$STAGE" --yes
-          destroy-command: bunx --no-install alchemy destroy --stage "$STAGE" --yes
+          deploy-command: bun ./node_modules/alchemy/bin/cli.js deploy --stage "$STAGE" --yes
+          destroy-command: bun ./node_modules/alchemy/bin/cli.js destroy --stage "$STAGE" --yes
           production-stage: prod
           production-url: https://search.mynameistito.com
           use-adopt: false

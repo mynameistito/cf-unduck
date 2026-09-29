@@ -95,6 +95,18 @@ const BangForm = ({
   const baseUrlAuto = useRef(true);
   const nameAuto = useRef(true);
 
+  useEffect(() => {
+    if (fields.baseUrl === "") {
+      baseUrlAuto.current = true;
+    }
+  }, [fields.baseUrl]);
+
+  useEffect(() => {
+    if (fields.name === "") {
+      nameAuto.current = true;
+    }
+  }, [fields.name]);
+
   const set = <K extends keyof BangFormFields>(
     key: K,
     value: BangFormFields[K]

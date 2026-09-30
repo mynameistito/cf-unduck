@@ -47,6 +47,17 @@ const deriveBaseDomain = (searchUrl: string): string => {
   }
 };
 
+const deriveBangName = (searchUrl: string): string => {
+  const baseDomain = deriveBaseDomain(searchUrl);
+  const [domainLabel] = baseDomain.split(".");
+  if (!domainLabel) {
+    return "";
+  }
+  return domainLabel
+    .replaceAll(/[-_]+/gu, " ")
+    .replaceAll(/\b\w/gu, (character) => character.toUpperCase());
+};
+
 const sectionCls =
   "border-b border-border pb-3 mb-3 last:border-b-0 last:pb-0 last:mb-0";
 const sectionHeadingCls =
@@ -81,10 +92,36 @@ const BangForm = ({
   firstFieldRef?: React.Ref<HTMLInputElement>;
   idPrefix: string;
 }) => {
+  const baseUrlAuto = useRef(true);
+  const nameAuto = useRef(true);
+
+  useEffect(() => {
+    if (fields.baseUrl === "") {
+      baseUrlAuto.current = true;
+    }
+  }, [fields.baseUrl]);
+
+  useEffect(() => {
+    if (fields.name === "") {
+      nameAuto.current = true;
+    }
+  }, [fields.name]);
+
   const set = <K extends keyof BangFormFields>(
     key: K,
     value: BangFormFields[K]
   ) => onChange({ ...fields, [key]: value });
+
+  const onSearchUrlChange = (searchUrl: string) => {
+    onChange({
+      ...fields,
+      baseUrl: baseUrlAuto.current
+        ? deriveBaseDomain(searchUrl)
+        : fields.baseUrl,
+      name: nameAuto.current ? deriveBangName(searchUrl) : fields.name,
+      searchUrl,
+    });
+  };
 
   const nameId = `${idPrefix}-name`;
   const shortcutId = `${idPrefix}-shortcut`;
@@ -93,18 +130,18 @@ const BangForm = ({
 
   return (
     <>
-      <label className={FIELD_LABEL_CLS} htmlFor={nameId}>
-        Name
+      <label className={FIELD_LABEL_CLS} htmlFor={searchUrlId}>
+        Search URL
       </label>
       <input
-        aria-label="Bang name"
+        aria-label="Bang search URL"
         className={formInputCls}
-        id={nameId}
-        onChange={(e) => set("name", e.target.value)}
-        placeholder="Bang name"
+        id={searchUrlId}
+        onChange={(e) => onSearchUrlChange(e.target.value)}
+        placeholder="Search URL with {{{s}}}"
         ref={firstFieldRef}
         type="text"
-        value={fields.name}
+        value={fields.searchUrl}
       />
       <label className={FIELD_LABEL_CLS} htmlFor={shortcutId}>
         Shortcut
@@ -118,37 +155,35 @@ const BangForm = ({
         type="text"
         value={fields.shortcut}
       />
-      <label className={FIELD_LABEL_CLS} htmlFor={searchUrlId}>
-        Search URL
-      </label>
-      <input
-        aria-label="Bang search URL"
-        className={formInputCls}
-        id={searchUrlId}
-        onBlur={() => {
-          if (!fields.baseUrl.trim()) {
-            const derived = deriveBaseDomain(fields.searchUrl);
-            if (derived) {
-              set("baseUrl", derived);
-            }
-          }
-        }}
-        onChange={(e) => set("searchUrl", e.target.value)}
-        placeholder="Search URL with {{{s}}}"
-        type="text"
-        value={fields.searchUrl}
-      />
       <label className={FIELD_LABEL_CLS} htmlFor={baseUrlId}>
-        Base domain
+        Base URL
       </label>
       <input
-        aria-label="Bang base domain"
+        aria-label="Bang base URL"
         className={formInputCls}
         id={baseUrlId}
-        onChange={(e) => set("baseUrl", e.target.value)}
-        placeholder="Base domain (auto-detected)"
+        onChange={(e) => {
+          baseUrlAuto.current = false;
+          set("baseUrl", e.target.value);
+        }}
+        placeholder="Base URL (auto-detected)"
         type="text"
         value={fields.baseUrl}
+      />
+      <label className={FIELD_LABEL_CLS} htmlFor={nameId}>
+        Bang Name
+      </label>
+      <input
+        aria-label="Bang name"
+        className={formInputCls}
+        id={nameId}
+        onChange={(e) => {
+          nameAuto.current = false;
+          set("name", e.target.value);
+        }}
+        placeholder="Bang name (auto-detected)"
+        type="text"
+        value={fields.name}
       />
     </>
   );

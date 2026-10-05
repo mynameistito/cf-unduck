@@ -978,7 +978,8 @@ export const SettingsModal = ({
     LS_KEYS.CUSTOM_BANGS,
     {}
   );
-  const [bangs, setBangs] = useState<BangMap>({});
+  const [bangs, setBangs] = useState<BangMap | null>(null);
+  const [bangsLoadError, setBangsLoadError] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -990,7 +991,7 @@ export const SettingsModal = ({
         }
       } catch {
         if (!cancelled) {
-          setBangs({});
+          setBangsLoadError(true);
         }
       }
     })();
@@ -1003,11 +1004,22 @@ export const SettingsModal = ({
   const [bangError, setBangError] = useState(false);
 
   const currentBang =
-    customBangs[defaultBang] ?? bangs[defaultBang] ?? undefined;
+    customBangs[defaultBang] ?? bangs?.[defaultBang] ?? undefined;
 
-  const onDefaultBangChange = (raw: string) => {
+  const onDefaultBangChange = async (raw: string) => {
     const shortcut = raw.replace(STRIP_BANG_PREFIX_RE, "").toLowerCase();
-    const found = customBangs[shortcut] ?? bangs[shortcut];
+    let loadedBangs = bangs;
+    let found = customBangs[shortcut] ?? loadedBangs?.[shortcut];
+    if (!found && !loadedBangs) {
+      try {
+        loadedBangs = await loadBangs();
+        setBangs(loadedBangs);
+        setBangsLoadError(false);
+        found = customBangs[shortcut] ?? loadedBangs[shortcut];
+      } catch {
+        setBangsLoadError(true);
+      }
+    }
     if (!found) {
       setBangError(true);
       audio.play("warning");
@@ -1070,6 +1082,11 @@ export const SettingsModal = ({
           onValueChange={setBangInput}
           value={bangInput}
         />
+        {bangsLoadError ? (
+          <p className="text-danger -mt-2 mb-3 text-sm" role="alert">
+            Could not load built-in bangs. Blur or submit the shortcut to retry.
+          </p>
+        ) : null}
 
         <BangSearchSection customBangs={customBangs} />
 

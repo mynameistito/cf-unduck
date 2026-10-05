@@ -6,7 +6,7 @@ import {
   useLocalStorageBool,
   useLocalStorageString,
 } from "@/hooks/use-local-storage";
-import { bangs } from "@/lib/bangs/hashbang";
+import { loadBangs } from "@/lib/bangs/load-bangs";
 import {
   ANIMATION_DURATION_MS,
   DEFAULT_BANG_SHORTCUT,
@@ -344,35 +344,47 @@ const BangSearchSection = ({ customBangs }: { customBangs: BangMap }) => {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     if (timerRef.current !== null) {
       clearTimeout(timerRef.current);
     }
     const q = query.trim().toLowerCase();
-    timerRef.current = setTimeout(() => {
+    timerRef.current = setTimeout(async () => {
       if (!q) {
         setResults([]);
         return;
       }
-      const all: BangMap = { ...bangs, ...customBangs };
-      const filtered = Object.entries(all)
-        .filter(([shortcut, b]) =>
-          `${shortcut} ${b.s} ${b.d}`.toLowerCase().includes(q)
-        )
-        .toSorted(([sa, ba], [sb, bb]) => {
-          const aStart = sa.startsWith(q) || ba.s.toLowerCase().startsWith(q);
-          const bStart = sb.startsWith(q) || bb.s.toLowerCase().startsWith(q);
-          if (aStart && !bStart) {
-            return -1;
-          }
-          if (!aStart && bStart) {
-            return 1;
-          }
-          return sa.length - sb.length;
-        })
-        .slice(0, 20);
-      setResults(filtered);
+      try {
+        const loadedBangs = await loadBangs();
+        if (cancelled) {
+          return;
+        }
+        const all: BangMap = { ...loadedBangs, ...customBangs };
+        const filtered = Object.entries(all)
+          .filter(([shortcut, b]) =>
+            `${shortcut} ${b.s} ${b.d}`.toLowerCase().includes(q)
+          )
+          .toSorted(([sa, ba], [sb, bb]) => {
+            const aStart = sa.startsWith(q) || ba.s.toLowerCase().startsWith(q);
+            const bStart = sb.startsWith(q) || bb.s.toLowerCase().startsWith(q);
+            if (aStart && !bStart) {
+              return -1;
+            }
+            if (!aStart && bStart) {
+              return 1;
+            }
+            return sa.length - sb.length;
+          })
+          .slice(0, 20);
+        setResults(filtered);
+      } catch {
+        if (!cancelled) {
+          setResults([]);
+        }
+      }
     }, SEARCH_DEBOUNCE_MS);
     return () => {
+      cancelled = true;
       if (timerRef.current !== null) {
         clearTimeout(timerRef.current);
       }
@@ -961,6 +973,26 @@ export const SettingsModal = ({
     LS_KEYS.CUSTOM_BANGS,
     {}
   );
+  const [bangs, setBangs] = useState<BangMap>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const loadedBangs = await loadBangs();
+        if (!cancelled) {
+          setBangs(loadedBangs);
+        }
+      } catch {
+        if (!cancelled) {
+          setBangs({});
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const [bangInput, setBangInput] = useState(defaultBang);
   const [bangError, setBangError] = useState(false);

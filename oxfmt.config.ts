@@ -5,6 +5,6 @@ export default defineConfig({
   ...ultracite,
   ignorePatterns: [
     ...(ultracite.ignorePatterns ?? []),
-    "src/lib/bangs/hashbang.ts",
+    "public/assets/hashbang.json",
   ],
 });

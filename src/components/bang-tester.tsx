@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { RefObject } from "react";
 
 import {
   useLocalStorage,
   useLocalStorageString,
 } from "@/hooks/use-local-storage";
-import { bangs as hashBangs } from "@/lib/bangs/hashbang";
+import { loadBangs } from "@/lib/bangs/load-bangs";
 import { DEFAULT_BANG_SHORTCUT, LS_KEYS } from "@/lib/constants";
 import { resolveBangRedirect } from "@/lib/redirect";
 import type { RedirectResult } from "@/lib/redirect";
@@ -35,7 +35,28 @@ interface Props {
 
 export const BangTester = ({ inputRef }: Props) => {
   const [query, setQuery] = useState("");
-  const bangs: BangMap = hashBangs;
+  const [bangs, setBangs] = useState<BangMap | null>(null);
+  useEffect(() => {
+    if (!query.trim() || bangs) {
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const loadedBangs = await loadBangs();
+        if (!cancelled) {
+          setBangs(loadedBangs);
+        }
+      } catch {
+        if (!cancelled) {
+          setBangs({});
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [bangs, query]);
   const [defaultBang] = useLocalStorageString(
     LS_KEYS.DEFAULT_BANG,
     DEFAULT_BANG_SHORTCUT

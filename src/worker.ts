@@ -1,10 +1,14 @@
 import type { ExecutionContext } from "@cloudflare/workers-types";
 
 import type { WorkerEnv as AlchemyWorkerEnv } from "../alchemy.run.ts";
-import { bangs } from "./lib/bangs/hashbang";
+import bangsJson from "../public/assets/hashbang.json";
 import { DEFAULT_BANG_SHORTCUT } from "./lib/constants";
 import { readPrefsFromCookieHeader } from "./lib/prefs-cookie";
 import { resolveBangRedirect } from "./lib/redirect";
+import type { BangMap } from "./lib/types";
+
+// SAFETY: fetch-bangs.ts generates this JSON from validated bang records.
+const bangs = bangsJson as BangMap;
 
 export type WorkerEnv = Omit<AlchemyWorkerEnv, "ASSETS"> & {
   ASSETS: Pick<AlchemyWorkerEnv["ASSETS"], "fetch">;

@@ -86,7 +86,7 @@ describe("resolveBangRedirect", () => {
     const r = resolveBangRedirect({ ...base, query: "!yt" });
     expect(r.kind).toBe("redirect");
     if (r.kind === "redirect") {
-      expect(r.url).toBe("https://youtube.com");
+      expect(r.url).toBe("https://youtube.com/");
     }
   });
 
@@ -161,7 +161,68 @@ describe("resolveBangRedirect", () => {
     const r = resolveBangRedirect({ ...base, customBangs, query: "!alt" });
     expect(r.kind).toBe("redirect");
     if (r.kind === "redirect") {
-      expect(r.url).toBe("https://alt.com");
+      expect(r.url).toBe("https://alt.com/");
     }
+  });
+
+  it("rejects explicit non-web schemes, including custom bang paths", () => {
+    const customBangs: BangMap = {
+      unsafe: {
+        d: "example.com",
+        s: "Unsafe",
+        u: "ftp://example.com/?q={{{s}}}",
+      },
+    };
+    expect(
+      resolveBangRedirect({ ...base, customBangs, query: "!unsafe search" })
+    ).toEqual({ kind: "landing" });
+    expect(
+      resolveBangRedirect({ ...base, customBangs, query: "!unsafe" })
+    ).toMatchObject({ kind: "redirect", url: "https://example.com/" });
+  });
+
+  it("allows HTTP, HTTPS, and scheme-less custom bang destinations", () => {
+    const customBangs: BangMap = {
+      http: {
+        d: "example.com",
+        s: "HTTP",
+        u: "http://example.com/?q={{{s}}}",
+      },
+      https: {
+        d: "example.com",
+        s: "HTTPS",
+        u: "https://example.com/?q={{{s}}}",
+      },
+      implicit: {
+        d: "example.com",
+        s: "Implicit",
+        u: "EXAMPLE.com/search?q={{{s}}}",
+      },
+    };
+    const httpResult = resolveBangRedirect({
+      ...base,
+      customBangs,
+      query: "!http search",
+    });
+    const httpsResult = resolveBangRedirect({
+      ...base,
+      customBangs,
+      query: "!https search",
+    });
+    const implicitResult = resolveBangRedirect({
+      ...base,
+      customBangs,
+      query: "!implicit two words",
+    });
+
+    expect(httpResult.kind === "redirect" && httpResult.url).toBe(
+      "http://example.com/?q=search"
+    );
+    expect(httpsResult.kind === "redirect" && httpsResult.url).toBe(
+      "https://example.com/?q=search"
+    );
+    expect(implicitResult.kind === "redirect" && implicitResult.url).toBe(
+      "https://example.com/search?q=two%20words"
+    );
   });
 });

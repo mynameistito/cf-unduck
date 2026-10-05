@@ -36,6 +36,7 @@ interface Props {
 export const BangTester = ({ inputRef }: Props) => {
   const [query, setQuery] = useState("");
   const [bangs, setBangs] = useState<BangMap | null>(null);
+  const [loadError, setLoadError] = useState(false);
   useEffect(() => {
     if (!query.trim() || bangs) {
       return;
@@ -49,7 +50,7 @@ export const BangTester = ({ inputRef }: Props) => {
         }
       } catch {
         if (!cancelled) {
-          setBangs({});
+          setLoadError(true);
         }
       }
     })();
@@ -87,7 +88,10 @@ export const BangTester = ({ inputRef }: Props) => {
           aria-label="Test a bang query"
           autoComplete="off"
           className="border-border bg-bg-muted text-fg focus:outline-fg-muted flex-1 rounded-md border px-3 py-2 outline-none focus:outline-2"
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setLoadError(false);
+            setQuery(e.target.value);
+          }}
           placeholder="Try it: !gh react"
           ref={inputRef}
           spellCheck={false}
@@ -103,6 +107,11 @@ export const BangTester = ({ inputRef }: Props) => {
           Go
         </button>
       </div>
+      {query.trim() && loadError ? (
+        <p className="text-danger mt-2 text-xs" role="alert">
+          Could not load built-in bangs. Change the query to retry.
+        </p>
+      ) : null}
       {query.trim() && preview ? <PreviewLine preview={preview} /> : null}
     </form>
   );

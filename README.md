@@ -112,7 +112,7 @@ Prereqs: [Bun](https://bun.com) and a Cloudflare account. Alchemy stores local c
 
 ## CI deployments
 
-`.github/workflows/ci.yml` builds the Worker entrypoint and Vite output without Cloudflare credentials, then uploads both as the `alchemy-worker` artifact. `.github/workflows/deploy.yml` uses [`mynameistito/alchemy-deploy`](https://github.com/mynameistito/alchemy-deploy), pinned to immutable v3.1.3, after the exact `CI` run succeeds. PR previews deploy only that artifact, while production deploys `prod` from `main`; previews are destroyed when pull requests close.
+`.github/workflows/ci.yml` builds the Worker entrypoint and Vite output without Cloudflare credentials, then uploads both as the `alchemy-worker` artifact. `.github/workflows/deploy.yml` uses [`mynameistito/alchemy-deploy`](https://github.com/mynameistito/alchemy-deploy), pinned to immutable v3.1.4, after the exact `CI` run succeeds. PR previews deploy only that artifact, while production deploys `prod` from `main`; previews are destroyed when pull requests close.
 
 Configure these repository secrets before enabling production deployments:
 

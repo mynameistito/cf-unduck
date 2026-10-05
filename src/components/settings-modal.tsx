@@ -355,7 +355,12 @@ const BangSearchSection = ({ customBangs }: { customBangs: BangMap }) => {
         return;
       }
       try {
-        const loadedBangs = await loadBangs();
+        let loadedBangs: BangMap = {};
+        try {
+          loadedBangs = await loadBangs();
+        } catch {
+          loadedBangs = {};
+        }
         if (cancelled) {
           return;
         }

@@ -2,7 +2,6 @@ import type { BangMap } from "./types";
 
 const B64_PLUS_RE = /\+/gu;
 const B64_SLASH_RE = /\//gu;
-const B64_PAD_RE = /=+$/u;
 
 const bytesToB64Url = (bytes: Uint8Array): string => {
   let bin = "";
@@ -13,10 +12,11 @@ const bytesToB64Url = (bytes: Uint8Array): string => {
   for (let i = 0; i < bytes.length; i += CHUNK) {
     bin += String.fromCodePoint(...bytes.subarray(i, i + CHUNK));
   }
-  return btoa(bin)
-    .replace(B64_PLUS_RE, "-")
-    .replace(B64_SLASH_RE, "_")
-    .replace(B64_PAD_RE, "");
+  let encoded = btoa(bin).replace(B64_PLUS_RE, "-").replace(B64_SLASH_RE, "_");
+  while (encoded.endsWith("=")) {
+    encoded = encoded.slice(0, -1);
+  }
+  return encoded;
 };
 
 const b64UrlToBytes = (token: string): Uint8Array => {

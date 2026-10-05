@@ -1,5 +1,7 @@
 node_modules
-.alchemy
+.alchemy/
+.tanstack/
+.wrangler/
 .output
 .vinxi
 dist

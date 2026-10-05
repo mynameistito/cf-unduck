@@ -1,6 +1,5 @@
 import type { Bang, BangMap } from "./types";
 
-const BANG_MATCH_RE = /^!(?<prefix>\S+)|!(?<suffix>\S+)$/iu;
 export const BANG_STRIP_RE = /!\S+\s*|^(?<bang>\S+!|!\S+)$/iu;
 const KAGI_SITE_BANG_RE = /^\/search\?q=\{\{\{s\}\}\}\+site:/u;
 const KAGI_SITE_EXTRACT_RE = /\+site:(?<site>[^\s&]+)/u;
@@ -29,6 +28,33 @@ const ensureProtocol = (url: string, defaultProtocol = "https://"): string => {
 
 const encodeQuery = (query: string): string =>
   encodeURIComponent(query).replace(ENCODE_SLASH_RE, "/");
+
+const getBangShortcut = (query: string): string | undefined => {
+  if (query.startsWith("!") && query.length > 1) {
+    let end = 1;
+    while (end < query.length && query.charAt(end).trim() !== "") {
+      end += 1;
+    }
+    if (end > 1) {
+      return query.slice(1, end).toLowerCase();
+    }
+  }
+
+  const lastBang = query.lastIndexOf("!");
+  if (lastBang === -1) {
+    return undefined;
+  }
+  const suffix = query.slice(lastBang + 1);
+  if (!suffix) {
+    return undefined;
+  }
+  for (const character of suffix) {
+    if (character.trim() === "") {
+      return undefined;
+    }
+  }
+  return suffix.toLowerCase();
+};
 
 const redirectResult = (
   bang: Bang,
@@ -86,14 +112,8 @@ export const resolveBangRedirect = (
     return { kind: "landing" };
   }
 
-  const match = query.match(BANG_MATCH_RE);
-  const bangShortcut = match
-    ? (
-        match.groups?.prefix ??
-        match.groups?.suffix ??
-        input.defaultBangShortcut
-      ).toLowerCase()
-    : input.defaultBangShortcut;
+  const matchedShortcut = getBangShortcut(query);
+  const bangShortcut = matchedShortcut ?? input.defaultBangShortcut;
 
   const selectedBang =
     input.customBangs[bangShortcut] ?? input.bangs[bangShortcut];
@@ -101,7 +121,9 @@ export const resolveBangRedirect = (
     input.customBangs[input.defaultBangShortcut] ??
     input.bangs[input.defaultBangShortcut];
 
-  const cleanQuery = match ? query.replace(BANG_STRIP_RE, "").trim() : query;
+  const cleanQuery = matchedShortcut
+    ? query.replace(BANG_STRIP_RE, "").trim()
+    : query;
 
   if (!selectedBang) {
     return { kind: "landing" };

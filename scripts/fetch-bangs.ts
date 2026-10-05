@@ -183,8 +183,7 @@ const main = async (): Promise<void> => {
   await mkdir(outDir, { recursive: true });
 
   const jsonPath = path.join(outDir, "hashbang.json");
-  // codeql[js/http-to-file-access]: This fixed-path generated asset contains only
-  // validated entries from the fixed HTTPS GitHub bangs endpoint.
+  // codeql[js/http-to-file-access] Fixed-path JSON output from validated bang records.
   await writeFile(jsonPath, JSON.stringify(hashbang));
 
   console.log(

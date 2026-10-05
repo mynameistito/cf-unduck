@@ -2,6 +2,7 @@ import { RouterProvider } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
+import { loadBangs } from "./lib/bangs/load-bangs";
 import { syncPrefsCookie } from "./lib/prefs-cookie";
 import { router } from "./router";
 
@@ -22,7 +23,7 @@ const preloadBangs = async (): Promise<void> => {
     return;
   }
   try {
-    await import("./lib/bangs/hashbang");
+    await loadBangs();
   } catch (error) {
     console.error("Failed to preload bangs", error);
   }

@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { RefObject } from "react";
 
 import {
   useLocalStorage,
   useLocalStorageString,
 } from "@/hooks/use-local-storage";
-import { bangs as hashBangs } from "@/lib/bangs/hashbang";
+import { loadBangs } from "@/lib/bangs/load-bangs";
 import { DEFAULT_BANG_SHORTCUT, LS_KEYS } from "@/lib/constants";
 import { resolveBangRedirect } from "@/lib/redirect";
 import type { RedirectResult } from "@/lib/redirect";
@@ -35,7 +35,29 @@ interface Props {
 
 export const BangTester = ({ inputRef }: Props) => {
   const [query, setQuery] = useState("");
-  const bangs: BangMap = hashBangs;
+  const [bangs, setBangs] = useState<BangMap | null>(null);
+  const [loadError, setLoadError] = useState(false);
+  useEffect(() => {
+    if (!query.trim() || bangs) {
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const loadedBangs = await loadBangs();
+        if (!cancelled) {
+          setBangs(loadedBangs);
+        }
+      } catch {
+        if (!cancelled) {
+          setLoadError(true);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [bangs, query]);
   const [defaultBang] = useLocalStorageString(
     LS_KEYS.DEFAULT_BANG,
     DEFAULT_BANG_SHORTCUT
@@ -66,7 +88,10 @@ export const BangTester = ({ inputRef }: Props) => {
           aria-label="Test a bang query"
           autoComplete="off"
           className="border-border bg-bg-muted text-fg focus:outline-fg-muted flex-1 rounded-md border px-3 py-2 outline-none focus:outline-2"
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setLoadError(false);
+            setQuery(e.target.value);
+          }}
           placeholder="Try it: !gh react"
           ref={inputRef}
           spellCheck={false}
@@ -82,6 +107,11 @@ export const BangTester = ({ inputRef }: Props) => {
           Go
         </button>
       </div>
+      {query.trim() && loadError ? (
+        <p className="text-danger mt-2 text-xs" role="alert">
+          Could not load built-in bangs. Change the query to retry.
+        </p>
+      ) : null}
       {query.trim() && preview ? <PreviewLine preview={preview} /> : null}
     </form>
   );

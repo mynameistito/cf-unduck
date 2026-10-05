@@ -73,6 +73,15 @@ describe("resolveBangRedirect", () => {
     }
   });
 
+  it("does not treat a multiword suffix as a bang shortcut", () => {
+    const r = resolveBangRedirect({ ...base, query: "foo !g bar" });
+    expect(r.kind).toBe("redirect");
+    if (r.kind === "redirect") {
+      expect(r.url).toBe("https://duckduckgo.com/?q=foo%20!g%20bar");
+      expect(r.bangShortcut).toBe("ddg");
+    }
+  });
+
   it("redirects to base domain when bang has empty query", () => {
     const r = resolveBangRedirect({ ...base, query: "!yt" });
     expect(r.kind).toBe("redirect");

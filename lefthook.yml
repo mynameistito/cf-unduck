@@ -6,5 +6,3 @@ pre-commit:
 
     - run: bun tsc --noEmit
       glob: "**/*.{ts,tsx}"
-
-    - run: bun run scripts/cleanup.ts

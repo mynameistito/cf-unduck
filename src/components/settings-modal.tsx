@@ -27,7 +27,7 @@ interface Props {
 
 const SEARCH_DEBOUNCE_MS = 150;
 const STRIP_BANG_PREFIX_RE = /^!+/u;
-const KAGI_SEARCH_SUFFIX_RE = /\s*\(Kagi Search\)\s*$/iu;
+const KAGI_SEARCH_SUFFIX = "(kagi search)";
 const STRIP_WWW_RE = /^www\./iu;
 const HAS_PROTOCOL_RE = /^https?:\/\//iu;
 
@@ -402,10 +402,12 @@ const BangSearchSection = ({ customBangs }: { customBangs: BangMap }) => {
             </div>
           ) : (
             results.map(([shortcut, b]) => {
-              const display = b.s.replace(
-                KAGI_SEARCH_SUFFIX_RE,
-                " (default search)"
-              );
+              const trimmedName = b.s.trimEnd();
+              const display =
+                trimmedName.slice(-KAGI_SEARCH_SUFFIX.length).toLowerCase() ===
+                KAGI_SEARCH_SUFFIX
+                  ? `${trimmedName.slice(0, -KAGI_SEARCH_SUFFIX.length).trimEnd()} (default search)`
+                  : b.s;
               return (
                 <div
                   className="border-border bg-bg-muted flex items-center gap-3 border-b px-3 py-2 last:border-b-0"

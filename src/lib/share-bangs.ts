@@ -1,3 +1,4 @@
+import { normalizeWebUrl } from "./redirect";
 import type { BangMap } from "./types";
 
 const B64_PLUS_RE = /\+/gu;
@@ -93,7 +94,7 @@ export const decodeShare = async (token: string): Promise<BangMap | null> => {
 
 export const isValidBangMap = (m: BangMap): boolean => {
   for (const v of Object.values(m)) {
-    if (!(v.d && v.s && v.u)) {
+    if (!(v.d && v.s && v.u) || !normalizeWebUrl(v.u)) {
       return false;
     }
   }

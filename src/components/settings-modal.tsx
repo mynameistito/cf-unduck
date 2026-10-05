@@ -15,6 +15,7 @@ import {
 } from "@/lib/constants";
 import { clearSearchHistory, getSearchHistory } from "@/lib/history";
 import { syncPrefsCookie } from "@/lib/prefs-cookie";
+import { normalizeWebUrl } from "@/lib/redirect";
 import { encodeShare } from "@/lib/share-bangs";
 import type { Bang, BangMap } from "@/lib/types";
 
@@ -266,7 +267,10 @@ const cleanBangFields = (
     .toLowerCase();
   const trimmedSearch = fields.searchUrl.trim();
   const trimmedBase = fields.baseUrl.trim() || deriveBaseDomain(trimmedSearch);
-  if (!(trimmedName && trimmedSearch && trimmedBase && cleanShortcut)) {
+  const hasRequiredFields =
+    trimmedName && trimmedSearch && trimmedBase && cleanShortcut;
+  const hasSafeSearchUrl = normalizeWebUrl(trimmedSearch);
+  if (!hasRequiredFields || !hasSafeSearchUrl) {
     return null;
   }
   return {
@@ -750,7 +754,7 @@ const sanitizeBangMap = (value: BangMap): BangMap | null => {
       return null;
     }
     const { ad, d, s, u } = bang;
-    if (!(d && s && u)) {
+    if (!(d && s && u) || !normalizeWebUrl(u)) {
       return null;
     }
     if (ad !== undefined && !ad) {

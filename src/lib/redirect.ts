@@ -18,11 +18,25 @@ export type RedirectResult =
   | { kind: "landing" }
   | { kind: "notfound" };
 
-const ensureProtocol = (url: string, defaultProtocol = "https://"): string => {
+/**
+ * Normalize a search destination to an HTTP(S) URL.
+ *
+ * Scheme-less destinations default to HTTPS; other schemes and malformed URLs
+ * are rejected.
+ */
+export const normalizeWebUrl = (url: string): string | null => {
   try {
-    return new URL(url).href;
+    const parsed = new URL(url);
+    return parsed.protocol === "http:" || parsed.protocol === "https:"
+      ? parsed.href
+      : null;
   } catch {
-    return `${defaultProtocol}${url}`;
+    try {
+      const parsed = new URL(`https://${url}`);
+      return parsed.protocol === "https:" ? parsed.href : null;
+    } catch {
+      return null;
+    }
   }
 };
 
@@ -60,12 +74,18 @@ const redirectResult = (
   bang: Bang,
   bangShortcut: string,
   url: string
-): RedirectResult => ({
-  bang,
-  bangShortcut,
-  kind: "redirect",
-  url: ensureProtocol(url),
-});
+): RedirectResult => {
+  const normalizedUrl = normalizeWebUrl(url);
+  if (!normalizedUrl) {
+    return { kind: "landing" };
+  }
+  return {
+    bang,
+    bangShortcut,
+    kind: "redirect",
+    url: normalizedUrl,
+  };
+};
 
 const getBangBaseUrl = (bang: Bang): string => {
   const alternateDomain = bang.ad?.trim();

@@ -1,6 +1,6 @@
 # cf-unduck
 
-Fast DuckDuckGo bang redirects on Cloudflare Workers. React + Vite + TanStack Router SPA served as static assets.
+Fast DuckDuckGo bang redirects on Cloudflare Workers. The React + Vite + TanStack Router app is served as static assets, with a Worker handling redirects and search suggestions.
 
 Live: https://unduck.xyz
 
@@ -23,21 +23,22 @@ Then `!gh react` → GitHub search for "react". No bang → falls back to DuckDu
 
 ## How is it that much faster?
 
-DuckDuckGo redirects through their own server hop. cf-unduck skips that:
+DuckDuckGo's bang redirects add a server hop. cf-unduck resolves bangs directly:
 
-- **First hit**: Worker resolves the bang at the edge and 302s straight to the target. Cookieless redirects are cached at the edge (`s-maxage=86400`), so repeat queries with the same `q` are pure cache hits.
-- **Subsequent hits**: SPA is cached locally, so redirects happen on-device with no round-trip.
+- **Server redirect**: The Worker resolves the bang and returns a 302 to the destination. Redirects without custom preferences are cacheable for up to a day (`s-maxage=86400`).
+- **Custom preferences**: When a `udprefs` cookie is present, redirects are private and not stored in shared caches.
+- **Client redirect**: The cached SPA also resolves bangs in the browser, avoiding a server round-trip when it is already loaded.
 
-Users with custom prefs (`udprefs` cookie) get private, no-store responses so settings never leak across the edge cache.
+The `udprefs` cookie carries the default bang and custom bangs needed by server-side redirects; other settings remain in browser storage.
 
 ## Features
 
 - Bangs (DuckDuckGo + [Kagi](https://github.com/kagisearch/bangs/)), hashmapped for O(1) lookup
-- Edge-cached server-side redirects on first hit, on-device after
-- Search suggestions endpoint (`/suggest`) proxying DuckDuckGo with edge cache
+- Server-side redirects with shared-cache support, plus client-side resolution when the SPA is loaded
+- Search suggestions endpoint (`/suggest`) proxying Google with a 60-second cache
 - [OpenSearch](https://developer.mozilla.org/en-US/docs/Web/XML/Guides/OpenSearch) support (browser auto-discovery)
 - PWA / installable
-- Settings: default bang, custom bangs, history toggle — synced via `udprefs` cookie so server redirects honor them
+- Settings: default bang and custom bangs are synced via the `udprefs` cookie so server redirects honor them; the history toggle is stored locally
 - Empty-query bang → base site (e.g. `!g` → google.com)
 - Suffix bangs (`ghr! user/repo` → that GitHub repo)
 - Quick settings (`!settings` or `!`)
@@ -48,7 +49,7 @@ Users with custom prefs (`udprefs` cookie) get private, no-store responses so se
 
 ## Search Suggestions
 
-Firefox has a dedicated suggestions URL field. Use the built-in proxy (cached at the edge):
+Firefox has a dedicated suggestions URL field. Use the built-in Google suggestions proxy (cached for 60 seconds):
 
 ```
 https://unduck.xyz/suggest?q=%s
@@ -63,7 +64,7 @@ https://www.google.com/complete/search?client=chrome&q=%s
 
 ## Self-hosting
 
-Prereqs: [Bun](https://bun.com) and a Cloudflare account. Alchemy stores local credentials in its `default` profile; CI uses the Cloudflare secrets described below.
+Prerequisites: [Bun](https://bun.com) and a Cloudflare account. Alchemy stores local credentials in its `default` profile; GitHub Actions uses the Cloudflare secrets described in [CI deployments](#ci-deployments).
 
 1. **Clone & install**
 
@@ -73,7 +74,7 @@ Prereqs: [Bun](https://bun.com) and a Cloudflare account. Alchemy stores local c
    bun install
    ```
 
-2. **Edit `src/site.config.ts`** — set your domain, repo, and footer credit:
+2. **Edit `src/site.config.ts`** — set your production domain, repository details, and footer credit:
 
    ```ts
    export const SITE = {
@@ -85,7 +86,7 @@ Prereqs: [Bun](https://bun.com) and a Cloudflare account. Alchemy stores local c
    } as const;
    ```
 
-3. **Edit `alchemy.run.ts`** — change `APP_NAME` if you are deploying a fork under a different Worker name. The production domain comes from `src/site.config.ts`; only `pr-*` preview stages use isolated `workers.dev` names.
+3. **Update deployment names if needed** — if your Worker should have a different name, change `APP_NAME` in `alchemy.run.ts` and `worker-name` in `.github/workflows/deploy.yml`. Change `production-url` in that workflow to your production URL too. The production domain is read from `src/site.config.ts`; pull-request previews use isolated `pr-*` stages.
 
 4. **(Optional) Refresh bangs**
 
@@ -93,26 +94,26 @@ Prereqs: [Bun](https://bun.com) and a Cloudflare account. Alchemy stores local c
    bun run fetch-bangs
    ```
 
-5. **Connect Alchemy to Cloudflare**
+5. **Connect Alchemy to Cloudflare for local deploys**
 
    ```bash
    bunx alchemy profile edit --add Cloudflare
    ```
 
-6. **Dev**
+6. **Develop locally**
 
    ```bash
    bun run dev
    ```
 
-7. **Deploy**
+7. **Deploy locally**
    ```bash
    bun run deploy
    ```
 
 ## CI deployments
 
-`.github/workflows/ci.yml` builds the Worker entrypoint and Vite output without Cloudflare credentials, then uploads both as the `alchemy-worker` artifact. `.github/workflows/deploy.yml` uses [`mynameistito/alchemy-deploy`](https://github.com/mynameistito/alchemy-deploy), pinned to immutable v3.1.4, after the exact `CI` run succeeds. PR previews deploy only that artifact, while production deploys `prod` from `main`; previews are destroyed when pull requests close.
+`.github/workflows/ci.yml` runs typechecking, tests, linting, and a build without Cloudflare credentials. The build also uploads the Worker entrypoint and static assets as the `alchemy-worker` artifact. After a successful CI run, `.github/workflows/deploy.yml` uses [`mynameistito/alchemy-deploy`](https://github.com/mynameistito/alchemy-deploy) to deploy that artifact for pull requests or deploy the `prod` stage from `main`. Pull-request preview stages are destroyed when their PRs close.
 
 Configure these repository secrets before enabling production deployments:
 
@@ -120,6 +121,8 @@ Configure these repository secrets before enabling production deployments:
 - `CLOUDFLARE_ACCOUNT_ID` — the Cloudflare account that owns the Worker
 
 The first local production deployment uses the new Alchemy state store and creates the deleted Worker from scratch. Subsequent deployments are handled by the workflow.
+
+To refresh the bundled bang data locally, run `bun run fetch-bangs`. You can also run the **Refresh bangs** workflow manually from the GitHub Actions tab; it opens a pull request if the generated data changed.
 
 ## Stack
 
@@ -133,7 +136,8 @@ React 19 + Vite + TanStack Router SPA, served as static assets by an Alchemy-man
 - `bun run deploy` — build and deploy with Alchemy
 - `bun run destroy` — destroy the selected Alchemy stage
 - `bun run fetch-bangs` — refresh bangs list
-- `bun run check` / `fix` — Ultracite lint
+- `bun run check` — Ultracite lint and format checks
+- `bun run fix` — apply automatic lint and format fixes
 - `bun test` — Bun test runner
 
 ## License

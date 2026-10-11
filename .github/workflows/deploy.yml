@@ -40,7 +40,7 @@ jobs:
           deploy-command: bun ./node_modules/alchemy/bin/cli.js deploy --stage "$STAGE" --yes
           destroy-command: bun ./node_modules/alchemy/bin/cli.js destroy --stage "$STAGE" --yes
           production-stage: prod
-          production-url: https://search.mynameistito.com
+          production-url: https://unduck.xyz
           use-adopt: false
           preview-artifact: alchemy-worker
           preview-entrypoint: worker/index.js

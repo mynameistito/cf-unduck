@@ -7,7 +7,7 @@ export const SITE = {
     url: "https://mynameistito.com",
   },
   // Your production URL, also set in alchemy.run.ts.
-  domain: "search.mynameistito.com",
+  domain: "unduck.xyz",
   // GitHub user/org for the repo link.
   githubUser: "mynameistito",
   // Used in page title and OpenSearch.

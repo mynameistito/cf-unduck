@@ -2,7 +2,7 @@
 
 Fast DuckDuckGo bang redirects on Cloudflare Workers. React + Vite + TanStack Router SPA served as static assets.
 
-Live: https://search.mynameistito.com
+Live: https://unduck.xyz
 
 ## Credit
 
@@ -16,7 +16,7 @@ Remade from [taciturnaxolotl/unduckified](https://github.com/taciturnaxolotl/und
 Add as custom search engine in your browser:
 
 ```
-https://search.mynameistito.com?q=%s
+https://unduck.xyz?q=%s
 ```
 
 Then `!gh react` → GitHub search for "react". No bang → falls back to DuckDuckGo (configurable in settings).
@@ -51,7 +51,7 @@ Users with custom prefs (`udprefs` cookie) get private, no-store responses so se
 Firefox has a dedicated suggestions URL field. Use the built-in proxy (cached at the edge):
 
 ```
-https://search.mynameistito.com/suggest?q=%s
+https://unduck.xyz/suggest?q=%s
 ```
 
 Or point straight at an upstream:

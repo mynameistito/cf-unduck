@@ -1,6 +1,6 @@
+import { Website, providers, state } from "@alchemy.run/cloudflare";
+import type { InferEnv } from "@alchemy.run/cloudflare";
 import { Stack } from "alchemy";
-import { Website, providers, state } from "alchemy/Cloudflare";
-import type { InferEnv } from "alchemy/Cloudflare";
 import { gen } from "effect/Effect";
 
 import { SITE } from "./src/site.config.ts";

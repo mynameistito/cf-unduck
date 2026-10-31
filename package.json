@@ -19,7 +19,7 @@
     "prepare": "lefthook install"
   },
   "dependencies": {
-    "@tanstack/react-router": "^1.170.44",
+    "@tanstack/react-router": "^1.170.45",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },
@@ -52,7 +52,7 @@
     "vite-plugin-pwa": "^2.0.0"
   },
   "optionalDependencies": {
-    "@rollup/rollup-linux-x64-gnu": "4.64.6",
+    "@rollup/rollup-linux-x64-gnu": "4.64.10",
     "lightningcss-linux-x64-gnu": "1.33.0"
   },
   "overrides": {},

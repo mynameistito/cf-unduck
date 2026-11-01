@@ -15,17 +15,24 @@
     "verbatimModuleSyntax": false,
     "noEmit": true,
     "allowImportingTsExtensions": true,
-    "types": ["@cloudflare/workers-types", "@types/bun", "vite/client"],
+    "types": [
+      "@cloudflare/workers-types",
+      "@types/bun",
+      "vite/client",
+      "chrome"
+    ],
     "paths": {
       "@/*": ["./src/*"]
     }
   },
   "include": [
     "src",
+    "extension",
     "scripts",
     "__tests__",
     "e2e",
     "playwright.config.ts",
+    "playwright-extension.config.ts",
     "vite.config.ts",
     "alchemy.run.ts"
   ]

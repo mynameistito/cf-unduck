@@ -50,6 +50,22 @@ jobs:
         if: matrix.task == 'build'
         run: bun run test:browser
 
+      - name: Test extension settings sync and site fallback
+        if: matrix.task == 'build'
+        run: bun run test:extension
+
+      - name: Build production browser extension
+        if: matrix.task == 'build'
+        run: bun run build:extension
+
+      - name: Upload browser extension
+        if: matrix.task == 'build'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: browser-extension
+          path: dist-extension/
+          if-no-files-found: error
+
       - name: Build Worker Preview artifact
         if: matrix.task == 'build'
         run: |

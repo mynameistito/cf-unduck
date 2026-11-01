@@ -19,6 +19,8 @@ import { normalizeWebUrl } from "@/lib/redirect";
 import { encodeShare } from "@/lib/share-bangs";
 import type { Bang, BangMap } from "@/lib/types";
 
+import { ExtensionSettings } from "./extension-settings";
+
 interface Props {
   audio: AudioController;
   onClose: () => void;
@@ -1126,6 +1128,7 @@ export const SettingsModal = ({
           }}
         />
 
+        <ExtensionSettings />
         <ImportExportSection />
       </div>
     </dialog>

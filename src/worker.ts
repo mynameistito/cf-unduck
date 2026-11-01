@@ -1,5 +1,3 @@
-import type { ExecutionContext } from "@cloudflare/workers-types";
-
 import type { WorkerEnv as AlchemyWorkerEnv } from "../alchemy.run.ts";
 import bangsJson from "../public/assets/hashbang.json";
 import { DEFAULT_BANG_SHORTCUT } from "./lib/constants";
@@ -85,14 +83,9 @@ const handleSuggest = async (url: URL): Promise<Response> => {
 };
 
 const PREFS_COOKIE_RE = /(?:^|;\s*)udprefs=/u;
-const REDIRECT_EDGE_TTL_SECONDS = 86_400;
 
 export default {
-  async fetch(
-    request: Request,
-    env: WorkerEnv,
-    ctx: Pick<ExecutionContext, "waitUntil">
-  ): Promise<Response> {
+  fetch(request: Request, env: WorkerEnv): Response | Promise<Response> {
     if (request.method !== "GET" && request.method !== "HEAD") {
       return env.ASSETS.fetch(request);
     }
@@ -112,16 +105,6 @@ export default {
 
     const cookieHeader = request.headers.get("Cookie");
     const hasPrefs = cookieHeader ? PREFS_COOKIE_RE.test(cookieHeader) : false;
-    const cache =
-      "caches" in globalThis ? await caches.open("redirects") : null;
-
-    if (!hasPrefs && cache) {
-      const cached = await cache.match(request);
-      if (cached) {
-        return cached;
-      }
-    }
-
     const prefs = readPrefsFromCookieHeader(cookieHeader);
     const defaultBangShortcut = prefs.d || DEFAULT_BANG_SHORTCUT;
 
@@ -144,20 +127,11 @@ export default {
       headers.set("Cache-Control", "private, no-store");
       headers.set("Vary", "Cookie");
     } else {
-      // Redirect target depends only on (path, query) for cookieless users —
-      // omit Vary so unrelated cookies (analytics etc.) don't fragment the
-      // edge cache key.
-      headers.set(
-        "Cache-Control",
-        `public, s-maxage=${REDIRECT_EDGE_TTL_SECONDS}, max-age=0`
-      );
+      // Resolve from the bundled dictionary rather than doing cache I/O for
+      // every query. Do not reuse destinations after preferences change.
+      headers.set("Cache-Control", "no-store");
     }
 
-    const response = new Response(null, { headers, status: 302 });
-
-    if (!hasPrefs && cache) {
-      ctx.waitUntil(cache.put(request, response.clone()));
-    }
-    return response;
+    return new Response(null, { headers, status: 302 });
   },
 };

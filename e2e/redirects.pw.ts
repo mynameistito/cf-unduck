@@ -165,10 +165,13 @@ test("settings and unknown bangs still show the app", async ({ page }) => {
   expect(await readStoredValue(page, "counts", "total")).toBeNull();
 });
 
-test("missing preferences fall back to the app resolver", async ({
+test("missing preferences fall back to the app resolver without Object.hasOwn", async ({
   page,
   context,
 }) => {
+  await context.addInitScript(() => {
+    Reflect.deleteProperty(Object, "hasOwn");
+  });
   await context.route(chatgptPattern, fulfillChatgpt);
   await install(page);
   await page.evaluate(readBrowserValue, {

@@ -93,7 +93,10 @@ const getBangBaseUrl = (bang: Bang): string => {
 };
 
 const findBang = (bangs: BangMap, shortcut: string): Bang | undefined =>
-  Object.hasOwn(bangs, shortcut) ? bangs[shortcut] : undefined;
+  // oxlint-disable-next-line prefer-object-has-own -- Shared with the extension; avoid requiring the newer Object.hasOwn runtime API.
+  Object.prototype.hasOwnProperty.call(bangs, shortcut)
+    ? bangs[shortcut]
+    : undefined;
 
 const resolveKagiSiteRedirect = (
   selectedBang: Bang,

@@ -42,6 +42,14 @@ jobs:
       - name: Run task
         run: bun run ${{ matrix.task }}
 
+      - name: Install browser for redirect tests
+        if: matrix.task == 'build'
+        run: bun x playwright install --with-deps chromium
+
+      - name: Test production service-worker redirects
+        if: matrix.task == 'build'
+        run: bun run test:browser
+
       - name: Build Worker Preview artifact
         if: matrix.task == 'build'
         run: |

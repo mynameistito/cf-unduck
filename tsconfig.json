@@ -20,5 +20,13 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src", "scripts", "__tests__", "vite.config.ts", "alchemy.run.ts"]
+  "include": [
+    "src",
+    "scripts",
+    "__tests__",
+    "e2e",
+    "playwright.config.ts",
+    "vite.config.ts",
+    "alchemy.run.ts"
+  ]
 }

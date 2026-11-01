@@ -1,4 +1,8 @@
+import { LS_KEYS } from "./constants";
+import { redirectStore } from "./redirect-store";
+
 const isBrowser = "window" in globalThis;
+let serviceWorkerCount = 0;
 
 type Listener = () => void;
 const listeners = new Map<string, Set<Listener>>();
@@ -26,13 +30,22 @@ export const storage = {
     if (!isBrowser) {
       return null;
     }
-    return localStorage.getItem(key);
+    const value = localStorage.getItem(key);
+    if (key === LS_KEYS.SEARCH_COUNT) {
+      const count = Number(value ?? "0");
+      return String((Number.isFinite(count) ? count : 0) + serviceWorkerCount);
+    }
+    return value;
   },
   set: (key: string, value: string): void => {
     if (!isBrowser) {
       return;
     }
-    localStorage.setItem(key, value);
+    const storedValue =
+      key === LS_KEYS.SEARCH_COUNT
+        ? String(Number(value) - serviceWorkerCount)
+        : value;
+    localStorage.setItem(key, storedValue);
     notify(key);
   },
   subscribe: (key: string, listener: Listener): (() => void) => {
@@ -46,4 +59,13 @@ export const storage = {
       set?.delete(listener);
     };
   },
+};
+
+/** Refresh the persistent fast-path count without copying it into localStorage. */
+export const refreshServiceWorkerCount = async (): Promise<void> => {
+  const count = await redirectStore.readCount();
+  if (count !== null && count !== serviceWorkerCount) {
+    serviceWorkerCount = count;
+    notify(LS_KEYS.SEARCH_COUNT);
+  }
 };

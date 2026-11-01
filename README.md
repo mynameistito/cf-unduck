@@ -27,14 +27,15 @@ DuckDuckGo's bang redirects add a server hop. cf-unduck resolves bangs directly:
 
 - **Server redirect**: The Worker resolves the bang from its bundled dictionary and returns a 302 without a cache lookup or upstream request. Redirect responses use `no-store` so changes to preferences and destinations take effect on the next request.
 - **Custom preferences**: When a `udprefs` cookie is present, redirects are private and not stored in shared caches.
-- **Client redirect**: The cached SPA also resolves bangs in the browser, avoiding a server round-trip when it is already loaded.
+- **Service-worker redirect**: After the first visit, the service worker resolves searches using the precached bang dictionary and preferences mirrored in IndexedDB. It returns a redirect before React loads and can resolve searches offline (the destination still needs a connection). Full custom bangs persist locally, including collections too large for the preferences cookie.
+- **App fallback**: History-enabled searches use the cached app to preserve local history recording. Unknown bangs, settings queries, and unavailable browser storage also fall back to the app. If its cache is unavailable, the service worker fetches the app shell from the network so counts and history are still recorded before redirecting.
 
-The `udprefs` cookie carries the default bang and custom bangs needed by server-side redirects; other settings remain in browser storage.
+The `udprefs` cookie carries the default bang and custom bangs needed by server-side redirects; other settings remain in browser storage. Fast-path redirects persist only an aggregate counter, which is added to the existing app search count; they do not store search text. Browser data clearing resets the corresponding local state.
 
 ## Features
 
 - Bangs (DuckDuckGo + [Kagi](https://github.com/kagisearch/bangs/)), hashmapped for O(1) lookup
-- Server-side redirects from an in-memory dictionary, plus client-side resolution when the SPA is loaded
+- Server-side redirects from an in-memory dictionary and service-worker redirects before React loads
 - Search suggestions endpoint (`/suggest`) proxying Google with a 60-second cache
 - [OpenSearch](https://developer.mozilla.org/en-US/docs/Web/XML/Guides/OpenSearch) support (browser auto-discovery)
 - PWA / installable
@@ -139,6 +140,7 @@ React 19 + Vite + TanStack Router SPA, served as static assets by an Alchemy-man
 - `bun run check` — Ultracite lint and format checks
 - `bun run fix` — apply automatic lint and format fixes
 - `bun test` — Bun test runner
+- `bun run test:browser` — Chromium tests against the production build (run `bun run build` and `bun x playwright install chromium` first)
 
 ## License
 

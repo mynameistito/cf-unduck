@@ -48,67 +48,29 @@ describe("resolveBangRedirect", () => {
     );
   });
 
-  it("uses default bang when no bang in query", () => {
-    const r = resolveBangRedirect({ ...base, query: "hello world" });
-    expect(r.kind).toBe("redirect");
-    if (r.kind === "redirect") {
-      expect(r.url).toBe("https://duckduckgo.com/?q=hello%20world");
-      expect(r.bangShortcut).toBe("ddg");
-    }
-  });
-
-  it("handles prefix bang !g foo", () => {
-    const r = resolveBangRedirect({ ...base, query: "!g foo" });
-    expect(r.kind).toBe("redirect");
-    if (r.kind === "redirect") {
-      expect(r.url).toBe("https://google.com/search?q=foo");
-    }
-  });
-
-  it("handles suffix bang foo !g", () => {
-    const r = resolveBangRedirect({ ...base, query: "foo !g" });
-    expect(r.kind).toBe("redirect");
-    if (r.kind === "redirect") {
-      expect(r.url).toBe("https://google.com/search?q=foo");
-    }
-  });
-
-  it("does not treat a multiword suffix as a bang shortcut", () => {
-    const r = resolveBangRedirect({ ...base, query: "foo !g bar" });
-    expect(r.kind).toBe("redirect");
-    if (r.kind === "redirect") {
-      expect(r.url).toBe("https://duckduckgo.com/?q=foo%20!g%20bar");
-      expect(r.bangShortcut).toBe("ddg");
-    }
-  });
-
-  it("redirects to base domain when bang has empty query", () => {
-    const r = resolveBangRedirect({ ...base, query: "!yt" });
-    expect(r.kind).toBe("redirect");
-    if (r.kind === "redirect") {
-      expect(r.url).toBe("https://youtube.com/");
-    }
-  });
-
-  it("preserves slashes in encoded query (prefix bang)", () => {
-    const r = resolveBangRedirect({ ...base, query: "!ghr foo/bar" });
-    expect(r.kind).toBe("redirect");
-    if (r.kind === "redirect") {
-      expect(r.url).toBe("https://github.com/foo/bar");
-    }
+  it.each([
+    ["hello world", "ddg", "https://duckduckgo.com/?q=hello%20world"],
+    ["!g foo", "g", "https://google.com/search?q=foo"],
+    ["foo !g", "g", "https://google.com/search?q=foo"],
+    ["foo !g bar", "ddg", "https://duckduckgo.com/?q=foo%20!g%20bar"],
+    ["!yt", "yt", "https://youtube.com/"],
+    ["!ghr foo/bar", "ghr", "https://github.com/foo/bar"],
+    [
+      "!kgh react",
+      "kgh",
+      "https://duckduckgo.com/?q=react%20site%3Agithub.com",
+    ],
+  ])("resolves %s using %s", (query, bangShortcut, url) => {
+    expect(resolveBangRedirect({ ...base, query })).toMatchObject({
+      kind: "redirect",
+      bangShortcut,
+      url,
+    });
   });
 
   it("404s on unknown path", () => {
     const r = resolveBangRedirect({ ...base, query: "" }, "/random");
     expect(r.kind).toBe("notfound");
-  });
-
-  it("Kagi site bang routes through default bang", () => {
-    const r = resolveBangRedirect({ ...base, query: "!kgh react" });
-    expect(r.kind).toBe("redirect");
-    if (r.kind === "redirect") {
-      expect(r.url).toBe("https://duckduckgo.com/?q=react%20site%3Agithub.com");
-    }
   });
 
   it("custom bang overrides built-in", () => {

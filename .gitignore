@@ -11,3 +11,5 @@ dist
 .env.local
 package-lock.json
 plans/
+playwright-report/
+test-results/

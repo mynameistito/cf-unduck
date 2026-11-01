@@ -143,8 +143,13 @@ export default defineConfig({
     tailwindcss(),
     siteConfigPlugin(),
     VitePWA({
+      strategies: "injectManifest",
+      srcDir: "src",
+      filename: "sw.ts",
       registerType: "autoUpdate",
-      workbox: {
+      injectManifest: {
+        // The dictionary has a stable filename and must refresh on SW updates.
+        dontCacheBustURLsMatching: /-[\w-]{8}\.(?:js|css)$/u,
         globPatterns: ["**/*.{js,css,html,json,svg,opus,gif}"],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
       },

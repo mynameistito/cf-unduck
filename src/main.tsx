@@ -4,6 +4,7 @@ import { createRoot } from "react-dom/client";
 
 import { loadBangs } from "./lib/bangs/load-bangs";
 import { syncPrefsCookie } from "./lib/prefs-cookie";
+import { startRedirectSync } from "./lib/sync-redirect-preferences";
 import { router } from "./router";
 
 import "./styles/global.css";
@@ -33,6 +34,7 @@ void loadDevTools();
 void preloadBangs();
 
 syncPrefsCookie();
+startRedirectSync();
 
 const el = document.querySelector("#app");
 if (!el) {

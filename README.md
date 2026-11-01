@@ -25,7 +25,7 @@ Then `!gh react` → GitHub search for "react". No bang → falls back to DuckDu
 
 DuckDuckGo's bang redirects add a server hop. cf-unduck resolves bangs directly:
 
-- **Server redirect**: The Worker resolves the bang and returns a 302 to the destination. Redirects without custom preferences are cacheable for up to a day (`s-maxage=86400`).
+- **Server redirect**: The Worker resolves the bang from its bundled dictionary and returns a 302 without a cache lookup or upstream request. Redirect responses use `no-store` so changes to preferences and destinations take effect on the next request.
 - **Custom preferences**: When a `udprefs` cookie is present, redirects are private and not stored in shared caches.
 - **Client redirect**: The cached SPA also resolves bangs in the browser, avoiding a server round-trip when it is already loaded.
 
@@ -34,7 +34,7 @@ The `udprefs` cookie carries the default bang and custom bangs needed by server-
 ## Features
 
 - Bangs (DuckDuckGo + [Kagi](https://github.com/kagisearch/bangs/)), hashmapped for O(1) lookup
-- Server-side redirects with shared-cache support, plus client-side resolution when the SPA is loaded
+- Server-side redirects from an in-memory dictionary, plus client-side resolution when the SPA is loaded
 - Search suggestions endpoint (`/suggest`) proxying Google with a 60-second cache
 - [OpenSearch](https://developer.mozilla.org/en-US/docs/Web/XML/Guides/OpenSearch) support (browser auto-discovery)
 - PWA / installable

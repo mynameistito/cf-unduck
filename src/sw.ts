@@ -80,7 +80,8 @@ registerRoute(
     } catch {
       // Cache storage can be unavailable, for example in private browsing.
     }
-    // Preserve the original query so the edge Worker can resolve it directly.
-    return fetch(options.request);
+    // Recover the app shell directly: fetching the search URL lets the edge
+    // redirect before the app can preserve local counts and history.
+    return fetch(new URL("/index.html", url.origin));
   })
 );

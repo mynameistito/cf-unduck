@@ -60,6 +60,16 @@ const install = async (page: Page): Promise<void> => {
   ).toBeVisible();
 };
 
+const enableHistory = async (page: Page): Promise<void> => {
+  await page.evaluate(() => {
+    localStorage.setItem("history-enabled", "true");
+  });
+  await page.reload();
+  await expect
+    .poll(() => readStoredValue(page, "preferences", "current"))
+    .toContain('"historyEnabled":true');
+};
+
 test("redirects offline without loading React and preserves the search count", async ({
   page,
   context,
@@ -82,13 +92,7 @@ test("redirects offline without loading React and preserves the search count", a
   await expect(
     page.getByRole("link", { name: "1 search", exact: true })
   ).toBeVisible();
-  await page.evaluate(() => {
-    localStorage.setItem("history-enabled", "true");
-  });
-  await page.reload();
-  await expect
-    .poll(() => readStoredValue(page, "preferences", "current"))
-    .toContain('"historyEnabled":true');
+  await enableHistory(page);
   await page.goto(helloQuery, { waitUntil: "domcontentloaded" });
   await expect(page).toHaveURL(helloDestination);
   await page.goto("/");
@@ -137,13 +141,7 @@ test("keeps history-enabled searches on the app path and records them once", asy
 }) => {
   await context.route(chatgptPattern, fulfillChatgpt);
   await install(page);
-  await page.evaluate(() => {
-    localStorage.setItem("history-enabled", "true");
-  });
-  await page.reload();
-  await expect
-    .poll(() => readStoredValue(page, "preferences", "current"))
-    .toContain('"historyEnabled":true');
+  await enableHistory(page);
   await page.goto("/search?q=!chatgpt+remember+this", {
     waitUntil: "domcontentloaded",
   });
@@ -190,7 +188,11 @@ test("missing app and dictionary caches fall back to the network", async ({
   context,
 }) => {
   await context.route(chatgptPattern, fulfillChatgpt);
+  const edgeResponse = await page.request.get(helloQuery, { maxRedirects: 0 });
+  expect(edgeResponse.status()).toBe(302);
+  expect(edgeResponse.headers().location).toBe(helloDestination);
   await install(page);
+  await enableHistory(page);
   await page.evaluate(async () => {
     const cacheKeys = await caches.keys();
     await Promise.all(cacheKeys.map((key) => caches.delete(key)));
@@ -200,4 +202,9 @@ test("missing app and dictionary caches fall back to the network", async ({
   await page.goto("/");
   expect(await readStoredValue(page, "counts", "total")).toBeNull();
   expect(await readAppCount(page)).toBe("1");
+  expect(
+    await page.evaluate(() =>
+      JSON.parse(localStorage.getItem("search-history") ?? "[]")
+    )
+  ).toMatchObject([{ bang: "chatgpt", query: "hello" }]);
 });

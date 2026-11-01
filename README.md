@@ -28,7 +28,7 @@ DuckDuckGo's bang redirects add a server hop. cf-unduck resolves bangs directly:
 - **Server redirect**: The Worker resolves the bang from its bundled dictionary and returns a 302 without a cache lookup or upstream request. Redirect responses use `no-store` so changes to preferences and destinations take effect on the next request.
 - **Custom preferences**: When a `udprefs` cookie is present, redirects are private and not stored in shared caches.
 - **Service-worker redirect**: After the first visit, the service worker resolves searches using the precached bang dictionary and preferences mirrored in IndexedDB. It returns a redirect before React loads and can resolve searches offline (the destination still needs a connection). Full custom bangs persist locally, including collections too large for the preferences cookie.
-- **App fallback**: History-enabled searches use the cached app to preserve local history recording. Unknown bangs, settings queries, and unavailable browser storage also fall back to the app. If its cache is unavailable, navigation goes to the edge Worker.
+- **App fallback**: History-enabled searches use the cached app to preserve local history recording. Unknown bangs, settings queries, and unavailable browser storage also fall back to the app. If its cache is unavailable, the service worker fetches the app shell from the network so counts and history are still recorded before redirecting.
 
 The `udprefs` cookie carries the default bang and custom bangs needed by server-side redirects; other settings remain in browser storage. Fast-path redirects persist only an aggregate counter, which is added to the existing app search count; they do not store search text. Browser data clearing resets the corresponding local state.
 

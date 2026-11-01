@@ -98,7 +98,7 @@ test("site settings sync to the real extension and survive a browser restart", a
 test("without the extension, the settings site remains usable", async ({
   page,
 }) => {
-  await page.goto("http://127.0.0.1:4173/?q=!settings");
+  await page.goto("http://127.0.0.1:4173/?q=%20!settings%20");
   await expect(page.getByText(/The site works on its own/u)).toBeVisible();
   await page.getByRole("checkbox", { name: "Enable Search History" }).check();
   expect(

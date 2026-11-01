@@ -2,10 +2,12 @@ import bangs from "../public/assets/hashbang.json";
 import { parseExtensionPreferences } from "../src/lib/extension-preferences";
 import { defaultExtensionPreferences } from "../src/lib/extension-protocol";
 import { resolveExtensionNavigation } from "./navigation";
+import { createSerialQueue } from "./serial-queue";
 
 declare const EXTENSION_SITE_ORIGIN: string;
 
 const siteOrigin = EXTENSION_SITE_ORIGIN;
+const enqueueWrite = createSerialQueue();
 
 chrome.runtime.onMessage.addListener((message, sender, respond) => {
   if (
@@ -21,14 +23,14 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
     respond({ ok: false });
     return false;
   }
-  void (async () => {
+  void enqueueWrite(async () => {
     try {
       await chrome.storage.local.set({ preferences });
       respond({ ok: true });
     } catch {
       respond({ ok: false });
     }
-  })();
+  });
   return true;
 });
 
@@ -36,18 +38,16 @@ const search = async (
   query: string,
   disposition: "currentTab" | "newForegroundTab" | "newBackgroundTab"
 ): Promise<void> => {
-  let preferences = defaultExtensionPreferences();
+  let url = `${siteOrigin}/?q=${encodeURIComponent(query)}`;
   try {
     const stored = await chrome.storage.local.get("preferences");
-    preferences = parseExtensionPreferences(stored.preferences) ?? preferences;
+    const preferences =
+      parseExtensionPreferences(stored.preferences) ??
+      defaultExtensionPreferences();
+    url = resolveExtensionNavigation(query, preferences, bangs, siteOrigin);
   } catch {
     // The site remains a usable fallback if extension storage is unavailable.
-    await chrome.tabs.create({
-      url: `${siteOrigin}/?q=${encodeURIComponent(query)}`,
-    });
-    return;
   }
-  const url = resolveExtensionNavigation(query, preferences, bangs, siteOrigin);
   if (disposition === "currentTab") {
     await chrome.tabs.update({ url });
     return;

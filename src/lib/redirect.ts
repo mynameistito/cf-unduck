@@ -92,6 +92,9 @@ const getBangBaseUrl = (bang: Bang): string => {
   return alternateDomain ? (bang.ad ?? bang.d) : bang.d;
 };
 
+const findBang = (bangs: BangMap, shortcut: string): Bang | undefined =>
+  Object.hasOwn(bangs, shortcut) ? bangs[shortcut] : undefined;
+
 const resolveKagiSiteRedirect = (
   selectedBang: Bang,
   defaultBang: Bang | undefined,
@@ -136,10 +139,11 @@ export const resolveBangRedirect = (
   const bangShortcut = matchedShortcut ?? input.defaultBangShortcut;
 
   const selectedBang =
-    input.customBangs[bangShortcut] ?? input.bangs[bangShortcut];
+    findBang(input.customBangs, bangShortcut) ??
+    findBang(input.bangs, bangShortcut);
   const defaultBang =
-    input.customBangs[input.defaultBangShortcut] ??
-    input.bangs[input.defaultBangShortcut];
+    findBang(input.customBangs, input.defaultBangShortcut) ??
+    findBang(input.bangs, input.defaultBangShortcut);
 
   const cleanQuery = matchedShortcut
     ? query.replace(BANG_STRIP_RE, "").trim()

@@ -7,8 +7,11 @@ import {
   EXTENSION_REQUEST,
   EXTENSION_STATUS,
 } from "../src/lib/extension-protocol";
+import { createSerialQueue } from "./serial-queue";
 
 declare const EXTENSION_SITE_ORIGIN: string;
+
+const enqueueSync = createSerialQueue();
 
 const sync = async (): Promise<void> => {
   if (window.location.origin !== EXTENSION_SITE_ORIGIN) {
@@ -36,19 +39,24 @@ const sync = async (): Promise<void> => {
   window.postMessage({ type: EXTENSION_STATUS, ok }, window.location.origin);
 };
 
+const requestSync = (): void => {
+  // Read the latest site settings when the queued operation starts.
+  void enqueueSync(sync);
+};
+
 window.addEventListener("message", (event: MessageEvent<unknown>) => {
   if (
     event.source === window &&
     event.origin === window.location.origin &&
     event.data === EXTENSION_REQUEST
   ) {
-    void sync();
+    requestSync();
   }
 });
 window.addEventListener("storage", () => {
-  void sync();
+  requestSync();
 });
 window.addEventListener("focus", () => {
-  void sync();
+  requestSync();
 });
-void sync();
+requestSync();

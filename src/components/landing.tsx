@@ -47,7 +47,9 @@ export const Landing = () => {
   const [searchCount] = useLocalStorageString(LS_KEYS.SEARCH_COUNT, "0");
   const [historyEnabled] = useLocalStorageBool(LS_KEYS.HISTORY_ENABLED, false);
   const [open, setOpen] = useState(
-    () => new URLSearchParams(window.location.search).get("q") === "!settings"
+    () =>
+      new URLSearchParams(window.location.search).get("q")?.trim() ===
+      "!settings"
   );
 
   const history = historyEnabled ? getSearchHistory() : [];

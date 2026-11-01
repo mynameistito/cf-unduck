@@ -45,7 +45,7 @@ await writeFile(
       action: { default_title: "Open Unduck settings" },
       content_scripts: [
         {
-          matches: [`${configuredSite.protocol}//${configuredSite.hostname}/*`],
+          matches: [`${configuredSite.protocol}//${configuredSite.host}/*`],
           js: ["content.js"],
           run_at: "document_idle",
         },

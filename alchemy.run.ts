@@ -43,9 +43,6 @@ export const Site = Website.StaticSite(
         },
       },
       outdir: "./dist",
-      placement: {
-        mode: "smart",
-      },
       workersDev:
         stack.stage === "prod"
           ? { enabled: false, previewsEnabled: true }

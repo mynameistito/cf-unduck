@@ -1,7 +1,9 @@
 import { z } from "zod";
 
+import { normalizeWebUrl } from "../redirect";
+
 /** Validate a search shortcut from stored or imported data. */
-export const bangSchema = z.looseObject({
+const bangSchema = z.looseObject({
   ad: z.string().optional(),
   d: z.string().min(1),
   s: z.string().min(1),
@@ -10,6 +12,21 @@ export const bangSchema = z.looseObject({
 
 /** Validate a map of search shortcuts. */
 export const bangMapSchema = z.record(z.string(), bangSchema);
+
+const webDestination = z
+  .string()
+  .min(1)
+  .refine((value) => normalizeWebUrl(value) !== null);
+
+/** Validate a custom shortcut whose destinations must be HTTP(S) URLs. */
+export const customBangSchema = bangSchema.extend({
+  ad: webDestination.optional(),
+  d: webDestination,
+  u: webDestination,
+});
+
+/** Validate a map of custom shortcuts. */
+export const customBangMapSchema = z.record(z.string(), customBangSchema);
 
 /** Recover valid shortcuts from a stored map without discarding their neighbors. */
 export const storedBangMapSchema = z
@@ -24,7 +41,7 @@ export const storedBangMapSchema = z
         continue;
       }
 
-      const bang = bangSchema.safeParse(value);
+      const bang = customBangSchema.safeParse(value);
 
       if (bang.success) {
         entries.push([key, bang.data]);
@@ -41,7 +58,7 @@ export const storedBangMapSchema = z
 export const parseBangMap = (raw: string) => {
   const value: unknown = JSON.parse(raw);
 
-  return bangMapSchema.parse(value);
+  return customBangMapSchema.parse(value);
 };
 
 /** Recover valid entries from a JSON map saved in browser storage.

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { normalizeWebUrl } from "./redirect";
+import { customBangMapSchema } from "./bangs/schema";
 import type { BangMap } from "./types";
 
 const sharedBangTuple = z.tuple([
@@ -127,15 +127,5 @@ export const decodeShare = async (token: string): Promise<BangMap | null> => {
  * @param m - Shortcut map to validate.
  * @returns Whether every shortcut is valid.
  */
-export const isValidBangMap = (m: BangMap): boolean => {
-  for (const v of Object.values(m)) {
-    if (
-      !(Boolean(v.d) && Boolean(v.s) && Boolean(v.u)) ||
-      normalizeWebUrl(v.u) === null
-    ) {
-      return false;
-    }
-  }
-
-  return true;
-};
+export const isValidBangMap = (m: BangMap): boolean =>
+  customBangMapSchema.safeParse(m).success;

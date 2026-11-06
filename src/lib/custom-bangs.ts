@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { bangSchema } from "./bangs/schema";
+import { customBangSchema } from "./bangs/schema";
 import { LS_KEYS } from "./constants";
 import { storage } from "./storage";
 import type { BangMap } from "./types";
@@ -30,7 +30,7 @@ export const readCustomBangs = (): BangMap => {
         continue;
       }
 
-      const bang = bangSchema.safeParse(v);
+      const bang = customBangSchema.safeParse(v);
 
       if (bang.success) {
         out[key] = bang.data;

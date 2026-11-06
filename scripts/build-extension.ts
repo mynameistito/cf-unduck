@@ -6,6 +6,7 @@ import { SITE } from "../src/site.config";
 const configuredSite = new URL(
   process.env.EXTENSION_SITE_URL ?? `https://${SITE.domain}`
 );
+
 if (
   configuredSite.protocol !== "https:" &&
   !(
@@ -17,8 +18,11 @@ if (
     "The extension site must use HTTPS (HTTP is allowed on localhost)."
   );
 }
+
 const outdir = path.resolve("dist-extension");
+
 await mkdir(outdir, { recursive: true });
+
 const result = await Bun.build({
   entrypoints: ["extension/background.ts", "extension/content.ts"],
   outdir,
@@ -27,9 +31,11 @@ const result = await Bun.build({
   minify: true,
   define: { EXTENSION_SITE_ORIGIN: JSON.stringify(configuredSite.origin) },
 });
+
 if (!result.success) {
   throw new AggregateError(result.logs, "Extension build failed");
 }
+
 await writeFile(
   path.resolve(outdir, "manifest.json"),
   JSON.stringify(

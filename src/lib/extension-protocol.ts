@@ -12,7 +12,9 @@ export interface ExtensionPreferences {
   soundEnabled: boolean;
 }
 
-/** New installations work immediately with the app's default search engine. */
+/** Create preferences for a new installation.
+ * @returns Default extension preferences.
+ */
 export const defaultExtensionPreferences = (): ExtensionPreferences => ({
   customBangs: {},
   defaultBangShortcut: DEFAULT_BANG_SHORTCUT,

@@ -9,8 +9,37 @@ afterAll(() => {
   globalThis.fetch = originalFetch;
 });
 
+it("shares the cached promise and turns synchronous fetch failures into rejections", async () => {
+  const fetchImplementation = Object.assign(
+    () => {
+      throw new Error("Fetch failed synchronously");
+    },
+    { preconnect: originalFetch.preconnect }
+  );
+
+  globalThis.fetch = Object.assign(mock(fetchImplementation), {
+    preconnect: originalFetch.preconnect,
+  });
+
+  const first = loadBangs();
+  const second = loadBangs();
+  expect(second).toBe(first);
+
+  let failure: unknown;
+
+  try {
+    await first;
+  } catch (error) {
+    failure = error;
+  }
+
+  expect(failure).toBeInstanceOf(Error);
+  expect(failure).toHaveProperty("message", "Fetch failed synchronously");
+});
+
 it("retries after a failed request", async () => {
   let requestCount = 0;
+
   const bangs: BangMap = {
     example: {
       d: "example.com",
@@ -18,22 +47,53 @@ it("retries after a failed request", async () => {
       u: "https://example.com/?q={{{s}}}",
     },
   };
+
   const fetchImplementation = Object.assign(
-    (_input: RequestInfo | URL, _init?: RequestInit): Promise<Response> => {
+    async (
+      _input: RequestInfo | URL,
+      _init?: RequestInit
+    ): Promise<Response> => {
+      await Promise.resolve();
       requestCount += 1;
+
       if (requestCount === 1) {
-        return Promise.resolve(new Response(null, { status: 503 }));
+        return new Response(null, { status: 503 });
       }
-      return Promise.resolve(Response.json(bangs));
+
+      if (requestCount === 2) {
+        return Response.json({ broken: { u: 42 } });
+      }
+
+      return Response.json(bangs);
     },
     { preconnect: originalFetch.preconnect }
   );
+
   const fetchMock = mock(fetchImplementation);
   globalThis.fetch = Object.assign(fetchMock, {
     preconnect: originalFetch.preconnect,
   });
 
-  await expect(loadBangs()).rejects.toThrow("Failed to load bangs: 503");
+  let failure: unknown;
+
+  try {
+    await loadBangs();
+  } catch (error) {
+    failure = error;
+  }
+
+  expect(failure).toBeInstanceOf(Error);
+  expect(failure).toHaveProperty("message", "Failed to load bangs: 503");
+
+  let validationFailure: unknown;
+
+  try {
+    await loadBangs();
+  } catch (error) {
+    validationFailure = error;
+  }
+
+  expect(validationFailure).toBeInstanceOf(Error);
   expect(await loadBangs()).toEqual(bangs);
-  expect(fetchMock).toHaveBeenCalledTimes(2);
+  expect(fetchMock).toHaveBeenCalledTimes(3);
 });

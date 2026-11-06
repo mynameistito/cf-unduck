@@ -1,3 +1,4 @@
+import { parseStoredBangMap } from "../src/lib/bangs/schema";
 import { DEFAULT_BANG_SHORTCUT, LS_KEYS } from "../src/lib/constants";
 import {
   extensionResponseSchema,
@@ -17,17 +18,22 @@ const sync = async (): Promise<void> => {
   if (window.location.origin !== EXTENSION_SITE_ORIGIN) {
     return;
   }
+
   let ok = false;
+
   try {
+    const customBangs = parseStoredBangMap(
+      localStorage.getItem(LS_KEYS.CUSTOM_BANGS) ?? "{}"
+    );
+
     const preferences = parseExtensionPreferences({
-      customBangs: JSON.parse(
-        localStorage.getItem(LS_KEYS.CUSTOM_BANGS) ?? "{}"
-      ),
+      customBangs,
       defaultBangShortcut:
         localStorage.getItem(LS_KEYS.DEFAULT_BANG) ?? DEFAULT_BANG_SHORTCUT,
       historyEnabled: localStorage.getItem(LS_KEYS.HISTORY_ENABLED) === "true",
       soundEnabled: localStorage.getItem(LS_KEYS.SOUND_ENABLED) !== "false",
     });
+
     if (preferences) {
       const response: unknown = await chrome.runtime.sendMessage(preferences);
       const parsed = extensionResponseSchema.safeParse(response);
@@ -36,6 +42,7 @@ const sync = async (): Promise<void> => {
   } catch {
     // Report failures on the site and preserve the last working cached snapshot.
   }
+
   window.postMessage({ type: EXTENSION_STATUS, ok }, window.location.origin);
 };
 
@@ -53,10 +60,13 @@ window.addEventListener("message", (event: MessageEvent<unknown>) => {
     requestSync();
   }
 });
+
 window.addEventListener("storage", () => {
   requestSync();
 });
+
 window.addEventListener("focus", () => {
   requestSync();
 });
+
 requestSync();

@@ -3,7 +3,9 @@ import { useEffect, useState } from "react";
 import { extensionStatusSchema } from "@/lib/extension-preferences";
 import { EXTENSION_REQUEST } from "@/lib/extension-protocol";
 
-/** The site remains the settings interface with or without an extension. */
+/** Show extension connection status in settings.
+ * @returns The extension settings interface.
+ */
 export const ExtensionSettings = () => {
   const [status, setStatus] = useState<"absent" | "synced" | "error">("absent");
   useEffect(() => {
@@ -11,14 +13,20 @@ export const ExtensionSettings = () => {
       if (event.source !== window || event.origin !== window.location.origin) {
         return;
       }
+
       const parsed = extensionStatusSchema.safeParse(event.data);
+
       if (parsed.success) {
         setStatus(parsed.data.ok ? "synced" : "error");
       }
     };
+
     window.addEventListener("message", receive);
     window.postMessage(EXTENSION_REQUEST, window.location.origin);
-    return () => window.removeEventListener("message", receive);
+
+    return () => {
+      window.removeEventListener("message", receive);
+    };
   }, []);
 
   return (

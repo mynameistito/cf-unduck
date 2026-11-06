@@ -9,20 +9,34 @@ declare const EXTENSION_SITE_ORIGIN: string;
 const siteOrigin = EXTENSION_SITE_ORIGIN;
 const enqueueWrite = createSerialQueue();
 
-chrome.runtime.onMessage.addListener((message, sender, respond) => {
+type UntrustedMessage = Parameters<typeof parseExtensionPreferences>[0];
+
+const onMessage = (
+  message: UntrustedMessage,
+  sender: chrome.runtime.MessageSender,
+  respond: (response?: { ok: boolean }) => void
+): boolean => {
   if (
     sender.id !== chrome.runtime.id ||
-    !sender.url ||
-    new URL(sender.url).origin !== siteOrigin ||
+    sender.url === undefined ||
+    sender.url === "" ||
     sender.frameId !== 0
   ) {
     return false;
   }
-  const preferences = parseExtensionPreferences(message);
-  if (!preferences) {
-    respond({ ok: false });
+
+  if (new URL(sender.url).origin !== siteOrigin) {
     return false;
   }
+
+  const preferences = parseExtensionPreferences(message);
+
+  if (!preferences) {
+    respond({ ok: false });
+
+    return false;
+  }
+
   void enqueueWrite(async () => {
     try {
       await chrome.storage.local.set({ preferences });
@@ -31,27 +45,37 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
       respond({ ok: false });
     }
   });
+
   return true;
-});
+};
+
+// oxlint-disable-next-line typescript/strict-void-return -- Chrome requires a true return to keep sendResponse open; @types/chrome declares void.
+chrome.runtime.onMessage.addListener(onMessage);
 
 const search = async (
   query: string,
   disposition: "currentTab" | "newForegroundTab" | "newBackgroundTab"
 ): Promise<void> => {
   let url = `${siteOrigin}/?q=${encodeURIComponent(query)}`;
+
   try {
     const stored = await chrome.storage.local.get("preferences");
+
     const preferences =
       parseExtensionPreferences(stored.preferences) ??
       defaultExtensionPreferences();
+
     url = resolveExtensionNavigation(query, preferences, bangs, siteOrigin);
   } catch {
     // The site remains a usable fallback if extension storage is unavailable.
   }
+
   if (disposition === "currentTab") {
     await chrome.tabs.update({ url });
+
     return;
   }
+
   await chrome.tabs.create({ active: disposition === "newForegroundTab", url });
 };
 

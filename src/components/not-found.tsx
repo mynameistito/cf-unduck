@@ -13,9 +13,13 @@ const useRandomNotFoundFace = () => {
       CUTIES.NOTFOUND[0] ??
       ""
   );
+
   return [notFoundFace, setNotFoundFace] as const;
 };
 
+/** Render the not-found page.
+ * @returns The rendered interface.
+ */
 export const NotFound = () => {
   const [searchCount] = useLocalStorageString(LS_KEYS.SEARCH_COUNT, "0");
   const [notFoundFace] = useRandomNotFoundFace();

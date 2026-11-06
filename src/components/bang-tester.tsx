@@ -6,6 +6,7 @@ import {
   useLocalStorageString,
 } from "@/hooks/use-local-storage";
 import { loadBangs } from "@/lib/bangs/load-bangs";
+import { parseStoredBangMap } from "@/lib/bangs/schema";
 import { DEFAULT_BANG_SHORTCUT, LS_KEYS } from "@/lib/constants";
 import { resolveBangRedirect } from "@/lib/redirect";
 import type { RedirectResult } from "@/lib/redirect";
@@ -19,6 +20,7 @@ const PreviewLine = ({ preview }: { preview: RedirectResult }) => {
       </p>
     );
   }
+
   if (preview.kind === "landing") {
     return (
       <p className="text-fg-muted mt-2 text-xs break-all">
@@ -26,6 +28,7 @@ const PreviewLine = ({ preview }: { preview: RedirectResult }) => {
       </p>
     );
   }
+
   return <p className="text-fg-muted mt-2 text-xs break-all">(no match)</p>;
 };
 
@@ -33,18 +36,26 @@ interface Props {
   inputRef?: RefObject<HTMLInputElement | null>;
 }
 
+/** Render the shortcut testing input.
+ * @param props - Component properties.
+ * @returns The rendered interface.
+ */
 export const BangTester = ({ inputRef }: Props) => {
   const [query, setQuery] = useState("");
   const [bangs, setBangs] = useState<BangMap | null>(null);
   const [loadError, setLoadError] = useState(false);
   useEffect(() => {
     if (!query.trim() || bangs) {
-      return;
+      return () => {
+        // No effect was started, so there is nothing to clean up.
+      };
     }
+
     let cancelled = false;
     void (async () => {
       try {
         const loadedBangs = await loadBangs();
+
         if (!cancelled) {
           setBangs(loadedBangs);
         }
@@ -54,15 +65,23 @@ export const BangTester = ({ inputRef }: Props) => {
         }
       }
     })();
+
     return () => {
       cancelled = true;
     };
   }, [bangs, query]);
+
   const [defaultBang] = useLocalStorageString(
     LS_KEYS.DEFAULT_BANG,
     DEFAULT_BANG_SHORTCUT
   );
-  const [customBangs] = useLocalStorage<BangMap>(LS_KEYS.CUSTOM_BANGS, {});
+
+  const [customBangs] = useLocalStorage<BangMap>(
+    LS_KEYS.CUSTOM_BANGS,
+    {},
+    parseStoredBangMap,
+    JSON.stringify
+  );
 
   const preview = bangs
     ? resolveBangRedirect({
@@ -75,9 +94,11 @@ export const BangTester = ({ inputRef }: Props) => {
 
   const onSubmit = (e: { preventDefault: () => void }) => {
     e.preventDefault();
+
     if (!query.trim()) {
       return;
     }
+
     window.location.href = `/?q=${encodeURIComponent(query)}`;
   };
 

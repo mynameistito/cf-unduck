@@ -5,9 +5,11 @@ const build = Bun.spawn(["bun", "scripts/build-extension.ts"], {
   stdout: "inherit",
   stderr: "inherit",
 });
+
 if ((await build.exited) !== 0) {
   process.exit(1);
 }
+
 const tests = Bun.spawn(
   ["bun", "x", "playwright", "test", "--config=playwright-extension.config.ts"],
   {
@@ -15,4 +17,5 @@ const tests = Bun.spawn(
     stderr: "inherit",
   }
 );
+
 process.exit(await tests.exited);

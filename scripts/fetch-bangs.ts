@@ -2,6 +2,8 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
+import { z } from "zod";
+
 const BANGS_URL =
   "https://raw.githubusercontent.com/kagisearch/bangs/refs/heads/main/data/bangs.json";
 
@@ -26,12 +28,20 @@ const RESERVED_KEYS = new Set(["__proto__", "constructor", "prototype"]);
 const isSafeBangKey = (key: string): boolean =>
   key.trim().length > 0 && !RESERVED_KEYS.has(key);
 
+const isNonEmptyString = (value: unknown): value is string =>
+  typeof value === "string" && value.length > 0;
+
 const isCompleteBang = (
   bang: RawBang
 ): bang is RawBang & { d: string; s: string; t: string; u: string } => {
-  if (!bang.t || !bang.u || !bang.s || !bang.d) {
+  if (!isNonEmptyString(bang.t) || !isNonEmptyString(bang.u)) {
     return false;
   }
+
+  if (!isNonEmptyString(bang.s) || !isNonEmptyString(bang.d)) {
+    return false;
+  }
+
   return isSafeBangKey(bang.t);
 };
 
@@ -130,18 +140,56 @@ const curatedSeed = {
   },
 } satisfies Record<string, RuntimeBang>;
 
+const rawBangSchema = z.object({
+  ad: z.string().optional(),
+  d: z.string().optional(),
+  s: z.string().optional(),
+  t: z.string().optional(),
+  ts: z.array(z.string()).optional(),
+  u: z.string().optional(),
+});
+
+const addBang = (
+  hashbang: Record<string, RuntimeBang>,
+  bang: RawBang
+): boolean => {
+  if (!isCompleteBang(bang)) {
+    return false;
+  }
+
+  const entry: RuntimeBang = { d: bang.d, s: bang.s, u: bang.u };
+
+  if (bang.ad !== undefined && bang.ad !== "") {
+    entry.ad = bang.ad;
+  }
+
+  hashbang[bang.t] = entry;
+
+  for (const trigger of bang.ts ?? []) {
+    if (isSafeBangKey(trigger)) {
+      hashbang[trigger] = entry;
+    }
+  }
+
+  return true;
+};
+
 const main = async (): Promise<void> => {
   console.log(`fetching ${BANGS_URL}`);
   const res = await fetch(BANGS_URL);
+
   if (!res.ok) {
     throw new Error(`fetch failed: ${res.status} ${res.statusText}`);
   }
+
   const text = await res.text();
+
   if (text.length < 1000) {
     throw new Error(`response suspiciously small: ${text.length} bytes`);
   }
 
-  let raw: RawBang[];
+  let raw: unknown;
+
   try {
     raw = JSON.parse(text);
   } catch (error) {
@@ -155,27 +203,15 @@ const main = async (): Promise<void> => {
     throw new TypeError("expected array at root");
   }
 
+  const candidates = z.array(z.unknown()).parse(raw);
   const hashbang = Object.fromEntries(Object.entries(curatedSeed));
   let skipped = 0;
 
-  for (const bang of raw) {
-    if (!isCompleteBang(bang)) {
-      skipped += 1;
-      continue;
-    }
-    const entry: RuntimeBang = { d: bang.d, s: bang.s, u: bang.u };
-    if (bang.ad) {
-      entry.ad = bang.ad;
-    }
+  for (const candidate of candidates) {
+    const bang = rawBangSchema.safeParse(candidate);
 
-    hashbang[bang.t] = entry;
-    if (bang.ts) {
-      for (const trigger of bang.ts) {
-        if (!isSafeBangKey(trigger)) {
-          continue;
-        }
-        hashbang[trigger] = entry;
-      }
+    if (!bang.success || !addBang(hashbang, bang.data)) {
+      skipped += 1;
     }
   }
 

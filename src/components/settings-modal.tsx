@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { z } from "zod";
 
 import type { AudioController } from "@/hooks/use-audio";
 import {
@@ -7,6 +8,11 @@ import {
   useLocalStorageString,
 } from "@/hooks/use-local-storage";
 import { loadBangs } from "@/lib/bangs/load-bangs";
+import {
+  customBangSchema,
+  parseBangMap,
+  parseStoredBangMap,
+} from "@/lib/bangs/schema";
 import {
   ANIMATION_DURATION_MS,
   DEFAULT_BANG_SHORTCUT,
@@ -17,6 +23,7 @@ import { clearSearchHistory, getSearchHistory } from "@/lib/history";
 import { syncPrefsCookie } from "@/lib/prefs-cookie";
 import { normalizeWebUrl } from "@/lib/redirect";
 import { encodeShare } from "@/lib/share-bangs";
+import { isReservedShortcut, normalizeShortcut } from "@/lib/shortcut";
 import type { Bang, BangMap } from "@/lib/types";
 
 import { ExtensionSettings } from "./extension-settings";
@@ -36,14 +43,18 @@ const HAS_PROTOCOL_RE = /^https?:\/\//iu;
 
 const deriveBaseDomain = (searchUrl: string): string => {
   const trimmed = searchUrl.trim();
+
   if (!trimmed) {
     return "";
   }
+
   try {
     const withProtocol = HAS_PROTOCOL_RE.test(trimmed)
       ? trimmed
       : `https://${trimmed}`;
+
     const { hostname } = new URL(withProtocol);
+
     return hostname.replace(STRIP_WWW_RE, "");
   } catch {
     return "";
@@ -53,9 +64,11 @@ const deriveBaseDomain = (searchUrl: string): string => {
 const deriveBangName = (searchUrl: string): string => {
   const baseDomain = deriveBaseDomain(searchUrl);
   const [domainLabel] = baseDomain.split(".");
-  if (!domainLabel) {
+
+  if (domainLabel === undefined || domainLabel === "") {
     return "";
   }
+
   return domainLabel
     .replaceAll(/[-_]+/gu, " ")
     .replaceAll(/\b\w/gu, (character) => character.toUpperCase());
@@ -63,16 +76,22 @@ const deriveBangName = (searchUrl: string): string => {
 
 const sectionCls =
   "border-b border-border pb-3 mb-3 last:border-b-0 last:pb-0 last:mb-0";
+
 const sectionHeadingCls =
   "text-xs font-semibold uppercase tracking-wide text-fg-muted mb-1.5";
+
 const inputCls =
   "w-full rounded-md border border-border bg-bg-muted text-fg px-2.5 py-1.5 text-sm outline-none focus:outline-2 focus:outline-fg-muted placeholder:text-fg-muted";
+
 const primaryBtnCls =
   "rounded-md bg-fg px-3 py-1.5 text-sm font-medium text-bg transition hover:brightness-90 active:scale-[0.97]";
+
 const secondaryBtnCls =
   "rounded-md border border-border bg-bg-muted px-3 py-1.5 text-sm font-medium text-fg transition hover:bg-bg-hover active:scale-[0.97]";
+
 const dangerBtnCls =
   "rounded-md bg-danger px-3 py-1.5 text-sm font-medium text-white transition hover:brightness-110 active:scale-[0.97]";
+
 const formInputCls = `${inputCls} bg-bg`;
 
 interface BangFormFields {
@@ -113,7 +132,9 @@ const BangForm = ({
   const set = <K extends keyof BangFormFields>(
     key: K,
     value: BangFormFields[K]
-  ) => onChange({ ...fields, [key]: value });
+  ) => {
+    onChange({ ...fields, [key]: value });
+  };
 
   const onSearchUrlChange = (searchUrl: string) => {
     onChange({
@@ -140,7 +161,9 @@ const BangForm = ({
         aria-label="Bang search URL"
         className={formInputCls}
         id={searchUrlId}
-        onChange={(e) => onSearchUrlChange(e.target.value)}
+        onChange={(e) => {
+          onSearchUrlChange(e.target.value);
+        }}
         placeholder="Search URL with {{{s}}}"
         ref={firstFieldRef}
         type="text"
@@ -153,7 +176,9 @@ const BangForm = ({
         aria-label="Bang shortcut"
         className={formInputCls}
         id={shortcutId}
-        onChange={(e) => set("shortcut", e.target.value)}
+        onChange={(e) => {
+          set("shortcut", e.target.value);
+        }}
         placeholder="Shortcut (e.g. !ddg)"
         type="text"
         value={fields.shortcut}
@@ -201,6 +226,7 @@ const getFocusables = (root: HTMLElement | null): HTMLElement[] => {
   if (!root) {
     return [];
   }
+
   return [...root.querySelectorAll<HTMLElement>(FOCUSABLE_SEL)].filter(
     (el) => !el.hasAttribute("aria-hidden")
   );
@@ -209,9 +235,11 @@ const getFocusables = (root: HTMLElement | null): HTMLElement[] => {
 const handleTrapTab = (e: KeyboardEvent, list: HTMLElement[]): void => {
   const [firstEl] = list;
   const lastEl = list.at(-1);
+
   if (!(firstEl && lastEl)) {
     return;
   }
+
   if (e.shiftKey && document.activeElement === firstEl) {
     e.preventDefault();
     lastEl.focus();
@@ -232,23 +260,32 @@ const useFocusTrap = (
   });
   useEffect(() => {
     if (!active) {
-      return;
+      return () => {
+        // No effect was started, so there is nothing to clean up.
+      };
     }
+
     const previouslyFocused =
       document.activeElement instanceof HTMLElement
         ? document.activeElement
         : null;
+
     getFocusables(ref.current)[0]?.focus();
+
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         onEscapeRef.current();
+
         return;
       }
+
       if (e.key === "Tab") {
         handleTrapTab(e, getFocusables(ref.current));
       }
     };
+
     document.addEventListener("keydown", onKey);
+
     return () => {
       document.removeEventListener("keydown", onKey);
       previouslyFocused?.focus?.();
@@ -263,20 +300,30 @@ const cleanBangFields = (
   bang: Bang;
 } | null => {
   const trimmedName = fields.name.trim();
+
   const cleanShortcut = fields.shortcut
     .trim()
     .replace(STRIP_BANG_PREFIX_RE, "")
     .toLowerCase();
+
   const trimmedSearch = fields.searchUrl.trim();
   const trimmedBase = fields.baseUrl.trim() || deriveBaseDomain(trimmedSearch);
+
   const hasRequiredFields =
     trimmedName && trimmedSearch && trimmedBase && cleanShortcut;
-  const hasSafeSearchUrl = normalizeWebUrl(trimmedSearch);
-  if (!hasRequiredFields || !hasSafeSearchUrl) {
+
+  const bang = customBangSchema.safeParse({
+    d: trimmedBase,
+    s: trimmedName,
+    u: trimmedSearch,
+  });
+
+  if (hasRequiredFields === "" || !bang.success) {
     return null;
   }
+
   return {
-    bang: { d: trimmedBase, s: trimmedName, u: trimmedSearch },
+    bang: bang.data,
     shortcut: cleanShortcut,
   };
 };
@@ -315,8 +362,12 @@ const DefaultBangSection = ({
         aria-labelledby="bang-description"
         className={`${inputCls} pr-9 ${error ? "shake flash-red" : ""}`}
         id="default-bang"
-        onBlur={(e) => onChange(e.target.value)}
-        onChange={(e) => onValueChange(e.target.value)}
+        onBlur={(e) => {
+          onChange(e.target.value);
+        }}
+        onChange={(e) => {
+          onValueChange(e.target.value);
+        }}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
             onChange(e.currentTarget.value);
@@ -351,51 +402,71 @@ const BangSearchSection = ({ customBangs }: { customBangs: BangMap }) => {
 
   useEffect(() => {
     let cancelled = false;
+
     if (timerRef.current !== null) {
       clearTimeout(timerRef.current);
     }
+
     const q = query.trim().toLowerCase();
-    timerRef.current = setTimeout(async () => {
+
+    const searchBangs = async () => {
       if (!q) {
         setResults([]);
+
         return;
       }
+
       try {
         let loadedBangs: BangMap = {};
+
         try {
           loadedBangs = await loadBangs();
         } catch {
           loadedBangs = {};
         }
+
         if (cancelled) {
           return;
         }
+
         const all: BangMap = { ...loadedBangs, ...customBangs };
+
         const filtered = Object.entries(all)
           .filter(([shortcut, b]) =>
             `${shortcut} ${b.s} ${b.d}`.toLowerCase().includes(q)
           )
           .toSorted(([sa, ba], [sb, bb]) => {
             const aStart = sa.startsWith(q) || ba.s.toLowerCase().startsWith(q);
+
             const bStart = sb.startsWith(q) || bb.s.toLowerCase().startsWith(q);
+
             if (aStart && !bStart) {
               return -1;
             }
+
             if (!aStart && bStart) {
               return 1;
             }
+
             return sa.length - sb.length;
           })
           .slice(0, 20);
+
         setResults(filtered);
       } catch {
         if (!cancelled) {
           setResults([]);
         }
       }
+    };
+
+    timerRef.current = setTimeout(() => {
+      void searchBangs();
     }, SEARCH_DEBOUNCE_MS);
+
     return () => {
       cancelled = true;
+
       if (timerRef.current !== null) {
         clearTimeout(timerRef.current);
       }
@@ -412,7 +483,9 @@ const BangSearchSection = ({ customBangs }: { customBangs: BangMap }) => {
         aria-label="Search bangs"
         className={inputCls}
         id="bang-search"
-        onChange={(e) => setQuery(e.target.value)}
+        onChange={(e) => {
+          setQuery(e.target.value);
+        }}
         placeholder="Search bangs by name or shortcut..."
         type="text"
         value={query}
@@ -426,11 +499,13 @@ const BangSearchSection = ({ customBangs }: { customBangs: BangMap }) => {
           ) : (
             results.map(([shortcut, b]) => {
               const trimmedName = b.s.trimEnd();
+
               const display =
                 trimmedName.slice(-KAGI_SEARCH_SUFFIX.length).toLowerCase() ===
                 KAGI_SEARCH_SUFFIX
                   ? `${trimmedName.slice(0, -KAGI_SEARCH_SUFFIX.length).trimEnd()} (default search)`
                   : b.s;
+
               return (
                 <div
                   className="border-border bg-bg-muted flex items-center gap-3 border-b px-3 py-2 last:border-b-0"
@@ -470,6 +545,7 @@ const EditBangPopup = ({
     searchUrl: bang.u,
     shortcut,
   });
+
   const [error, setError] = useState<string | null>(null);
   const firstFieldRef = useRef<HTMLInputElement>(null);
   const titleId = "edit-bang-title";
@@ -481,8 +557,12 @@ const EditBangPopup = ({
         onCancel();
       }
     };
+
     document.addEventListener("keydown", onKey, true);
-    return () => document.removeEventListener("keydown", onKey, true);
+
+    return () => {
+      document.removeEventListener("keydown", onKey, true);
+    };
   }, [onCancel]);
 
   useEffect(() => {
@@ -492,17 +572,28 @@ const EditBangPopup = ({
 
   const submit = () => {
     const cleaned = cleanBangFields(fields);
+
     if (!cleaned) {
       setError(ALL_FIELDS_REQUIRED);
+
       return;
     }
+
+    if (isReservedShortcut(cleaned.shortcut)) {
+      setError("Shortcut is reserved");
+
+      return;
+    }
+
     if (
       cleaned.shortcut !== shortcut &&
       existingKeys.includes(cleaned.shortcut)
     ) {
       setError("Shortcut already exists");
+
       return;
     }
+
     onSave({ bang: cleaned.bang, key: cleaned.shortcut });
   };
 
@@ -544,7 +635,7 @@ const EditBangPopup = ({
               setFields(next);
             }}
           />
-          {error ? (
+          {error !== null && error !== "" ? (
             <p className="text-danger text-sm" role="alert">
               {error}
             </p>
@@ -587,11 +678,21 @@ const CustomBangsSection = ({
 
   const add = () => {
     const cleaned = cleanBangFields(fields);
+
     if (!cleaned) {
       setAddError(ALL_FIELDS_REQUIRED);
       audio.play("warning");
+
       return;
     }
+
+    if (isReservedShortcut(cleaned.shortcut)) {
+      setAddError("Shortcut is reserved");
+      audio.play("warning");
+
+      return;
+    }
+
     setAddError(null);
     audio.play("click", { from: 0.1, rate: 2 });
     onChange({ ...customBangs, [cleaned.shortcut]: cleaned.bang });
@@ -600,19 +701,23 @@ const CustomBangsSection = ({
 
   const remove = (key: string) => {
     audio.play("warning");
+
     const rest: BangMap = Object.fromEntries(
       Object.entries(customBangs).filter(([entryKey]) => entryKey !== key)
     );
+
     onChange(rest);
   };
 
   const saveEdit = (originalKey: string, next: { key: string; bang: Bang }) => {
     audio.play("click", { from: 0.1, rate: 2 });
+
     const rest: BangMap = Object.fromEntries(
       Object.entries(customBangs).filter(
         ([entryKey]) => entryKey !== originalKey
       )
     );
+
     onChange({ ...rest, [next.key]: next.bang });
     setEditingKey(null);
   };
@@ -622,7 +727,7 @@ const CustomBangsSection = ({
       <h3 className={sectionHeadingCls}>Add Custom Bang</h3>
       <div className="border-border bg-bg-muted flex flex-col gap-1.5 rounded-md border p-2">
         <BangForm fields={fields} idPrefix="add-bang" onChange={updateFields} />
-        {addError ? (
+        {addError !== null && addError !== "" ? (
           <p className="text-danger text-sm" role="alert">
             {addError}
           </p>
@@ -655,14 +760,18 @@ const CustomBangsSection = ({
                 <div className="flex justify-end gap-2">
                   <button
                     className={`${secondaryBtnCls} px-3 py-1 text-sm`}
-                    onClick={() => setEditingKey(key)}
+                    onClick={() => {
+                      setEditingKey(key);
+                    }}
                     type="button"
                   >
                     Edit
                   </button>
                   <button
                     className={`${dangerBtnCls} px-3 py-1 text-sm`}
-                    onClick={() => remove(key)}
+                    onClick={() => {
+                      remove(key);
+                    }}
                     type="button"
                   >
                     Remove
@@ -677,8 +786,12 @@ const CustomBangsSection = ({
         <EditBangPopup
           bang={customBangs[editingKey]}
           existingKeys={Object.keys(customBangs)}
-          onCancel={() => setEditingKey(null)}
-          onSave={(next) => saveEdit(editingKey, next)}
+          onCancel={() => {
+            setEditingKey(null);
+          }}
+          onSave={(next) => {
+            saveEdit(editingKey, next);
+          }}
           shortcut={editingKey}
         />
       ) : null}
@@ -705,7 +818,9 @@ const SoundSection = ({
         checked={enabled}
         className="toggle"
         id="sound-toggle"
-        onChange={(e) => onToggle(e.target.checked)}
+        onChange={(e) => {
+          onToggle(e.target.checked);
+        }}
         type="checkbox"
       />
     </label>
@@ -738,7 +853,9 @@ const HistorySection = ({
           checked={enabled}
           className="toggle"
           id="history-toggle"
-          onChange={(e) => onToggle(e.target.checked)}
+          onChange={(e) => {
+            onToggle(e.target.checked);
+          }}
           type="checkbox"
         />
       </label>
@@ -749,7 +866,14 @@ const HistorySection = ({
   </div>
 );
 
-type ImportValue = string | null | undefined | "true" | "false";
+type ImportValue = string | null | undefined;
+
+const importDataSchema = z.object({
+  customBangs: z.string().nullish(),
+  defaultBang: z.string().nullish(),
+  historyEnabled: z.string().nullish(),
+  soundEnabled: z.string().nullish(),
+});
 
 interface ImportData {
   customBangs?: ImportValue;
@@ -768,25 +892,35 @@ const isStringValue = (v: ImportValue): v is string =>
 
 const sanitizeBangMap = (value: BangMap): BangMap | null => {
   const bangsMap: BangMap = {};
+
   for (const [shortcut, bang] of Object.entries(value)) {
-    if (!(shortcut && bang)) {
+    if (!(Boolean(shortcut) && bang !== undefined)) {
       return null;
     }
+
     const { ad, d, s, u } = bang;
-    if (!(d && s && u) || !normalizeWebUrl(u)) {
+
+    if (
+      !(Boolean(d) && Boolean(s) && Boolean(u)) ||
+      normalizeWebUrl(u) === null
+    ) {
       return null;
     }
+
     if (ad !== undefined && !ad) {
       return null;
     }
+
     bangsMap[shortcut] = ad === undefined ? { d, s, u } : { ad, d, s, u };
   }
+
   return bangsMap;
 };
 
 const parseCustomBangs = (value: string): BangMap | null => {
   try {
-    const parsed: BangMap = JSON.parse(value);
+    const parsed = parseBangMap(value);
+
     return sanitizeBangMap(parsed);
   } catch {
     return null;
@@ -797,9 +931,11 @@ const validateImport = (d: ImportData): string | null => {
   if (!isMissing(d.defaultBang) && !isStringValue(d.defaultBang)) {
     return "Invalid defaultBang";
   }
+
   if (!isMissing(d.customBangs) && !isStringValue(d.customBangs)) {
     return "Invalid customBangs";
   }
+
   if (
     isStringValue(d.customBangs) &&
     d.customBangs &&
@@ -807,37 +943,48 @@ const validateImport = (d: ImportData): string | null => {
   ) {
     return "Invalid customBangs shape";
   }
+
   if (!(isMissing(d.historyEnabled) || isBoolString(d.historyEnabled))) {
     return "Invalid historyEnabled";
   }
+
   if (!(isMissing(d.soundEnabled) || isBoolString(d.soundEnabled))) {
     return "Invalid soundEnabled";
   }
+
   return null;
 };
 
 const applyImport = (data: ImportData): string | null => {
   const err = validateImport(data);
   const d = data;
-  if (err) {
+
+  if (err !== null && err !== "") {
     return err;
   }
+
   if (isStringValue(d.defaultBang)) {
     localStorage.setItem(LS_KEYS.DEFAULT_BANG, d.defaultBang);
   }
+
   if (isStringValue(d.customBangs)) {
     const parsed = parseCustomBangs(d.customBangs);
+
     if (!parsed) {
       return "Invalid customBangs shape";
     }
+
     localStorage.setItem(LS_KEYS.CUSTOM_BANGS, JSON.stringify(parsed));
   }
+
   if (isBoolString(d.historyEnabled)) {
     localStorage.setItem(LS_KEYS.HISTORY_ENABLED, d.historyEnabled);
   }
+
   if (isBoolString(d.soundEnabled)) {
     localStorage.setItem(LS_KEYS.SOUND_ENABLED, d.soundEnabled);
   }
+
   return null;
 };
 
@@ -849,9 +996,11 @@ const onExport = () => {
     historyEnabled: localStorage.getItem(LS_KEYS.HISTORY_ENABLED),
     soundEnabled: localStorage.getItem(LS_KEYS.SOUND_ENABLED),
   };
+
   const blob = new Blob([JSON.stringify(settingsData, null, 2)], {
     type: "application/json",
   });
+
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -867,52 +1016,89 @@ const ImportExportSection = () => {
 
   const onShare = async () => {
     const raw = localStorage.getItem(LS_KEYS.CUSTOM_BANGS);
-    if (!raw) {
+
+    if (raw === null || raw === "") {
       setImportError("No custom bangs to share");
+
       return;
     }
+
     let map: BangMap;
+
     try {
-      map = JSON.parse(raw);
+      map = parseStoredBangMap(raw);
     } catch {
       setImportError("Custom bangs corrupt");
+
       return;
     }
+
     if (Object.keys(map).length === 0) {
       setImportError("No custom bangs to share");
+
       return;
     }
+
     let token: string;
+
     try {
       token = await encodeShare(map);
     } catch {
       setImportError("Failed to encode share link");
+
       return;
     }
+
     const url = `${window.location.origin}/#bangs=${token}`;
+
     try {
       await navigator.clipboard.writeText(url);
     } catch {
       setImportError("Clipboard blocked — copy URL manually");
+
       return;
     }
+
     setShareCopied(true);
-    setTimeout(() => setShareCopied(false), 1500);
+    setTimeout(() => {
+      setShareCopied(false);
+    }, 1500);
   };
 
   const onImport = async (file: File) => {
     let data: ImportData;
+
     try {
-      data = JSON.parse(await file.text());
+      const value: unknown = JSON.parse(await file.text());
+      const parsed = importDataSchema.safeParse(value);
+
+      if (!parsed.success) {
+        const field = parsed.error.issues[0]?.path[0];
+        const fieldName = z.string().safeParse(field);
+        setImportError(
+          fieldName.success
+            ? `Invalid ${fieldName.data}`
+            : "Invalid settings data"
+        );
+
+        return;
+      }
+
+      ({ data } = parsed);
     } catch {
       setImportError("Invalid JSON");
+
       return;
     }
+
     const err = applyImport(data);
-    if (err) {
+
+    if (err !== null && err !== "") {
       setImportError(err);
+
       return;
     }
+
     window.location.reload();
   };
 
@@ -930,7 +1116,13 @@ const ImportExportSection = () => {
         >
           Import Settings
         </button>
-        <button className={secondaryBtnCls} onClick={onShare} type="button">
+        <button
+          className={secondaryBtnCls}
+          onClick={() => {
+            void onShare();
+          }}
+          type="button"
+        >
           {shareCopied ? "Link copied!" : "Share custom bangs"}
         </button>
         <input
@@ -938,22 +1130,21 @@ const ImportExportSection = () => {
           aria-label="Import settings file"
           className="hidden"
           id="import-file"
-          onChange={async (e) => {
+          onChange={(e) => {
             const f = e.target.files?.[0];
+
             if (f) {
               setImportError(null);
-              try {
-                await onImport(f);
-              } catch {
+              void onImport(f).catch(() => {
                 setImportError("Import failed");
-              }
+              });
             }
           }}
           ref={fileRef}
           type="file"
         />
       </div>
-      {importError ? (
+      {importError !== null && importError !== "" ? (
         <p className="text-danger mt-2 text-sm" role="alert">
           {importError}
         </p>
@@ -962,6 +1153,10 @@ const ImportExportSection = () => {
   );
 };
 
+/** Render the settings dialog.
+ * @param props - Component properties.
+ * @returns The rendered interface.
+ */
 export const SettingsModal = ({
   open,
   onClose,
@@ -972,18 +1167,24 @@ export const SettingsModal = ({
     LS_KEYS.DEFAULT_BANG,
     DEFAULT_BANG_SHORTCUT
   );
+
   const [historyEnabled, setHistoryEnabled] = useLocalStorageBool(
     LS_KEYS.HISTORY_ENABLED,
     false
   );
+
   const [soundEnabled, setSoundEnabled] = useLocalStorageBool(
     LS_KEYS.SOUND_ENABLED,
     true
   );
+
   const [customBangs, setCustomBangs] = useLocalStorage<BangMap>(
     LS_KEYS.CUSTOM_BANGS,
-    {}
+    {},
+    parseStoredBangMap,
+    JSON.stringify
   );
+
   const [bangs, setBangs] = useState<BangMap | null>(null);
   const [bangsLoadError, setBangsLoadError] = useState(false);
 
@@ -992,6 +1193,7 @@ export const SettingsModal = ({
     void (async () => {
       try {
         const loadedBangs = await loadBangs();
+
         if (!cancelled) {
           setBangs(loadedBangs);
         }
@@ -1001,6 +1203,7 @@ export const SettingsModal = ({
         }
       }
     })();
+
     return () => {
       cancelled = true;
     };
@@ -1009,13 +1212,18 @@ export const SettingsModal = ({
   const [bangInput, setBangInput] = useState(defaultBang);
   const [bangError, setBangError] = useState(false);
 
+  const normalizedDefaultBang = normalizeShortcut(defaultBang);
+
   const currentBang =
-    customBangs[defaultBang] ?? bangs?.[defaultBang] ?? undefined;
+    customBangs[normalizedDefaultBang] ??
+    bangs?.[normalizedDefaultBang] ??
+    undefined;
 
   const onDefaultBangChange = async (raw: string) => {
     const shortcut = raw.replace(STRIP_BANG_PREFIX_RE, "").toLowerCase();
     let loadedBangs = bangs;
     let found = customBangs[shortcut] ?? loadedBangs?.[shortcut];
+
     if (!found && !loadedBangs) {
       try {
         loadedBangs = await loadBangs();
@@ -1026,12 +1234,17 @@ export const SettingsModal = ({
         setBangsLoadError(true);
       }
     }
+
     if (!found) {
       setBangError(true);
       audio.play("warning");
-      setTimeout(() => setBangError(false), ANIMATION_DURATION_MS);
+      setTimeout(() => {
+        setBangError(false);
+      }, ANIMATION_DURATION_MS);
+
       return;
     }
+
     setDefaultBang(shortcut);
     setBangInput(shortcut);
     syncPrefsCookie();
@@ -1084,7 +1297,9 @@ export const SettingsModal = ({
         <DefaultBangSection
           bang={currentBang}
           error={bangError}
-          onChange={onDefaultBangChange}
+          onChange={(value) => {
+            void onDefaultBangChange(value);
+          }}
           onValueChange={setBangInput}
           value={bangInput}
         />
@@ -1116,10 +1331,13 @@ export const SettingsModal = ({
           onClear={() => {
             audio.play("warning");
             clearSearchHistory();
+
             if (reducedMotion) {
               window.location.reload();
             } else {
-              setTimeout(() => window.location.reload(), ANIMATION_DURATION_MS);
+              setTimeout(() => {
+                window.location.reload();
+              }, ANIMATION_DURATION_MS);
             }
           }}
           onToggle={(checked) => {

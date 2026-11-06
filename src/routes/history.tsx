@@ -5,10 +5,15 @@ import { Landing } from "@/components/landing";
 
 const HistoryComponent = () => {
   const navigate = useNavigate();
+
   return (
     <>
       <Landing />
-      <HistoryModal onClose={() => navigate({ replace: true, to: "/" })} />
+      <HistoryModal
+        onClose={() => {
+          void navigate({ replace: true, to: "/" });
+        }}
+      />
     </>
   );
 };

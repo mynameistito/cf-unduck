@@ -8,6 +8,10 @@ interface Props {
   reducedMotion: boolean;
 }
 
+/** Render the share URL control.
+ * @param props - Component properties.
+ * @returns The rendered interface.
+ */
 export const CopyUrl = ({ audio, reducedMotion }: Props) => {
   const url = `${window.location.protocol}//${window.location.host}?q=%s`;
   const [copied, setCopied] = useState(false);
@@ -23,12 +27,15 @@ export const CopyUrl = ({ audio, reducedMotion }: Props) => {
 
     audio.play("copy");
     setCopied(true);
+
     if (!reducedMotion) {
       setFlashing(true);
     }
+
     if (timerRef.current !== null) {
       clearTimeout(timerRef.current);
     }
+
     timerRef.current = setTimeout(() => {
       setCopied(false);
       setFlashing(false);
@@ -47,7 +54,9 @@ export const CopyUrl = ({ audio, reducedMotion }: Props) => {
       <button
         aria-label="Copy URL"
         className="copy-button"
-        onClick={onCopy}
+        onClick={() => {
+          void onCopy();
+        }}
         type="button"
       >
         <img

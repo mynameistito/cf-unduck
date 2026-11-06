@@ -10,16 +10,19 @@ import { parseExtensionPreferences } from "../src/lib/extension-preferences";
 const readPreferences = async (worker: Worker) => {
   const raw = await worker.evaluate(async () => {
     const stored = await chrome.storage.local.get("preferences");
+
     return stored.preferences;
   });
+
   return parseExtensionPreferences(raw);
 };
 
 test("site settings sync to the real extension and survive a browser restart", async () => {
   const profile = await mkdtemp(path.join(tmpdir(), "unduck-extension-"));
   const extension = path.resolve("dist-extension");
-  const launch = () =>
-    chromium.launchPersistentContext(profile, {
+
+  const launch = async () =>
+    await chromium.launchPersistentContext(profile, {
       channel: "chromium",
       headless: true,
       args: [
@@ -27,11 +30,20 @@ test("site settings sync to the real extension and survive a browser restart", a
         `--load-extension=${extension}`,
       ],
     });
+
+  const syncInput = {
+    key: "custom-bangs",
+    message: "cf-unduck:sync-extension",
+    updatedUrl: "https://chatgpt.com/?q={{{s}}}",
+  };
+
   let context = await launch();
+
   try {
     const worker =
       context.serviceWorkers()[0] ??
       (await context.waitForEvent("serviceworker"));
+
     const page = await context.newPage();
     await page.goto("http://127.0.0.1:4173/?q=!settings");
     await expect(
@@ -39,9 +51,9 @@ test("site settings sync to the real extension and survive a browser restart", a
         "Extension connected. Your bangs and settings are cached on this device."
       )
     ).toBeVisible();
-    await page.evaluate(() => {
+    await page.evaluate(({ key, message }) => {
       localStorage.setItem(
-        "custom-bangs",
+        key,
         JSON.stringify({
           gpt: {
             d: "chatgpt.com",
@@ -51,11 +63,12 @@ test("site settings sync to the real extension and survive a browser restart", a
         })
       );
       localStorage.setItem("default-bang", "gpt");
-      window.postMessage("cf-unduck:sync-extension", window.location.origin);
-    });
+      window.postMessage(message, window.location.origin);
+    }, syncInput);
     await expect
       .poll(async () => {
         const preferences = await readPreferences(worker);
+
         return preferences?.defaultBangShortcut;
       })
       .toBe("gpt");
@@ -69,24 +82,70 @@ test("site settings sync to the real extension and survive a browser restart", a
     await expect
       .poll(async () => {
         const preferences = await readPreferences(worker);
+
         return preferences?.historyEnabled;
       })
       .toBe(true);
-    await page.evaluate(() => {
-      localStorage.setItem("custom-bangs", "broken-json");
-      window.postMessage("cf-unduck:sync-extension", window.location.origin);
-    });
+    await page.evaluate(({ key, message, updatedUrl }) => {
+      const exampleDomain = "example.com";
+      const exampleUrl = "https://example.com/?q={{{s}}}";
+
+      localStorage.setItem(
+        key,
+        JSON.stringify({
+          GPT: {
+            d: "chatgpt.com",
+            s: "Updated ChatGPT",
+            u: updatedUrl,
+          },
+          "": {
+            d: exampleDomain,
+            s: "Empty",
+            u: exampleUrl,
+          },
+          "   ": {
+            d: exampleDomain,
+            s: "Whitespace",
+            u: exampleUrl,
+          },
+          broken: { d: exampleDomain, s: "Broken", u: "data:text/html,unsafe" },
+        })
+      );
+      localStorage.setItem("sound-enabled", "false");
+      window.postMessage(message, window.location.origin);
+    }, syncInput);
+    await expect
+      .poll(async () => {
+        const preferences = await readPreferences(worker);
+
+        return {
+          destination: preferences?.customBangs.gpt?.u,
+          broken: preferences?.customBangs.broken ?? null,
+          empty: preferences?.customBangs[""] ?? null,
+          soundEnabled: preferences?.soundEnabled,
+        };
+      })
+      .toEqual({
+        destination: syncInput.updatedUrl,
+        broken: null,
+        empty: null,
+        soundEnabled: false,
+      });
+    await page.evaluate(({ key, message }) => {
+      localStorage.setItem(key, "broken-json");
+      window.postMessage(message, window.location.origin);
+    }, syncInput);
     await expect(page.getByText(/settings could not sync/u)).toBeVisible();
     const preserved = await readPreferences(worker);
-    expect(preserved?.customBangs.gpt?.u).toBe(
-      "https://chatgpt.com/?prompt={{{s}}}"
-    );
+    expect(preserved?.customBangs.gpt?.u).toBe(syncInput.updatedUrl);
     await page.goto("about:blank");
     await context.close();
     context = await launch();
+
     const restarted =
       context.serviceWorkers()[0] ??
       (await context.waitForEvent("serviceworker"));
+
     const persisted = await readPreferences(restarted);
     expect(persisted?.defaultBangShortcut).toBe("gpt");
   } finally {

@@ -6,6 +6,10 @@ interface Props {
   searchCount: string;
 }
 
+/** Render the navigation bar and search count.
+ * @param props - Component properties.
+ * @returns The rendered interface.
+ */
 export const TopBar = ({ searchCount, children }: Props) => (
   <header className="absolute top-4 w-full">
     <div className="flex justify-between px-4">

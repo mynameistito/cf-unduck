@@ -20,6 +20,7 @@ const AUDIO_NAMES = [
 
 type AudioName = (typeof AUDIO_NAMES)[number];
 
+/** Playback controls for interface sounds. */
 export interface AudioController {
   pause: (name: AudioName) => void;
   play: (
@@ -29,6 +30,10 @@ export interface AudioController {
   reset: (name: AudioName) => void;
 }
 
+/** Manage the interface sound effects.
+ * @param enabled - Whether playback is enabled.
+ * @returns Controls for the available sounds.
+ */
 export const useAudio = (enabled: boolean): AudioController => {
   const ref = useRef<Partial<Record<AudioName, HTMLAudioElement>>>({});
   const enabledRef = useRef(enabled);
@@ -41,27 +46,35 @@ export const useAudio = (enabled: boolean): AudioController => {
     if (Object.keys(ref.current).length > 0) {
       return;
     }
+
     const elements: Partial<Record<AudioName, HTMLAudioElement>> = {};
+
     for (const key of AUDIO_NAMES) {
       const a = new Audio();
       a.src = SOURCES[key];
       elements[key] = a;
     }
+
     ref.current = elements;
   }, []);
 
   const play: AudioController["play"] = (name, opts) => {
-    if (!(enabledRef.current || opts?.force)) {
+    if (!(enabledRef.current || opts?.force === true)) {
       return;
     }
+
     const a = ref.current[name];
+
     if (!a) {
       return;
     }
+
     if (opts?.rate !== undefined) {
       a.playbackRate = opts.rate;
     }
+
     a.currentTime = opts?.from ?? 0;
+
     const playAudio = async () => {
       try {
         await a.play();
@@ -69,22 +82,27 @@ export const useAudio = (enabled: boolean): AudioController => {
         // Autoplay can be blocked or interrupted by rapid UI changes.
       }
     };
+
     void playAudio();
   };
 
   const pause: AudioController["pause"] = (name) => {
     const a = ref.current[name];
+
     if (!a) {
       return;
     }
+
     a.pause();
   };
 
   const reset: AudioController["reset"] = (name) => {
     const a = ref.current[name];
+
     if (!a) {
       return;
     }
+
     a.pause();
     a.currentTime = 0;
   };

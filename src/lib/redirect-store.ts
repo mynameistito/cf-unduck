@@ -26,6 +26,7 @@ const connect = async (
 ): Promise<IDBPDatabase<RedirectDatabase> | null> => {
   let expired = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
+
   try {
     const opening = openDB<RedirectDatabase>(name, DATABASE_VERSION, {
       upgrade(db) {
@@ -38,14 +39,19 @@ const connect = async (
         db.close();
       },
     });
+
     const ready = (async () => {
       const db = await opening;
+
       if (expired) {
         db.close();
+
         return null;
       }
+
       return db;
     })();
+
     return await Promise.race([
       ready,
       // oxlint-disable-next-line promise/avoid-new -- Adapt the browser timer to bound blocked IndexedDB opens.
@@ -63,15 +69,21 @@ const connect = async (
   }
 };
 
-/** Create the persistent service-worker preferences and redirect counter store. */
+/** Create the persistent service-worker preferences and redirect counter store.
+ * @param name - IndexedDB database name.
+ * @returns The preferences and counter store.
+ */
 export const createRedirectStore = (name = DATABASE_NAME) => ({
   async sync(preferences: RedirectPreferences): Promise<boolean> {
     const db = await connect(name);
+
     if (!db) {
       return false;
     }
+
     try {
       await db.put("preferences", preferences, "current");
+
       return true;
     } catch {
       return false;
@@ -82,9 +94,11 @@ export const createRedirectStore = (name = DATABASE_NAME) => ({
 
   async readCount(): Promise<number | null> {
     const db = await connect(name);
+
     if (!db) {
       return null;
     }
+
     try {
       return (await db.get("counts", "total")) ?? 0;
     } catch {
@@ -96,17 +110,22 @@ export const createRedirectStore = (name = DATABASE_NAME) => ({
 
   async resolve(url: URL, bangs: BangMap): Promise<RedirectResult | null> {
     const db = await connect(name);
+
     if (!db) {
       return null;
     }
+
     try {
       // Serialize preference reads and counter updates across tabs/navigations.
       const tx = db.transaction(["preferences", "counts"], "readwrite");
       const preferences = await tx.objectStore("preferences").get("current");
+
       if (!preferences || preferences.historyEnabled) {
         await tx.done;
+
         return null;
       }
+
       const result = resolveBangRedirect(
         {
           ...preferences,
@@ -115,11 +134,14 @@ export const createRedirectStore = (name = DATABASE_NAME) => ({
         },
         url.pathname
       );
+
       if (result.kind === "redirect") {
         const counts = tx.objectStore("counts");
         await counts.put(((await counts.get("total")) ?? 0) + 1, "total");
       }
+
       await tx.done;
+
       return result;
     } catch {
       return null;

@@ -17,13 +17,16 @@ const bangs: BangMap = {
     u: "https://chatgpt.com/?prompt={{{s}}}",
   },
 };
+
 const defaults: RedirectPreferences = {
   customBangs: {},
   defaultBangShortcut: "ddg",
   historyEnabled: false,
 };
+
 const createStore = () =>
   createRedirectStore(`redirect-test-${crypto.randomUUID()}`);
+
 const query = (q: string, path = "/") =>
   new URL(`${path}?q=${encodeURIComponent(q)}`, "https://unduck.test");
 
@@ -88,16 +91,19 @@ describe("persistent browser redirects", () => {
   it("does not count settings, unknown bangs, or unrelated paths", async () => {
     const store = createStore();
     await store.sync(defaults);
+
     const results = await Promise.all(
-      ["", "!", "!settings", "!unknown"].map((q) =>
-        store.resolve(query(q), bangs)
+      ["", "!", "!settings", "!unknown"].map(
+        async (q) => await store.resolve(query(q), bangs)
       )
     );
+
     for (const result of results) {
       expect(result).toMatchObject({
         kind: "landing",
       });
     }
+
     expect(
       await store.resolve(query("!chatgpt", "/other"), bangs)
     ).toMatchObject({ kind: "notfound" });
@@ -107,11 +113,14 @@ describe("persistent browser redirects", () => {
   it("serializes concurrent navigations without losing counts", async () => {
     const store = createStore();
     await store.sync(defaults);
+
     const results = await Promise.all(
-      Array.from({ length: 10 }, () =>
-        store.resolve(query("!chatgpt hello"), bangs)
+      Array.from(
+        { length: 10 },
+        async () => await store.resolve(query("!chatgpt hello"), bangs)
       )
     );
+
     expect(results.every((result) => result?.kind === "redirect")).toBe(true);
     expect(await store.readCount()).toBe(10);
   });
@@ -124,6 +133,7 @@ describe("persistent browser redirects", () => {
         throw new Error("Storage blocked");
       },
     });
+
     try {
       const store = createStore();
       expect(await store.sync(defaults)).toBe(false);

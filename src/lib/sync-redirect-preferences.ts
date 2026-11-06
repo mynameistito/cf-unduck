@@ -26,6 +26,7 @@ export const startRedirectSync = (): void => {
   ]) {
     storage.subscribe(key, sync);
   }
+
   sync();
   void refreshServiceWorkerCount();
   window.addEventListener("focus", () => {

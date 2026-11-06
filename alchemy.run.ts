@@ -51,6 +51,7 @@ export const Site = Website.StaticSite(
   })
 );
 
+/** Environment bindings inferred from the site deployment. */
 export type WorkerEnv = InferEnv<typeof Site>;
 
 export default Stack(

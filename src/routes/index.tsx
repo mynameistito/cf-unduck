@@ -1,5 +1,6 @@
 import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { z } from "zod";
 
 import { Landing } from "@/components/landing";
 import { loadBangs } from "@/lib/bangs/load-bangs";
@@ -19,19 +20,26 @@ const IndexRoute = () => {
 
   useEffect(() => {
     let cancelled = false;
+
     const redirect = async () => {
       try {
         const query = q ?? "";
+
         const defaultBangShortcut =
           storage.get(LS_KEYS.DEFAULT_BANG) ?? DEFAULT_BANG_SHORTCUT;
+
         const customBangs = readCustomBangs();
+
         if (cancelled) {
           return;
         }
+
         const bangs = await loadBangs();
+
         if (cancelled) {
           return;
         }
+
         const result = resolveBangRedirect({
           bangs,
           customBangs,
@@ -41,12 +49,14 @@ const IndexRoute = () => {
 
         if (result.kind === "landing" || result.kind === "notfound") {
           setShowLanding(true);
+
           return;
         }
 
         const prev = Math.trunc(
           Number(storage.get(LS_KEYS.SEARCH_COUNT) ?? "0")
         );
+
         const count = ((Number.isNaN(prev) ? 0 : prev) + 1).toString();
         storage.set(LS_KEYS.SEARCH_COUNT, count);
 
@@ -60,12 +70,15 @@ const IndexRoute = () => {
         window.location.replace(result.url);
       } catch (error) {
         console.error("Failed to resolve redirect", error);
+
         if (!cancelled) {
           setShowLanding(true);
         }
       }
     };
-    redirect();
+
+    void redirect();
+
     return () => {
       cancelled = true;
     };
@@ -74,12 +87,16 @@ const IndexRoute = () => {
   if (!showLanding) {
     return null;
   }
+
   return <Landing />;
 };
 
 export const Route = createFileRoute("/")({
   component: IndexRoute,
   validateSearch: (raw: { q?: unknown }): Search => ({
-    q: raw.q === undefined || raw.q === null ? undefined : String(raw.q),
+    q:
+      raw.q === undefined || raw.q === null
+        ? undefined
+        : z.coerce.string().parse(raw.q),
   }),
 });

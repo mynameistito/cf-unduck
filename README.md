@@ -127,12 +127,12 @@ To refresh the bundled bang data locally, run `bun run fetch-bangs`. You can als
 
 ## Stack
 
-React 19 + Vite + TanStack Router SPA, served as static assets by an Alchemy-managed Cloudflare Worker that also handles redirects and `/suggest`. Tailwind v4. Ultracite (Biome) for lint/format. Bun test runner.
+React 19 + Vite + TanStack Router SPA, served as static assets by an Alchemy-managed Cloudflare Worker that also handles redirects and `/suggest`. Tailwind v4. Ultracite (Oxlint and Oxfmt) for lint/format. Bun test runner.
 
 ## Scripts
 
 - `bun run dev` — Alchemy local development with Vite HMR
-- `bun run build` — build + typecheck (`tsc`)
+- `bun run build` — build + typecheck (`tsrs`)
 - `bun run plan` — preview the Alchemy infrastructure diff
 - `bun run deploy` — build and deploy with Alchemy
 - `bun run destroy` — destroy the selected Alchemy stage
@@ -141,6 +141,10 @@ React 19 + Vite + TanStack Router SPA, served as static assets by an Alchemy-man
 - `bun run fix` — apply automatic lint and format fixes
 - `bun test` — Bun test runner
 - `bun run test:browser` — Chromium tests against the production build (run `bun run build` and `bun x playwright install chromium` first)
+
+Alchemy beta.85 and the deployment action v4 use Effect 4.1.2 and state-store API v8. Keep deployment workflows disabled until every client sharing the store is upgraded and its state, key, and namespace are verified. This coordinated runtime and action upgrade is an explicit exception to the seven-day release-age policy; unrelated dependencies retain that policy.
+
+Type checking uses `tsrs`. The TypeScript 6 package remains a development dependency because the GitHub, SonarJS, and documentation lint plugins use the TypeScript compiler API.
 
 ## License
 

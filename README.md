@@ -142,7 +142,7 @@ React 19 + Vite + TanStack Router SPA, served as static assets by an Alchemy-man
 - `bun test` — Bun test runner
 - `bun run test:browser` — Chromium tests against the production build (run `bun run build` and `bun x playwright install chromium` first)
 
-Alchemy beta.84 requires Effect 4.0.x; the `@effect/platform-node-shared` override keeps its transitive platform dependency on the same compatible release.
+Alchemy beta.85 and the deployment action v4 use Effect 4.1.2 and state-store API v8. Keep deployment workflows disabled until every client sharing the store is upgraded and its state, key, and namespace are verified. This coordinated runtime and action upgrade is an explicit exception to the seven-day release-age policy; unrelated dependencies retain that policy.
 
 Type checking uses `tsrs`. The TypeScript 6 package remains a development dependency because the GitHub, SonarJS, and documentation lint plugins use the TypeScript compiler API.
 

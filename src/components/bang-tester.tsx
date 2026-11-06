@@ -6,7 +6,7 @@ import {
   useLocalStorageString,
 } from "@/hooks/use-local-storage";
 import { loadBangs } from "@/lib/bangs/load-bangs";
-import { parseBangMap } from "@/lib/bangs/schema";
+import { parseStoredBangMap } from "@/lib/bangs/schema";
 import { DEFAULT_BANG_SHORTCUT, LS_KEYS } from "@/lib/constants";
 import { resolveBangRedirect } from "@/lib/redirect";
 import type { RedirectResult } from "@/lib/redirect";
@@ -79,7 +79,7 @@ export const BangTester = ({ inputRef }: Props) => {
   const [customBangs] = useLocalStorage<BangMap>(
     LS_KEYS.CUSTOM_BANGS,
     {},
-    parseBangMap,
+    parseStoredBangMap,
     JSON.stringify
   );
 

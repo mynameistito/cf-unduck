@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { bangMapSchema } from "./bangs/schema";
+import { storedBangMapSchema } from "./bangs/schema";
 import { LS_KEYS } from "./constants";
 import { readCustomBangs } from "./custom-bangs";
 import type { BangMap } from "./types";
@@ -32,8 +32,8 @@ export interface Prefs {
 }
 
 const prefsSchema = z.object({
-  c: bangMapSchema.optional(),
-  d: z.string().optional(),
+  c: z.unknown().optional(),
+  d: z.unknown().optional(),
 });
 
 const getCookiePart = (cookieHeader: string): string | null =>
@@ -69,7 +69,23 @@ export const readPrefsFromCookieHeader = (
     const value: unknown = JSON.parse(decodeURIComponent(part.slice(eq + 1)));
     const prefs = prefsSchema.safeParse(value);
 
-    return prefs.success ? prefs.data : {};
+    if (!prefs.success) {
+      return {};
+    }
+
+    const result: Prefs = {};
+    const customBangs = storedBangMapSchema.safeParse(prefs.data.c);
+    const defaultBang = z.string().safeParse(prefs.data.d);
+
+    if (customBangs.success) {
+      result.c = customBangs.data;
+    }
+
+    if (defaultBang.success) {
+      result.d = defaultBang.data;
+    }
+
+    return result;
   } catch {
     return {};
   }

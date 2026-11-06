@@ -8,7 +8,7 @@ import {
   useLocalStorageString,
 } from "@/hooks/use-local-storage";
 import { loadBangs } from "@/lib/bangs/load-bangs";
-import { parseBangMap } from "@/lib/bangs/schema";
+import { parseBangMap, parseStoredBangMap } from "@/lib/bangs/schema";
 import {
   ANIMATION_DURATION_MS,
   DEFAULT_BANG_SHORTCUT,
@@ -1004,7 +1004,7 @@ const ImportExportSection = () => {
     let map: BangMap;
 
     try {
-      map = parseBangMap(raw);
+      map = parseStoredBangMap(raw);
     } catch {
       setImportError("Custom bangs corrupt");
 
@@ -1159,7 +1159,7 @@ export const SettingsModal = ({
   const [customBangs, setCustomBangs] = useLocalStorage<BangMap>(
     LS_KEYS.CUSTOM_BANGS,
     {},
-    parseBangMap,
+    parseStoredBangMap,
     JSON.stringify
   );
 

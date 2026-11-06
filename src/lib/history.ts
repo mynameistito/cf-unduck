@@ -4,14 +4,14 @@ import { LS_KEYS, MAX_HISTORY } from "./constants";
 import { storage } from "./storage";
 import type { SearchHistoryEntry } from "./types";
 
-const historySchema = z.array(
-  z.object({
-    bang: z.string(),
-    name: z.string(),
-    query: z.string(),
-    timestamp: z.number(),
-  })
-);
+const historyEntrySchema = z.looseObject({
+  bang: z.string(),
+  name: z.string(),
+  query: z.string(),
+  timestamp: z.number(),
+});
+
+const historySchema = z.array(z.unknown());
 
 /** Read saved search history.
  * @returns Saved entries, or an empty list when unavailable.
@@ -24,7 +24,21 @@ export const getSearchHistory = (): SearchHistoryEntry[] => {
 
     const parsed = historySchema.safeParse(raw);
 
-    return parsed.success ? parsed.data : [];
+    if (!parsed.success) {
+      return [];
+    }
+
+    const entries: SearchHistoryEntry[] = [];
+
+    for (const value of parsed.data) {
+      const entry = historyEntrySchema.safeParse(value);
+
+      if (entry.success) {
+        entries.push(entry.data);
+      }
+    }
+
+    return entries;
   } catch {
     return [];
   }

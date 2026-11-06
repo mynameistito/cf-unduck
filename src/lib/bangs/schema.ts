@@ -34,7 +34,12 @@ export const customBangSchema = bangSchema.extend({
 
 /** Validate a map of custom shortcuts. */
 export const customBangMapSchema = z.record(
-  z.string().refine((shortcut) => !isReservedShortcut(shortcut)),
+  z
+    .string()
+    .trim()
+    .min(1)
+    .toLowerCase()
+    .refine((shortcut) => !isReservedShortcut(shortcut)),
   customBangSchema
 );
 
@@ -45,14 +50,16 @@ export const storedBangMapSchema = z
     const entries: [string, z.infer<typeof bangSchema>][] = [];
 
     for (const [key, value] of Object.entries(map)) {
-      if (isReservedShortcut(key)) {
+      const shortcut = key.trim().toLowerCase();
+
+      if (shortcut === "" || isReservedShortcut(shortcut)) {
         continue;
       }
 
       const bang = customBangSchema.safeParse(value);
 
       if (bang.success) {
-        entries.push([key.toLowerCase(), bang.data]);
+        entries.push([shortcut, bang.data]);
       }
     }
 

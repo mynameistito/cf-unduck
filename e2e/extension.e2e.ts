@@ -87,6 +87,9 @@ test("site settings sync to the real extension and survive a browser restart", a
       })
       .toBe(true);
     await page.evaluate(({ key, message, updatedUrl }) => {
+      const exampleDomain = "example.com";
+      const exampleUrl = "https://example.com/?q={{{s}}}";
+
       localStorage.setItem(
         key,
         JSON.stringify({
@@ -95,7 +98,17 @@ test("site settings sync to the real extension and survive a browser restart", a
             s: "Updated ChatGPT",
             u: updatedUrl,
           },
-          broken: { d: "example.com", s: "Broken", u: "data:text/html,unsafe" },
+          "": {
+            d: exampleDomain,
+            s: "Empty",
+            u: exampleUrl,
+          },
+          "   ": {
+            d: exampleDomain,
+            s: "Whitespace",
+            u: exampleUrl,
+          },
+          broken: { d: exampleDomain, s: "Broken", u: "data:text/html,unsafe" },
         })
       );
       localStorage.setItem("sound-enabled", "false");
@@ -108,12 +121,14 @@ test("site settings sync to the real extension and survive a browser restart", a
         return {
           destination: preferences?.customBangs.gpt?.u,
           broken: preferences?.customBangs.broken ?? null,
+          empty: preferences?.customBangs[""] ?? null,
           soundEnabled: preferences?.soundEnabled,
         };
       })
       .toEqual({
         destination: syncInput.updatedUrl,
         broken: null,
+        empty: null,
         soundEnabled: false,
       });
     await page.evaluate(({ key, message }) => {

@@ -44,7 +44,9 @@ it("normalizes stored shortcut keys and lets the last valid case variant win", (
 
   const stored = JSON.stringify({
     GOOD: validBang,
-    good: replacement,
+    " good ": replacement,
+    "": validBang,
+    "   ": validBang,
     constructor: validBang,
   });
 

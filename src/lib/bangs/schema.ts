@@ -18,6 +18,13 @@ const webDestination = z
   .min(1)
   .refine((value) => normalizeWebUrl(value) !== null);
 
+/** Check whether a shortcut is reserved for object internals.
+ * @param shortcut - Shortcut to check.
+ * @returns Whether the shortcut is reserved.
+ */
+export const isReservedShortcut = (shortcut: string): boolean =>
+  ["__proto__", "prototype", "constructor"].includes(shortcut.toLowerCase());
+
 /** Validate a custom shortcut whose destinations must be HTTP(S) URLs. */
 export const customBangSchema = bangSchema.extend({
   ad: webDestination.optional(),
@@ -26,7 +33,10 @@ export const customBangSchema = bangSchema.extend({
 });
 
 /** Validate a map of custom shortcuts. */
-export const customBangMapSchema = z.record(z.string(), customBangSchema);
+export const customBangMapSchema = z.record(
+  z.string().refine((shortcut) => !isReservedShortcut(shortcut)),
+  customBangSchema
+);
 
 /** Recover valid shortcuts from a stored map without discarding their neighbors. */
 export const storedBangMapSchema = z
@@ -35,16 +45,14 @@ export const storedBangMapSchema = z
     const entries: [string, z.infer<typeof bangSchema>][] = [];
 
     for (const [key, value] of Object.entries(map)) {
-      if (
-        ["__proto__", "prototype", "constructor"].includes(key.toLowerCase())
-      ) {
+      if (isReservedShortcut(key)) {
         continue;
       }
 
       const bang = customBangSchema.safeParse(value);
 
       if (bang.success) {
-        entries.push([key, bang.data]);
+        entries.push([key.toLowerCase(), bang.data]);
       }
     }
 

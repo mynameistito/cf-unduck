@@ -60,6 +60,10 @@ it("retries after a failed request", async () => {
         return new Response(null, { status: 503 });
       }
 
+      if (requestCount === 2) {
+        return Response.json({ broken: { u: 42 } });
+      }
+
       return Response.json(bangs);
     },
     { preconnect: originalFetch.preconnect }
@@ -80,6 +84,16 @@ it("retries after a failed request", async () => {
 
   expect(failure).toBeInstanceOf(Error);
   expect(failure).toHaveProperty("message", "Failed to load bangs: 503");
+
+  let validationFailure: unknown;
+
+  try {
+    await loadBangs();
+  } catch (error) {
+    validationFailure = error;
+  }
+
+  expect(validationFailure).toBeInstanceOf(Error);
   expect(await loadBangs()).toEqual(bangs);
-  expect(fetchMock).toHaveBeenCalledTimes(2);
+  expect(fetchMock).toHaveBeenCalledTimes(3);
 });

@@ -1,3 +1,4 @@
+import { parseStoredBangMap } from "../src/lib/bangs/schema";
 import { DEFAULT_BANG_SHORTCUT, LS_KEYS } from "../src/lib/constants";
 import {
   extensionResponseSchema,
@@ -21,7 +22,7 @@ const sync = async (): Promise<void> => {
   let ok = false;
 
   try {
-    const customBangs: unknown = JSON.parse(
+    const customBangs = parseStoredBangMap(
       localStorage.getItem(LS_KEYS.CUSTOM_BANGS) ?? "{}"
     );
 

@@ -1,6 +1,34 @@
 import { expect, test } from "@playwright/test";
 import type { Page, Route } from "@playwright/test";
 
+test("rejects reserved custom shortcuts without deleting an edited shortcut", async ({
+  page,
+}) => {
+  const shortcutLabel = "Bang shortcut";
+  const reservedShortcut = "constructor";
+  await page.goto("/?q=!settings");
+  await page
+    .getByLabel("Bang search URL")
+    .fill("https://example.com/?q={{{s}}}");
+  await page.getByLabel(shortcutLabel).fill(reservedShortcut);
+  await page.getByRole("button", { name: "Add Bang" }).click();
+  await expect(
+    page.getByRole("alert").filter({ hasText: "Shortcut is reserved" })
+  ).toBeVisible();
+
+  await page.getByLabel(shortcutLabel).fill("good");
+  await page.getByRole("button", { name: "Add Bang" }).click();
+  await expect(page.getByText("!good", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Edit", exact: true }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Edit Custom Bang" });
+  await dialog.getByLabel(shortcutLabel).fill(reservedShortcut);
+  await dialog.getByRole("button", { name: "Save" }).click();
+  await expect(dialog.getByRole("alert")).toHaveText("Shortcut is reserved");
+  await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
+  await expect(page.getByText("!good", { exact: true })).toBeVisible();
+});
+
 const readBrowserValue = async ({
   store,
   key,

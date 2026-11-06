@@ -39,6 +39,19 @@ it("recovers usable stored shortcuts while keeping imports strict", () => {
   ).toMatchObject({ kind: "redirect", url: "https://example.com/?q=hello" });
 });
 
+it("normalizes stored shortcut keys and lets the last valid case variant win", () => {
+  const replacement = { ...validBang, s: "Replacement" };
+
+  const stored = JSON.stringify({
+    GOOD: validBang,
+    good: replacement,
+    constructor: validBang,
+  });
+
+  expect(parseStoredBangMap(stored)).toEqual({ good: replacement });
+  expect(() => parseBangMap(stored)).toThrow();
+});
+
 it("recovers valid cookie shortcuts and preserves an independent default", () => {
   const cookie = `udprefs=${encodeURIComponent(JSON.stringify({ c: mixedBangs, d: "good" }))}`;
 

@@ -8,7 +8,12 @@ import {
   useLocalStorageString,
 } from "@/hooks/use-local-storage";
 import { loadBangs } from "@/lib/bangs/load-bangs";
-import { parseBangMap, parseStoredBangMap } from "@/lib/bangs/schema";
+import {
+  customBangSchema,
+  isReservedShortcut,
+  parseBangMap,
+  parseStoredBangMap,
+} from "@/lib/bangs/schema";
 import {
   ANIMATION_DURATION_MS,
   DEFAULT_BANG_SHORTCUT,
@@ -307,14 +312,18 @@ const cleanBangFields = (
   const hasRequiredFields =
     trimmedName && trimmedSearch && trimmedBase && cleanShortcut;
 
-  const hasSafeSearchUrl = normalizeWebUrl(trimmedSearch);
+  const bang = customBangSchema.safeParse({
+    d: trimmedBase,
+    s: trimmedName,
+    u: trimmedSearch,
+  });
 
-  if (hasRequiredFields === "" || hasSafeSearchUrl === null) {
+  if (hasRequiredFields === "" || !bang.success) {
     return null;
   }
 
   return {
-    bang: { d: trimmedBase, s: trimmedName, u: trimmedSearch },
+    bang: bang.data,
     shortcut: cleanShortcut,
   };
 };
@@ -570,6 +579,12 @@ const EditBangPopup = ({
       return;
     }
 
+    if (isReservedShortcut(cleaned.shortcut)) {
+      setError("Shortcut is reserved");
+
+      return;
+    }
+
     if (
       cleaned.shortcut !== shortcut &&
       existingKeys.includes(cleaned.shortcut)
@@ -666,6 +681,13 @@ const CustomBangsSection = ({
 
     if (!cleaned) {
       setAddError(ALL_FIELDS_REQUIRED);
+      audio.play("warning");
+
+      return;
+    }
+
+    if (isReservedShortcut(cleaned.shortcut)) {
+      setAddError("Shortcut is reserved");
       audio.play("warning");
 
       return;

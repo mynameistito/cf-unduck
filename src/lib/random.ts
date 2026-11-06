@@ -1,5 +1,9 @@
 const UINT32_RANGE = 2 ** 32;
 
+/** Select an unbiased random index.
+ * @param length - Number of possible indices.
+ * @returns An index below length.
+ */
 export const randomIndex = (length: number): number => {
   if (!Number.isSafeInteger(length) || length < 1 || length > UINT32_RANGE) {
     throw new RangeError("random index length must be between 1 and 2^32");
@@ -9,6 +13,7 @@ export const randomIndex = (length: number): number => {
 
   while (true) {
     const [randomValue = 0] = crypto.getRandomValues(new Uint32Array(1));
+
     if (randomValue < limit) {
       return randomValue % length;
     }

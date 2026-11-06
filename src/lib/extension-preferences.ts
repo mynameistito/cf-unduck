@@ -5,12 +5,14 @@ import type { ExtensionPreferences } from "./extension-protocol";
 import { normalizeWebUrl } from "./redirect";
 
 const webUrl = z.string().refine((value) => normalizeWebUrl(value) !== null);
+
 const shortcut = z
   .string()
   .trim()
   .min(1)
   .toLowerCase()
   .refine((key) => !["__proto__", "constructor", "prototype"].includes(key));
+
 const preferencesSchema = z.object({
   customBangs: z.record(
     shortcut,
@@ -26,16 +28,21 @@ const preferencesSchema = z.object({
   soundEnabled: z.boolean(),
 });
 
-/** Parse untrusted messages at the extension storage boundary. */
+/** Parse untrusted messages at the extension storage boundary.
+ * @param value - Untrusted stored or received value.
+ * @returns Validated preferences, or null for invalid input.
+ */
 export const parseExtensionPreferences = (
   // oxlint-disable-next-line anti-slop/no-unknown-parameters -- This is the I/O parser; Zod establishes the preferences contract below.
   value: unknown
 ): ExtensionPreferences | null => {
   const parsed = preferencesSchema.safeParse(value);
+
   return parsed.success ? parsed.data : null;
 };
 
 export const extensionResponseSchema = z.object({ ok: z.boolean() });
+
 export const extensionStatusSchema = extensionResponseSchema.extend({
   type: z.literal(EXTENSION_STATUS),
 });

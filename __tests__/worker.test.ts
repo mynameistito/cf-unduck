@@ -5,12 +5,13 @@ import type { WorkerEnv } from "@/worker";
 
 const makeEnv = (): WorkerEnv => ({
   ASSETS: {
-    fetch: mock((request: Request) =>
-      Promise.resolve(
-        new Response(`asset:${new URL(request.url).pathname}`, {
-          status: 200,
-        })
-      )
+    fetch: mock(
+      async (request: Request) =>
+        await Promise.resolve(
+          new Response(`asset:${new URL(request.url).pathname}`, {
+            status: 200,
+          })
+        )
     ),
   },
 });
@@ -50,10 +51,12 @@ describe("worker fetch", () => {
 
   it("non-GET passes through to ASSETS", async () => {
     const env = makeEnv();
+
     const res = await worker.fetch(
       req("https://x.test/?q=!g+foo", { method: "POST" }),
       env
     );
+
     expect(env.ASSETS.fetch).toHaveBeenCalled();
     expect(res.status).toBe(200);
   });
@@ -61,10 +64,12 @@ describe("worker fetch", () => {
   it("respects cookie default bang", async () => {
     const env = makeEnv();
     const cookie = `udprefs=${encodeURIComponent(JSON.stringify({ d: "g" }))}`;
+
     const res = await worker.fetch(
       req("https://x.test/?q=hello", { headers: { Cookie: cookie } }),
       env
     );
+
     expect(res.status).toBe(302);
     expect(res.headers.get("Location")).toContain("google.com");
     expect(res.headers.get("Vary")).toBe("Cookie");
@@ -86,11 +91,13 @@ describe("worker fetch", () => {
         throw new Error("Cache storage unavailable");
       },
     });
+
     try {
       const response = await worker.fetch(
         req("https://x.test/?q=!chatgpt+hello"),
         makeEnv()
       );
+
       expect(response.status).toBe(302);
       expect(response.headers.get("Location")).toBe(
         "https://chatgpt.com/?prompt=hello"
@@ -107,14 +114,17 @@ describe("worker fetch", () => {
 
   it("keeps personalized destinations isolated from later cookieless requests", async () => {
     const cookie = `udprefs=${encodeURIComponent(JSON.stringify({ d: "g" }))}`;
+
     const personalized = await worker.fetch(
       req("https://x.test/?q=hello", { headers: { Cookie: cookie } }),
       makeEnv()
     );
+
     const cookieless = await worker.fetch(
       req("https://x.test/?q=hello"),
       makeEnv()
     );
+
     expect(personalized.headers.get("Location")).toContain("google.com");
     expect(cookieless.headers.get("Location")).toContain("duckduckgo.com");
     expect(cookieless.headers.get("Cache-Control")).toBe("no-store");
@@ -125,6 +135,7 @@ describe("worker fetch", () => {
       req("https://x.test/search/?q=!chatgpt", { method: "HEAD" }),
       makeEnv()
     );
+
     expect(response.status).toBe(302);
     expect(response.headers.get("Location")).toBe("https://chatgpt.com/");
     expect(await response.text()).toBe("");

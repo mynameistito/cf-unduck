@@ -9,6 +9,7 @@ import {
 import type { PrecacheEntry } from "workbox-precaching";
 import { NavigationRoute, registerRoute } from "workbox-routing";
 
+import { bangMapSchema } from "./lib/bangs/schema";
 import { redirectStore } from "./lib/redirect-store";
 import type { BangMap } from "./lib/types";
 
@@ -17,36 +18,47 @@ declare const self: ServiceWorkerGlobalScope & {
 };
 
 void self.skipWaiting();
+
 clientsClaim();
+
 precacheAndRoute(self.__WB_MANIFEST);
+
 cleanupOutdatedCaches();
 
 let bangsPromise: Promise<BangMap | null> | null = null;
 
+// oxlint-disable-next-line typescript/promise-function-async -- The service worker shares the cached promise without creating a wrapper.
 const readCachedBangs = (): Promise<BangMap | null> => {
   bangsPromise ??= (async () => {
     const response = await matchPrecache("/assets/hashbang.json");
+
     if (!response) {
       return null;
     }
-    // SAFETY: the build precaches this generated dictionary of validated bangs.
-    return (await response.json()) as BangMap;
+
+    const value: unknown = await response.json();
+
+    return bangMapSchema.parse(value);
   })();
+
   return bangsPromise;
 };
 
 registerRoute(
   new NavigationRoute(async (options) => {
     const { url, event } = options;
+
     const isSearch =
       (url.pathname === "/" ||
         url.pathname === "/search" ||
         url.pathname === "/search/") &&
       url.searchParams.has("q");
+
     if (isSearch) {
       try {
         const bangs = await readCachedBangs();
         const result = bangs ? await redirectStore.resolve(url, bangs) : null;
+
         if (result?.kind === "redirect") {
           event.waitUntil(
             (async () => {
@@ -58,6 +70,7 @@ registerRoute(
               }
             })()
           );
+
           return new Response(null, {
             status: 302,
             headers: {
@@ -72,16 +85,19 @@ registerRoute(
         // Cache/IDB failures use the existing app resolver and localStorage prefs.
       }
     }
+
     try {
       const appShell = await matchPrecache("index.html");
+
       if (appShell) {
         return appShell;
       }
     } catch {
       // Cache storage can be unavailable, for example in private browsing.
     }
+
     // Recover the app shell directly: fetching the search URL lets the edge
     // redirect before the app can preserve local counts and history.
-    return fetch(new URL("/index.html", url.origin));
+    return await fetch(new URL("/index.html", url.origin));
   })
 );

@@ -4,8 +4,10 @@ import { resolveExtensionNavigation } from "../extension/navigation";
 import { createSerialQueue } from "../extension/serial-queue";
 import { parseExtensionPreferences } from "../src/lib/extension-preferences";
 import { defaultExtensionPreferences } from "../src/lib/extension-protocol";
+import type { BangMap } from "../src/lib/types";
 
 const site = "https://unduck.example";
+
 const bangs = {
   ddg: {
     d: "duckduckgo.com",
@@ -13,6 +15,7 @@ const bangs = {
     u: "https://duckduckgo.com/?q={{{s}}}",
   },
 };
+
 const customBangs = {
   gpt: {
     d: "chatgpt.com",
@@ -87,11 +90,13 @@ describe("extension searches", () => {
   });
   test("malformed snapshots are rejected and prototype keys cannot enter storage", () => {
     expect(parseExtensionPreferences({ customBangs: [] })).toBeNull();
+
     for (const key of ["__proto__", "constructor", "prototype"]) {
       const parsed = parseExtensionPreferences({
         ...defaultExtensionPreferences(),
         customBangs: { [key]: customBangs.gpt },
       });
+
       expect(Object.hasOwn(parsed?.customBangs ?? {}, key)).toBe(false);
       expect(
         parseExtensionPreferences({
@@ -121,12 +126,16 @@ describe("extension searches", () => {
         )
       ).toBe(`${site}/?q=hello`);
     }
+
+    const inheritedBangs: BangMap = {};
+    Object.setPrototypeOf(inheritedBangs, { ddg: customBangs.gpt });
+
     expect(
       resolveExtensionNavigation(
         "hello",
         {
           ...defaultExtensionPreferences(),
-          customBangs: Object.create({ ddg: customBangs.gpt }),
+          customBangs: inheritedBangs,
         },
         bangs,
         site
@@ -149,27 +158,37 @@ describe("extension searches", () => {
 test("queued syncs read the latest settings without overlapping cache writes", async () => {
   const enqueue = createSerialQueue();
   let release: (() => void) | undefined;
+
   // oxlint-disable-next-line promise/avoid-new -- Explicitly control completion of the first cache write without timers.
   const delayedWrite = new Promise<void>((resolve) => {
     release = resolve;
   });
+
   let current = 1;
   const snapshots: number[] = [];
+
   const first = enqueue(async () => {
     snapshots.push(current);
     await delayedWrite;
   });
+
   await Promise.resolve();
   current = 2;
-  const second = enqueue(() => {
+
+  const second = enqueue(async () => {
     snapshots.push(current);
-    return Promise.resolve();
+
+    await Promise.resolve();
   });
+
   current = 3;
-  const third = enqueue(() => {
+
+  const third = enqueue(async () => {
     snapshots.push(current);
-    return Promise.resolve();
+
+    await Promise.resolve();
   });
+
   expect(snapshots).toEqual([1]);
   release?.();
   await Promise.all([first, second, third]);
@@ -178,13 +197,29 @@ test("queued syncs read the latest settings without overlapping cache writes", a
 
 test("a failed cache write does not block the next sync", async () => {
   const enqueue = createSerialQueue();
-  const first = enqueue(() => Promise.reject(new Error("Storage unavailable")));
-  let saved = false;
-  const second = enqueue(() => {
-    saved = true;
-    return Promise.resolve();
+
+  const first = enqueue(async () => {
+    await Promise.reject(new Error("Storage unavailable"));
   });
-  await expect(first).rejects.toThrow("Storage unavailable");
+
+  let saved = false;
+
+  const second = enqueue(async () => {
+    saved = true;
+
+    await Promise.resolve();
+  });
+
+  let failure: unknown;
+
+  try {
+    await first;
+  } catch (error) {
+    failure = error;
+  }
+
+  expect(failure).toBeInstanceOf(Error);
+  expect(failure).toHaveProperty("message", "Storage unavailable");
   await second;
   expect(saved).toBe(true);
 });

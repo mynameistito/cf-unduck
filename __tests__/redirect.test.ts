@@ -81,12 +81,15 @@ describe("resolveBangRedirect", () => {
         u: "https://example.com/?q={{{s}}}",
       },
     };
+
     const r = resolveBangRedirect({
       ...base,
       customBangs,
       query: "!g foo",
     });
+
     expect(r.kind).toBe("redirect");
+
     if (r.kind === "redirect") {
       expect(r.url).toBe("https://example.com/?q=foo");
     }
@@ -108,6 +111,7 @@ describe("resolveBangRedirect", () => {
       defaultBangShortcut: "nonexistent",
       query: "hello",
     });
+
     expect(r.kind).toBe("landing");
   });
 
@@ -120,8 +124,10 @@ describe("resolveBangRedirect", () => {
         u: "https://primary.com/?q={{{s}}}",
       },
     };
+
     const r = resolveBangRedirect({ ...base, customBangs, query: "!alt" });
     expect(r.kind).toBe("redirect");
+
     if (r.kind === "redirect") {
       expect(r.url).toBe("https://alt.com/");
     }
@@ -135,6 +141,7 @@ describe("resolveBangRedirect", () => {
         u: "ftp://example.com/?q={{{s}}}",
       },
     };
+
     expect(
       resolveBangRedirect({ ...base, customBangs, query: "!unsafe search" })
     ).toEqual({ kind: "landing" });
@@ -161,16 +168,19 @@ describe("resolveBangRedirect", () => {
         u: "EXAMPLE.com/search?q={{{s}}}",
       },
     };
+
     const httpResult = resolveBangRedirect({
       ...base,
       customBangs,
       query: "!http search",
     });
+
     const httpsResult = resolveBangRedirect({
       ...base,
       customBangs,
       query: "!https search",
     });
+
     const implicitResult = resolveBangRedirect({
       ...base,
       customBangs,

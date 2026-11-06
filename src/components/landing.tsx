@@ -23,6 +23,7 @@ import { TopBar } from "./top-bar";
 
 const SettingsModal = lazy(async () => {
   const m = await import("./settings-modal");
+
   return { default: m.SettingsModal };
 });
 
@@ -30,6 +31,7 @@ const shouldIgnoreShortcut = (e: KeyboardEvent): boolean => {
   if (e.ctrlKey || e.metaKey || e.altKey) {
     return true;
   }
+
   if (e.target instanceof HTMLElement) {
     return (
       e.target.tagName === "INPUT" ||
@@ -37,15 +39,20 @@ const shouldIgnoreShortcut = (e: KeyboardEvent): boolean => {
       e.target.isContentEditable
     );
   }
+
   return false;
 };
 
+/** Render the search landing page.
+ * @returns The rendered interface.
+ */
 export const Landing = () => {
   const reducedMotion = usePrefersReducedMotion();
   const [soundEnabled] = useLocalStorageBool(LS_KEYS.SOUND_ENABLED, true);
   const audio = useAudio(!reducedMotion && soundEnabled);
   const [searchCount] = useLocalStorageString(LS_KEYS.SEARCH_COUNT, "0");
   const [historyEnabled] = useLocalStorageBool(LS_KEYS.HISTORY_ENABLED, false);
+
   const [open, setOpen] = useState(
     () =>
       new URLSearchParams(window.location.search).get("q")?.trim() ===
@@ -61,21 +68,30 @@ export const Landing = () => {
 
   useEffect(() => {
     const { hash } = window.location;
+
     if (!hash.startsWith("#bangs=")) {
-      return;
+      return () => {
+        // No effect was started, so there is nothing to clean up.
+      };
     }
+
     let cancelled = false;
-    (async () => {
+    void (async () => {
       const map = await decodeShare(hash.slice("#bangs=".length));
+
       if (cancelled || !(map && isValidBangMap(map))) {
         return;
       }
+
       const count = Object.keys(map).length;
+
       if (count === 0) {
         return;
       }
+
       setShareImport({ count, map });
     })();
+
     return () => {
       cancelled = true;
     };
@@ -85,6 +101,7 @@ export const Landing = () => {
     if (!shareImport) {
       return;
     }
+
     const existing = readCustomBangs();
     const merged = { ...existing, ...shareImport.map };
     storage.set(LS_KEYS.CUSTOM_BANGS, JSON.stringify(merged));
@@ -104,6 +121,7 @@ export const Landing = () => {
       if (open || shouldIgnoreShortcut(e)) {
         return;
       }
+
       if (e.key === "/") {
         e.preventDefault();
         testerInputRef.current?.focus();
@@ -112,8 +130,12 @@ export const Landing = () => {
         setOpen(true);
       }
     };
+
     document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+
+    return () => {
+      document.removeEventListener("keydown", onKey);
+    };
   }, [open]);
 
   return (
@@ -124,9 +146,15 @@ export const Landing = () => {
           className={["settings-button", open ? "rotate" : ""]
             .filter(Boolean)
             .join(" ")}
-          onClick={() => setOpen(true)}
-          onMouseEnter={() => audio.play("spin")}
-          onMouseLeave={() => audio.reset("spin")}
+          onClick={() => {
+            setOpen(true);
+          }}
+          onMouseEnter={() => {
+            audio.play("spin");
+          }}
+          onMouseLeave={() => {
+            audio.reset("spin");
+          }}
           type="button"
         >
           <img
@@ -242,7 +270,9 @@ export const Landing = () => {
         <Suspense fallback={null}>
           <SettingsModal
             audio={audio}
-            onClose={() => setOpen(false)}
+            onClose={() => {
+              setOpen(false);
+            }}
             open={open}
             reducedMotion={reducedMotion}
           />

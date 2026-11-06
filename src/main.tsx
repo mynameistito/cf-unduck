@@ -24,6 +24,7 @@ const preloadBangs = async (): Promise<void> => {
   if (!new URLSearchParams(window.location.search).has("q")) {
     return;
   }
+
   try {
     await loadBangs();
   } catch (error) {
@@ -32,13 +33,17 @@ const preloadBangs = async (): Promise<void> => {
 };
 
 void loadDevTools();
+
 void preloadBangs();
 
 syncPrefsCookie();
+
 startRedirectSync();
+
 startExtensionSync();
 
 const el = document.querySelector("#app");
+
 if (!el) {
   throw new Error("App element not found");
 }

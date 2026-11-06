@@ -8,12 +8,14 @@ import type { BangMap } from "./lib/types";
 // SAFETY: fetch-bangs.ts generates this JSON from validated bang records.
 const bangs = bangsJson as BangMap;
 
+/** Worker bindings required by the deployed application. */
 export type WorkerEnv = Omit<AlchemyWorkerEnv, "ASSETS"> & {
   ASSETS: Pick<AlchemyWorkerEnv["ASSETS"], "fetch">;
 };
 
 const SUGGEST_UPSTREAM =
   "https://suggestqueries.google.com/complete/search?client=firefox&q=";
+
 const SUGGESTION_CACHE_TTL_SECONDS = 60;
 const SUGGESTION_FETCH_TIMEOUT_MS = 1500;
 const JSON_CONTENT_TYPE = "application/json; charset=utf-8";
@@ -22,9 +24,11 @@ const isHandledPath = (path: string): string | null => {
   if (path === "/") {
     return "/";
   }
+
   if (path === "/search" || path === "/search/") {
     return "/search";
   }
+
   return null;
 };
 
@@ -40,6 +44,7 @@ const emptySuggestions = (status: number): Response =>
 
 const handleSuggest = async (url: URL): Promise<Response> => {
   const q = url.searchParams.get("q") ?? "";
+
   if (!q) {
     return new Response("[]", {
       headers: {
@@ -48,10 +53,13 @@ const handleSuggest = async (url: URL): Promise<Response> => {
       },
     });
   }
+
   const controller = new AbortController();
+
   const timeout = setTimeout(() => {
     controller.abort();
   }, SUGGESTION_FETCH_TIMEOUT_MS);
+
   try {
     const upstream = await fetch(SUGGEST_UPSTREAM + encodeURIComponent(q), {
       cf: {
@@ -60,10 +68,13 @@ const handleSuggest = async (url: URL): Promise<Response> => {
       },
       signal: controller.signal,
     });
+
     if (!upstream.ok) {
       return emptySuggestions(upstream.status);
     }
+
     const body = await upstream.text();
+
     return new Response(body, {
       headers: {
         "Access-Control-Allow-Origin": "*",
@@ -76,6 +87,7 @@ const handleSuggest = async (url: URL): Promise<Response> => {
     if (error instanceof DOMException && error.name === "AbortError") {
       return emptySuggestions(504);
     }
+
     return emptySuggestions(502);
   } finally {
     clearTimeout(timeout);
@@ -99,14 +111,21 @@ export default {
     const handledPath = isHandledPath(url.pathname);
     const q = url.searchParams.get("q");
 
-    if (!(handledPath && q)) {
+    if (handledPath === null || handledPath === "" || q === null || q === "") {
       return env.ASSETS.fetch(request);
     }
 
     const cookieHeader = request.headers.get("Cookie");
-    const hasPrefs = cookieHeader ? PREFS_COOKIE_RE.test(cookieHeader) : false;
+
+    const hasPrefs =
+      cookieHeader !== null &&
+      cookieHeader !== "" &&
+      PREFS_COOKIE_RE.test(cookieHeader);
+
     const prefs = readPrefsFromCookieHeader(cookieHeader);
-    const defaultBangShortcut = prefs.d || DEFAULT_BANG_SHORTCUT;
+
+    const defaultBangShortcut =
+      prefs.d === undefined || prefs.d === "" ? DEFAULT_BANG_SHORTCUT : prefs.d;
 
     const result = resolveBangRedirect(
       { bangs, customBangs: prefs.c ?? {}, defaultBangShortcut, query: q },
@@ -121,6 +140,7 @@ export default {
       Location: result.url,
       "Referrer-Policy": "no-referrer",
     });
+
     if (hasPrefs) {
       // Vary on Cookie so any intermediate cache keys per-user; combined with
       // no-store this is defense-in-depth.

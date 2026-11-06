@@ -7,19 +7,27 @@ import shadcn from "ultracite/oxlint/shadcn";
 import tanstack from "ultracite/oxlint/tanstack";
 import tanstackJsPlugins from "ultracite/oxlint/tanstack/js-plugins";
 
-const jsPlugins = selectJsPlugins(["github", "sonarjs", "react-doctor"]);
+const jsPlugins = selectJsPlugins([
+  "github",
+  "jsdoc-js",
+  "sonarjs",
+  "tsdoc",
+  "react-doctor",
+]);
 
 export default defineConfig({
+  env: core.env,
   extends: [
     antiSlop,
     core,
     react,
+    shadcn,
     tanstack,
     tanstackJsPlugins,
-    shadcn,
     jsPlugins,
   ],
   ignorePatterns: [...core.ignorePatterns, "src/lib/bangs/hashbang.ts"],
   jsPlugins: [...jsPlugins.jsPlugins, ...shadcn.jsPlugins],
+  options: { typeAware: true },
   settings: jsPluginSettings,
 });

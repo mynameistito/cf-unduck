@@ -1,4 +1,10 @@
 {
   "$schema": "https://unpkg.com/knip@latest/schema.json",
-  "ignoreBinaries": ["portless"],
+  "entry": [
+    "alchemy.run.ts",
+    "extension/background.ts",
+    "extension/content.ts",
+    "e2e/extension.e2e.ts",
+    "playwright-extension.config.ts",
+  ],
 }

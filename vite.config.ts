@@ -22,9 +22,11 @@ const XML_ENTITIES: ReadonlyMap<string, string> = new Map([
 
 const escapeXml = (str: string): string => {
   let out = "";
+
   for (const ch of str) {
     out += XML_ENTITIES.get(ch) ?? ch;
   }
+
   return out;
 };
 
@@ -46,6 +48,7 @@ const replaceOrThrow = (
   if (!re.test(html)) {
     throw new Error(`site-config: ${label} did not match index.html`);
   }
+
   return html.replace(re, replacement);
 };
 
@@ -78,6 +81,7 @@ const siteConfigPlugin = (): Plugin => {
         () => `<title>${safeName}</title>`,
         "TITLE_RE"
       );
+
       out = replaceOrThrow(
         out,
         OPENSEARCH_LINK_RE,
@@ -121,6 +125,7 @@ const siteConfigPlugin = (): Plugin => {
         () => `<meta name="twitter:title" content="${safeName}">`,
         "TWITTER_TITLE_RE"
       );
+
       return out;
     },
   };

@@ -19,6 +19,7 @@ jobs:
           - typecheck
           - test
           - check
+          - knip
           - build
     name: ${{ matrix.task }}
     steps:

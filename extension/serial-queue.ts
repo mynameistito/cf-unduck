@@ -1,8 +1,11 @@
-/** Order asynchronous cache operations, including after an earlier failure. */
+/** Order asynchronous cache operations, including after an earlier failure.
+ * @returns A function that enqueues an operation.
+ */
 export const createSerialQueue = (): ((
   operation: () => Promise<void>
 ) => Promise<void>) => {
   let tail = Promise.resolve();
+
   return async (operation) => {
     const previous = tail;
     let release: (() => void) | undefined;
@@ -11,6 +14,7 @@ export const createSerialQueue = (): ((
       release = resolve;
     });
     await previous;
+
     try {
       await operation();
     } finally {

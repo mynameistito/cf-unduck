@@ -2,8 +2,9 @@ import { LS_KEYS } from "./constants";
 import { EXTENSION_REQUEST } from "./extension-protocol";
 import { storage } from "./storage";
 
-const request = (): void =>
+const request = (): void => {
   window.postMessage(EXTENSION_REQUEST, window.location.origin);
+};
 
 /** Notify an optional extension after site settings change; no extension is required. */
 export const startExtensionSync = (): void => {
@@ -15,5 +16,6 @@ export const startExtensionSync = (): void => {
   ]) {
     storage.subscribe(key, request);
   }
+
   request();
 };

@@ -1,12 +1,34 @@
 import { expect, test } from "@playwright/test";
 import type { Page, Route } from "@playwright/test";
 
+const settingsPath = "/?q=!settings";
+
+test("shows an uppercase stored default using its recovered shortcut", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("default-bang", "GOOD");
+    localStorage.setItem(
+      "custom-bangs",
+      JSON.stringify({
+        GOOD: {
+          d: "example.com",
+          s: "Example",
+          u: "https://example.com/?q={{{s}}}",
+        },
+      })
+    );
+  });
+  await page.goto(settingsPath);
+  await expect(page.getByText("Default Bang: Example")).toBeVisible();
+});
+
 test("rejects reserved custom shortcuts without deleting an edited shortcut", async ({
   page,
 }) => {
   const shortcutLabel = "Bang shortcut";
   const reservedShortcut = "constructor";
-  await page.goto("/?q=!settings");
+  await page.goto(settingsPath);
   await page
     .getByLabel("Bang search URL")
     .fill("https://example.com/?q={{{s}}}");
@@ -202,7 +224,7 @@ test("keeps history-enabled searches on the app path and records them once", asy
 
 test("settings and unknown bangs still show the app", async ({ page }) => {
   await install(page);
-  await page.goto("/?q=!settings");
+  await page.goto(settingsPath);
   await expect(page.getByRole("button", { name: "Settings" })).toBeVisible();
   await page.goto("/?q=!unknown-bang-xyz");
   await expect(page.getByRole("button", { name: "Settings" })).toBeVisible();

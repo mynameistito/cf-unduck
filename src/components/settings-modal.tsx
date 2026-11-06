@@ -10,7 +10,6 @@ import {
 import { loadBangs } from "@/lib/bangs/load-bangs";
 import {
   customBangSchema,
-  isReservedShortcut,
   parseBangMap,
   parseStoredBangMap,
 } from "@/lib/bangs/schema";
@@ -24,6 +23,7 @@ import { clearSearchHistory, getSearchHistory } from "@/lib/history";
 import { syncPrefsCookie } from "@/lib/prefs-cookie";
 import { normalizeWebUrl } from "@/lib/redirect";
 import { encodeShare } from "@/lib/share-bangs";
+import { isReservedShortcut, normalizeShortcut } from "@/lib/shortcut";
 import type { Bang, BangMap } from "@/lib/types";
 
 import { ExtensionSettings } from "./extension-settings";
@@ -1212,8 +1212,12 @@ export const SettingsModal = ({
   const [bangInput, setBangInput] = useState(defaultBang);
   const [bangError, setBangError] = useState(false);
 
+  const normalizedDefaultBang = normalizeShortcut(defaultBang);
+
   const currentBang =
-    customBangs[defaultBang] ?? bangs?.[defaultBang] ?? undefined;
+    customBangs[normalizedDefaultBang] ??
+    bangs?.[normalizedDefaultBang] ??
+    undefined;
 
   const onDefaultBangChange = async (raw: string) => {
     const shortcut = raw.replace(STRIP_BANG_PREFIX_RE, "").toLowerCase();

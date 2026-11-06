@@ -1,3 +1,4 @@
+import { normalizeShortcut } from "./shortcut";
 import type { Bang, BangMap } from "./types";
 
 export const BANG_STRIP_RE = /!\S+\s*|^(?<bang>\S+!|!\S+)$/iu;
@@ -166,15 +167,16 @@ export const resolveBangRedirect = (
   }
 
   const matchedShortcut = getBangShortcut(query);
-  const bangShortcut = matchedShortcut ?? input.defaultBangShortcut;
+  const defaultBangShortcut = normalizeShortcut(input.defaultBangShortcut);
+  const bangShortcut = matchedShortcut ?? defaultBangShortcut;
 
   const selectedBang =
     findBang(input.customBangs, bangShortcut) ??
     findBang(input.bangs, bangShortcut);
 
   const defaultBang =
-    findBang(input.customBangs, input.defaultBangShortcut) ??
-    findBang(input.bangs, input.defaultBangShortcut);
+    findBang(input.customBangs, defaultBangShortcut) ??
+    findBang(input.bangs, defaultBangShortcut);
 
   const cleanQuery =
     matchedShortcut !== undefined && matchedShortcut !== ""

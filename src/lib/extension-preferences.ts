@@ -3,6 +3,7 @@ import { z } from "zod";
 import { EXTENSION_STATUS } from "./extension-protocol";
 import type { ExtensionPreferences } from "./extension-protocol";
 import { normalizeWebUrl } from "./redirect";
+import { isReservedShortcut } from "./shortcut";
 
 const webUrl = z.string().refine((value) => normalizeWebUrl(value) !== null);
 
@@ -11,7 +12,7 @@ const shortcut = z
   .trim()
   .min(1)
   .toLowerCase()
-  .refine((key) => !["__proto__", "constructor", "prototype"].includes(key));
+  .refine((key) => !isReservedShortcut(key));
 
 const preferencesSchema = z.object({
   customBangs: z.record(

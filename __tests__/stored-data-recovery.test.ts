@@ -54,6 +54,20 @@ it("normalizes stored shortcut keys and lets the last valid case variant win", (
   expect(() => parseBangMap(stored)).toThrow();
 });
 
+it("resolves a mixed-case stored default against a recovered shortcut", () => {
+  const cookie = `udprefs=${encodeURIComponent(JSON.stringify({ c: { GOOD: validBang }, d: "GOOD" }))}`;
+  const preferences = readPrefsFromCookieHeader(cookie);
+
+  expect(
+    resolveBangRedirect({
+      bangs: {},
+      customBangs: preferences.c ?? {},
+      defaultBangShortcut: preferences.d ?? "",
+      query: "hello",
+    })
+  ).toMatchObject({ kind: "redirect", url: "https://example.com/?q=hello" });
+});
+
 it("recovers valid cookie shortcuts and preserves an independent default", () => {
   const cookie = `udprefs=${encodeURIComponent(JSON.stringify({ c: mixedBangs, d: "good" }))}`;
 

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { normalizeWebUrl } from "../redirect";
+import { isReservedShortcut, normalizeShortcut } from "../shortcut";
 
 /** Validate a search shortcut from stored or imported data. */
 const bangSchema = z.looseObject({
@@ -17,13 +18,6 @@ const webDestination = z
   .string()
   .min(1)
   .refine((value) => normalizeWebUrl(value) !== null);
-
-/** Check whether a shortcut is reserved for object internals.
- * @param shortcut - Shortcut to check.
- * @returns Whether the shortcut is reserved.
- */
-export const isReservedShortcut = (shortcut: string): boolean =>
-  ["__proto__", "prototype", "constructor"].includes(shortcut.toLowerCase());
 
 /** Validate a custom shortcut whose destinations must be HTTP(S) URLs. */
 export const customBangSchema = bangSchema.extend({
@@ -50,7 +44,7 @@ export const storedBangMapSchema = z
     const entries: [string, z.infer<typeof bangSchema>][] = [];
 
     for (const [key, value] of Object.entries(map)) {
-      const shortcut = key.trim().toLowerCase();
+      const shortcut = normalizeShortcut(key);
 
       if (shortcut === "" || isReservedShortcut(shortcut)) {
         continue;
